@@ -1,7 +1,71 @@
-
+import pandas as pd
+import torch
+import torch.nn as nn
+from tqdm import tqdm
+from repository.ncf_recommender.dataset_loader import Test_Rating_dataSet
+import ast
+from itertools import islice
+import operator
 
 # Configer converts a dictionary to class:
 class configer(object):
     def __init__(self, my_dict):
         for key in my_dict:
             setattr(self, key, my_dict[key])
+
+
+def str_to_list(list_string):
+  return ast.literal_eval(list_string)
+
+
+def eval_sample_list(user_list,url_list,pre,model):
+  user_df = pd.DataFrame({'user': user_list})
+  article_df = pd.DataFrame({'article':url_list})
+  test_ds = Test_Rating_dataSet(user_df,article_df, pre.user_index_mapping, pre.url_to_index_and_labels_dict)
+  test_dl = torch.utils.data.DataLoader(test_ds, batch_size=1, shuffle=False,)
+  url_to_rating = {}
+  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+  for _, (user_name,user,article_url,url_index,labels,Dominant_Topic) in tqdm(enumerate(test_dl)):
+      user = user[0].unsqueeze(1)
+      # print('keywords before: ',keywords)
+      # keywords = torch.tensor([ str_to_list(key) for key in keywords])
+      # print('keywords after: ',keywords,keywords.shape)
+      user,url_index, label,Dominant_Topic = user.to(device),url_index.to(device),labels.to(device),Dominant_Topic.to(device)
+      # print('user shape: ',user.shape,'keywords shape:',keywords.shape,'label shape:',label.shape)
+      prediction, user_embed_MLP, article_embed_MLP = model( user, url_index,label,Dominant_Topic)
+        
+      for i,url in enumerate(article_url[0]):
+          
+          url_r= {url : float(prediction[i])}
+          url_to_rating.update(url_r)
+
+  return url_to_rating
+
+
+def take(n, iterable):
+    "Return first n items of the iterable as a list"
+    return list(islice(iterable, n))
+
+    
+def get_top_20(user_name,url_list,pre ,model):
+  user_list = [user_name,]
+  url_to_rating = eval_sample_list(user_list,url_list,pre,model)
+  sorted_top_url = dict( sorted(url_to_rating.items(), key=operator.itemgetter(1),reverse=True))
+  top_20 = take(20, sorted_top_url.items())
+  return top_20
+
+
+def context_giver(top_20,pre):
+    return_val = []
+    for item in top_20:
+        item_df = pre.df[pre.df.url == item[0]].iloc[0]
+        item_val = {
+            "url": item_df.url,
+            "date": item_df.date.split()[0],
+            "label": item_df.label,
+            "all_content": item_df.all_content,
+            "main_topic": item_df.main_topic,
+        }
+        return_val.append(item_val)
+    return return_val

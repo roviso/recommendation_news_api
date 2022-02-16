@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from models import user_model 
 from database import engine
-from routers import user, token
+from routers import user, token, recommendation_ncf
 
 
 
@@ -11,7 +11,7 @@ user_model.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
-# app.include_router(cashwithdrawal.router)
+app.include_router(recommendation_ncf.router)
 
 app.include_router(token.router)
 
