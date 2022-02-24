@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 from repository.ncf_recommender.dataset_loader import Test_Rating_dataSet
+# from dataset_loader import Test_Rating_dataSet
 import ast
 from itertools import islice
 import operator
@@ -62,10 +63,15 @@ def context_giver(top_20,pre):
         item_df = pre.df[pre.df.url == item[0]].iloc[0]
         item_val = {
             "url": item_df.url,
+            "head_image": item_df.head_image,
+            "heading": item_df.heading,
             "date": item_df.date.split()[0],
             "label": item_df.label,
-            "all_content": item_df.all_content,
-            "main_topic": item_df.main_topic,
+            "content": ast.literal_eval(item_df.content),
+            "additional_img": ast.literal_eval(item_df.additional_images),
+            "source": item_df.source,
+            "author": item_df.author,
+            "author_img": item_df.author_img,
         }
         return_val.append(item_val)
     return return_val

@@ -12,3 +12,6 @@ python model_train.py --device cuda --no-save_model --epochs 55 --bs 24 --lr 0.0
 
 ## dont save and load model
 python model_train.py --device cuda --no-load_model --no-save_model --epochs 55 --bs 24 --lr 0.001
+
+
+

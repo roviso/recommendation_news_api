@@ -1,10 +1,26 @@
 ## ------------------------------------- PICKLE LOADER ------------------------------------ ##
 import torch
 import pickle
+# from preprocessor import preprocessor
+
+class MyCustomUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module == "__main__":
+            module = "preprocessor"
+        return super().find_class(module, name)
+
+# with open('out.pkl', 'rb') as f:
+#     unpickler = MyCustomUnpickler(f)
+#     obj = unpickler.load()
+
+
 
 def load_pkl(pkl_file):
     with open(pkl_file, 'rb') as inp:
-        pickled_obj = pickle.load(inp)
+        print('pkl file is being used: ', pkl_file)
+        # pickled_obj = pickle.load(inp)
+        unpickler = MyCustomUnpickler(inp)
+        pickled_obj = unpickler.load()
     return pickled_obj
 
 def save_pkl(obj, filename):

@@ -30,6 +30,7 @@ keyword_len = 20
 
 print('----------Preprocessing(loading data)--------------------')
 if os.path.isfile('../data/pre.pkl'):
+    print('loding pikle...1111111111111111111111111111111')
     pre = load_pkl('../data/pre.pkl')
     print('Successfully Loaded Pickle file')
 elif os.path.isfile('../data/train.csv'):
@@ -104,10 +105,14 @@ def get_recommendation(top_20):
         pre_df = pre.df[pre.df.url == recommended_url[0]].iloc[0]
         item_val = {
             "url": pre_df.url,
+            "head_image": pre.df.head_image,
+            "heading": pre.df.heading,
             "date": pre_df.date.split()[0],
             "label": pre_df.label,
-            "all_content": pre_df.all_content,
-            "main_topic": pre_df.main_topic,
+            "content": pre.df.content,
+            "source": pre.df.source,
+            "author": pre.df.author,
+            "author_img": pre.df.author_img,
         }
         recommended_list.append(item_val)
     return recommended_list
