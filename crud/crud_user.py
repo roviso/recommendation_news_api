@@ -118,7 +118,7 @@ def get_viewed_article(db: Session, user_id: str, article_id: str):
 
 
 def get_all_viewed_articles(db: Session,user_id: str,  skip: int = 0):
-    return db.query(user_model.UserArticleLikes).filter(user_model.UserArticleLikes.user_id == user_id).offset(skip).all()
+    return db.query(user_model.UserArticleViewed).filter(user_model.UserArticleViewed.user_id == user_id).offset(skip).all()
 
 
 def create_views(db: Session, article_viewed:user_schema.CreateUserArticleViewed):

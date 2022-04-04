@@ -5,31 +5,50 @@ import database
 from models import article_model
 from typing import Optional
 from fastapi.responses import HTMLResponse
-
+import nepali_datetime
 from starlette.requests import Request
 from starlette.responses import Response
 import time
 from datetime import datetime
+from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
-
+from fastapi_cache.backends.redis import RedisBackend
+import aioredis
 
 router = APIRouter(
     prefix = "/latest_recommendation",
      tags=['Latest Recommendation']
 )
 
+# @router.on_event("startup")
+# async def startup():
+#     redis = aioredis.from_url(url="redis://localhost")
+#     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+
+latest_recommendation = article_model.LatestArticle()
+
+@cache(namespace="test", expire=5)
+async def get_recommendation(db: Session):
+    global latest_recommendation
+    # time.sleep(3)
+    latest_recommendation = db.query(article_model.LatestArticle).order_by(desc(article_model.LatestArticle.likes,)).limit(20).all()
+    return latest_recommendation
 
 
 
 
 @router.get('/get_latest_news/', status_code = 200)
-@cache(namespace="test", expire=20)
-async def get_already_recommended(db: Session = Depends(database.get_db)):
+@cache(namespace="test", expire=1*60)
+async def get_already_recommended(request: Request, response: Response, db: Session = Depends(database.get_db)):
     start = datetime.now()
     # time.sleep(2)
-    latest_aricles = db.query(article_model.LatestArticle).order_by(desc(article_model.LatestArticle.likes)).limit(20).all()
-    print('time taken to query: ',datetime.now() - start)
 
+    latest_aricles = await get_recommendation(db)
+    # latest_aricles = db.query(article_model.LatestArticle).order_by(desc(article_model.LatestArticle.likes,)).limit(20).all()
+    print('time taken to query: ',datetime.now() - start)
+    # print(testt,"5555555555555555555555555555")
+    # print(FastAPICache.get_prefix())
     return latest_aricles
     # recommended_user_article
     # stmt = select(users_table).order_by(users_table.c.name.asc())

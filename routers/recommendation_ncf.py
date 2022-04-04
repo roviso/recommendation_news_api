@@ -21,7 +21,15 @@ from randomdict import RandomDict
 from models import user_model
 from schemas import user_schema
 
+import aioredis
 
+from starlette.requests import Request
+from starlette.responses import Response
+
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
+from fastapi_cache.coder import JsonCoder
 
 
 
@@ -30,58 +38,65 @@ router = APIRouter(
      tags=['Recommendation']
 )
 
-# print('-------importing modules done-----------------')
-# # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cuda")
-# print("Using: ",device)
-
-# load_model = True
-# save_model = False
-# load_pkl_flag = True
-# data_path = '../repository/data/train.csv'
-# keyword_len = 20
+# @router.on_event("startup")
+# async def startup():
+#     redis = aioredis.from_url(url="redis://localhost")
+#     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
 
-# print('----------Preprocessing(loading data)--------------------')
-# if os.path.isfile('/home/prixa-ml/Desktop/projects/recommendation_news_api/repository/data-processing/processed_data/train_data/pre.pkl'):
+print('-------importing modules done-----------------')
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda")
+print("Using: ",device)
+
+load_model = True
+save_model = False
+load_pkl_flag = True
+data_path = '../repository/data/train.csv'
+keyword_len = 20
+
+
+
+print('----------Preprocessing(loading data)--------------------')
+if os.path.isfile('/home/prixa-ml/Desktop/projects/recommendation_news_api/repository/data-processing/processed_data/train_data/pre.pkl'):
     
-#     pre = load_pkl('/home/prixa-ml/Desktop/projects/recommendation_news_api/repository/data-processing/processed_data/train_data/pre.pkl')
-#     print('Successfully Loaded Pickle file')
-# elif os.path.isfile('repository/data/train.csv'):
-#     print('No Pickle file found.')
-#     print('Using CSV file, train.csv.')
-#     data_path = 'repository/data/train.csv'
-#     print('Starting Pre-processing...')
-#     pre = preprocessor(data_path,keywords_limit = keyword_len)
-#     if pre:
-#         print('Successfully Loaded CSV file to train')
-# print('----------Preprocessing Completed--------------------')
+    pre = load_pkl('/home/prixa-ml/Desktop/projects/recommendation_news_api/repository/data-processing/processed_data/train_data/pre.pkl')
+    print('Successfully Loaded Pickle file')
+elif os.path.isfile('repository/data/train.csv'):
+    print('No Pickle file found.')
+    print('Using CSV file, train.csv.')
+    data_path = 'repository/data/train.csv'
+    print('Starting Pre-processing...')
+    pre = preprocessor(data_path,keywords_limit = keyword_len)
+    if pre:
+        print('Successfully Loaded CSV file to train')
+print('----------Preprocessing Completed--------------------')
 
 
 
-# dropout = 0.01
-# learning_rate = 0.001
-# print("finish loading Data...)")
+dropout = 0.01
+learning_rate = 0.001
+print("finish loading Data...)")
 
-# print("Initailizing Model...")
-# model_name = 'repository/trained_models/NCF_checkpoint_cuda.pth.tar'
-# nlayer = 3
-# dropout = 0.001
-# model = NMF(user_emb_sizes = pre.user_emb_sizes, url_emb_sizes = pre.url_emb_sizes,url_to_keyword_dict= pre.url_to_keyword_dict ,  nlayer = nlayer, dropout = dropout, device = device).to(device)
-# criterion = nn.MSELoss()
-# optimizer = torch.optim.Adam(model.parameters(), lr= learning_rate)
+print("Initailizing Model...")
+model_name = 'repository/trained_models/NCF_checkpoint_cuda.pth.tar'
+nlayer = 3
+dropout = 0.001
+model = NMF(user_emb_sizes = pre.user_emb_sizes, url_emb_sizes = pre.url_emb_sizes,url_to_keyword_dict= pre.url_to_keyword_dict ,  nlayer = nlayer, dropout = dropout, device = device).to(device)
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr= learning_rate)
 
-# if load_model:
-#     print("loading Model.....")
-#     load_checkpoint(torch.load(model_name), model, optimizer)
-#     model.train() 
-#     print("Finish Loading Model")
+if load_model:
+    print("loading Model.....")
+    load_checkpoint(torch.load(model_name), model, optimizer)
+    model.train() 
+    print("Finish Loading Model")
 
 
-# url_generated = url_generator.url_generator(pre.df)
-# url_list =  url_generated.get_url_by_time_only('3_months')
-# url_list = url_list['url'].unique()
+url_generated = url_generator.url_generator(pre.df)
+url_list =  url_generated.get_url_by_time_only('3_months')
+url_list = url_list['url'].unique()
 
 
 recommended_user_article = dict()
@@ -96,11 +111,8 @@ async def store_viewed_already(user_id: str, url_list: list):
 async def get_already_recommended():
     return recommended_user_article
 
-
-@router.get('/{user_id}', status_code = 200)
-async def get_recommendation(user_id: str, site: Optional[str] = None, time: Optional[str] =  None,db: Session = Depends(database.get_db)):
-    # user = pre.index_user_mapping[int(user_id)]
-    # user = random.choice(list(d.values()))
+@cache(expire=60*3,coder=JsonCoder)
+async def get_recommendation_cache_func(db, user_id: str, site: Optional[str] = None, time: Optional[str] =  None):
     global recommended_user_article
     r = RandomDict(pre.index_user_mapping)
     user = r.random_value()
@@ -115,6 +127,10 @@ async def get_recommendation(user_id: str, site: Optional[str] = None, time: Opt
         url_df =  url_generated.get_url_by_time_only('4_months')
 
     all_url_list = url_df['url'].unique()
+
+    print(f'all_url_list: {len(all_url_list)}')
+
+
     user_url_df = pre.df.groupby(['user'])
     prev_visited_url = user_url_df.get_group(user).url.to_list()
     # liked_articles = crud_user.get_all_liked_articles(db,user_id)
@@ -130,16 +146,91 @@ async def get_recommendation(user_id: str, site: Optional[str] = None, time: Opt
         # print(f"{user_id} already viewed {prev_visited_url}")
 
     url_list = list(reduce(lambda x,y : filter(lambda z: z!=y,x) ,prev_visited_url,all_url_list))
+    print(f'url_list: {len(url_list)}')
 
-    top_20_urls =  utils.get_top_20(user,url_list,pre,model)
+    top_100_recommended_urls =  utils.get_top_100(user,url_list,pre,model)
+    top_100_dictionary = dict.fromkeys(top_100_recommended_urls, "recommended")
+    
+    return top_100_dictionary
+
+
+# @router.get('/{user_id}', status_code = 200)
+# @cache(namespace="test", expire=60)
+# async def get_recommendation_cache(user_id: str, 
+#                                     site: Optional[str] = None, 
+#                                     time: Optional[str] =  None,
+#                                     db: Session = Depends(database.get_db)):
+#     global latest_recommendation
+#     # time.sleep(3)
+#     latest_recommendation = db.query(article_model.LatestArticle).order_by(desc(article_model.LatestArticle.likes,)).limit(20).all()
+#     return latest_recommendation
+
+
+
+@router.get('/{user_id}', status_code = 200)
+async def get_recommendation_cache(request: Request, response: Response, user_id: str, site: Optional[str] = None, time: Optional[str] =  None,db: Session = Depends(database.get_db)):
+    top_100_dictionary = await get_recommendation_cache_func(db, user_id,site,time)
+    top_100_recommended_urls = list(top_100_dictionary.keys())
+    print(f'top_100_recommended_urls after deletion is {len(top_100_recommended_urls)} 999999999999999999999999999999999999')
+    top_20_urls = top_100_recommended_urls[:20]
+    print(f'top_20_urls are {len(top_20_urls)} 11111111111111111111111111111111')
     if user_id in recommended_user_article:
         recommended_urls = recommended_user_article[user_id]
         recommended_urls.extend(top_20_urls)
     else:
         recommended_urls = top_20_urls
         recommended_user_article.update(await store_viewed_already(user_id,recommended_urls))
+    
+    del top_100_recommended_urls[:20]
+    print(f'top_100_recommended_urls after deletion is {len(top_100_recommended_urls)} 22222222222222222222222222222222222222222')
 
-    return utils.context_giver(top_20_urls,pre)
+    top_20_recommendation = utils.context_giver(top_20_urls,pre)
+    return top_20_recommendation
+
+
+# @router.get('/{user_id}', status_code = 200)
+# async def get_recommendation(user_id: str, site: Optional[str] = None, time: Optional[str] =  None,db: Session = Depends(database.get_db)):
+#     # user = pre.index_user_mapping[int(user_id)]
+#     # user = random.choice(list(d.values()))
+#     global recommended_user_article
+#     r = RandomDict(pre.index_user_mapping)
+#     user = r.random_value()
+
+#     if site and time :
+#         url_df = url_generated.get_url_by_time_and_site(site,time)
+#     elif site:        
+#         url_df =  url_generated.get_df_by_site(site)
+#     elif time:        
+#         url_df =  url_generated.get_url_by_time_only(time)
+#     else:
+#         url_df =  url_generated.get_url_by_time_only('4_months')
+
+#     all_url_list = url_df['url'].unique()
+#     user_url_df = pre.df.groupby(['user'])
+#     prev_visited_url = user_url_df.get_group(user).url.to_list()
+#     # liked_articles = crud_user.get_all_liked_articles(db,user_id)
+
+
+#     viewed_articles = crud_user.get_all_viewed_articles(db,user_id)
+#     liked_article_list = [x.liked_article.url for x in viewed_articles]
+#     prev_visited_url.extend(liked_article_list)
+
+#     if user_id in recommended_user_article:
+#         already_recommended_articles = recommended_user_article[user_id]
+#         prev_visited_url.extend(already_recommended_articles)
+#         # print(f"{user_id} already viewed {prev_visited_url}")
+
+#     url_list = list(reduce(lambda x,y : filter(lambda z: z!=y,x) ,prev_visited_url,all_url_list))
+
+#     top_20_urls =  utils.get_top_20(user,url_list,pre,model)
+#     if user_id in recommended_user_article:
+#         recommended_urls = recommended_user_article[user_id]
+#         recommended_urls.extend(top_20_urls)
+#     else:
+#         recommended_urls = top_20_urls
+#         recommended_user_article.update(await store_viewed_already(user_id,recommended_urls))
+
+#     return utils.context_giver(top_20_urls,pre)
 
 
 @router.post('/likes/',status_code = status.HTTP_201_CREATED)

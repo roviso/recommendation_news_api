@@ -57,6 +57,14 @@ def get_top_20(user_name,url_list,pre ,model):
     top_20 = take(20, sorted_top_url.keys()) # gives url only
     return top_20
 
+def get_top_100(user_name,url_list,pre ,model):
+    user_list = [user_name,]
+    url_to_rating = eval_sample_list(user_list,url_list,pre,model)
+    sorted_top_url = dict( sorted(url_to_rating.items(), key=operator.itemgetter(1),reverse=True))
+#   top_20 = take(20, sorted_top_url.items()) # gives url with scores
+    top_100 = take(100, sorted_top_url.keys()) # gives url only
+    return top_100
+
 
 def content_filter(content):
     new_content_list = []

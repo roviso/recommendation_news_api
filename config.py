@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-
+from pydantic import BaseSettings
 from pathlib import Path
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -27,4 +27,11 @@ class AuthConfig:
 
 authconfig = AuthConfig()
 
+
+class CacheConfig(BaseSettings):
+    redis_url: str = 'redis://localhost'
+    URL_EXPIRY_TIME = 60*60*3 ##3 hours
+    EXPIRY_TIME = 60 * 60
+
+cacheconfig = CacheConfig()
 
