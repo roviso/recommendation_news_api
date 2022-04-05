@@ -51,20 +51,35 @@ def create_user_id(device_id: str, device_name: str,ip_address: str, db: Session
     # db_user = crud_user.get_user(db, id = user.id)
     # if db_user:
     #     raise HTTPException(status_code=400, detail="Email already registered")
-    user = user_model.User(
-        id = secrets.token_urlsafe(32),
-        device_id = device_id,
-        device_name = device_name,
-        ip_address = ip_address
-    )
-    print(user,user.__dict__)
-    return crud_user.create_user(db=db, user=user)
+    
+    user_exists = crud_user.user_exists(db=db, device_id=device_id, device_name=device_name)
+    if user_exists:
+        return user_exists
+    else:
+        user = user_model.User(
+            id = secrets.token_urlsafe(32),
+            device_id = device_id,
+            device_name = device_name,
+            ip_address = ip_address
+        )
+        # print(user,user.__dict__)
+        return crud_user.create_user(db=db, user=user)
+         
 
 @router.get("/get_user", response_model=user_schema.UserInDB)
 async def read_user(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
-
     return crud_user.get_user(db=db, user_id=current_user.id)
 
+# @router.post("/user_exists",)
+# async def user_exists(device_id: str, device_name: str, db: Session = Depends(database.get_db)):
+#     user_exists = crud_user.user_exists(db=db, device_id=device_id, device_name=device_name)
+#     print(user_exists, type(user_exists))
+#     if not user_exists:
+#         print("NO USER FOUND")
+#         return "NO USER FOUND"
+#     else:
+#         print(f"USER FOUND: {user_exists.id}")
+#         return user_exists.id
 
 
 @router.get("/get_user_liked_articles")

@@ -3,7 +3,6 @@ from typing import Optional, List
 from fastapi.responses import HTMLResponse
 from models import user_model, author_model
 from database import engine
-from repository.ncf_recommender.preprocessor import preprocessor
 from routers import user, token, latest_recommender
 from preprocessor import preprocessor
 import aioredis
@@ -33,7 +32,7 @@ import random
 from randomdict import RandomDict
 from models import user_model
 from schemas import user_schema
-from newscacher import newscache, urlcache
+from newscacher import newscache, urlcache,usercache
 from collections import OrderedDict
 
 
@@ -42,6 +41,11 @@ author_model.Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(title='News Recommendation')
+
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
 
 app.include_router(latest_recommender.router)
 
@@ -127,7 +131,7 @@ def url_remover(db,user_id: str,all_url_list: List[str],url_to_ignore: List[str]
     liked_articles = crud_user.get_all_liked_articles(db,user_id)
     liked_article_list = [x.liked_article.url for x in liked_articles]
 
-    ignore_article_list = viewed_article_list + liked_article_list
+    ignore_article_list = viewed_article_list + liked_article_list + url_to_ignore
     url_list = list(reduce(lambda x,y : filter(lambda z: z!=y,x) ,ignore_article_list,all_url_list))
     
     return url_list
@@ -201,7 +205,7 @@ def get_random_news(news_list: List[dict], number_to_select: int) -> List[dict]:
 
 @app.get('/{user_id}', status_code = 200)
 async def get_recommendation_cache(background_tasks: BackgroundTasks,user_id: str, site: Optional[str] = None, time: Optional[str] =  None,db: Session = Depends(database.get_db)):
-    cached_users = await newscache.get_users()
+    cached_users = await usercache.get_users()
     if user_id not in cached_users:
         print('---------------------------No-user Found--------------------------')
 
@@ -253,6 +257,10 @@ async def remove_cached_news(user_id: str, url_indices : List[int]):
     # return await get_recommendation_cache_func(db, user_id,site,time)
     return await newscache.clear_cache_news(user_id, url_indices)
 
+@app.get('/clear_user_cache/', status_code = 200)
+async def clear_user_cache():
+    # return await get_recommendation_cache_func(db, user_id,site,time)
+    return await usercache.clear_user_cache()
 
 
 # @app.get('/cached_url/{user_id}', status_code = 200)

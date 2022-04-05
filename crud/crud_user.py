@@ -25,6 +25,9 @@ def get_user(db: Session, user_id: str):
     #     return user_schema.UserInDB(**user_dict)
     return db.query(user_model.User).filter(user_model.User.id == user_id).first()
 
+def user_exists(db: Session, device_id: str, device_name: str,):
+    return db.query(user_model.User).filter(user_model.User.device_id == device_id, user_model.User.device_name == device_name,).first()
+
 
 def create_user(db: Session, user: user_model.User):
     db.add(user)

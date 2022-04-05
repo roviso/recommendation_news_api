@@ -43,10 +43,28 @@ class UrlCache():
 
 urlcache = UrlCache()
 
-class NewsCache():
+
+class UserCache():
     def __init__(self):
         self.redis = aioredis.from_url(cacheconfig.redis_url, decode_responses=True)
+        
+    async def add_user(self,user_id: str):
+        await self.redis.lpush(f'cached_user',user_id)
+        # self.redis.expire(f'cached_user:{user_id}',cacheconfig.EXPIRY_TIME)
 
+    async def clear_user_cache(self,):
+        await self.redis.delete('cached_user')
+
+    async def remove_cached_user(self,user_id: str):
+        await self.redis.lrem(f'cached_user',0,user_id)
+
+    async def get_users(self):
+        return await self.redis.lrange(f'cached_user',0,-1)
+
+usercache = UserCache()
+class NewsCache(UserCache):
+    def __init__(self):
+        super().__init__()
     
     async def add_to_cache(self,user_id: str,news_index,recommendedNew ):
         await asyncio.gather(
@@ -57,15 +75,6 @@ class NewsCache():
     async def remove_cached_news(self,user_id: str,news_index: int):
         await self.redis.delete(f'recommended_news:{user_id}:{news_index}')
 
-    async def add_user(self,user_id: str):
-        await self.redis.lpush(f'cached_user',user_id)
-        # self.redis.expire(f'cached_user:{user_id}',cacheconfig.EXPIRY_TIME)
-    
-    async def remove_cached_user(self,user_id: str):
-        await self.redis.lrem(f'cached_user',0,user_id)
-
-    async def get_users(self):
-        return await self.redis.lrange(f'cached_user',0,-1)
 
     async def read_from_cache(self, user_id: str,news_index:str):
         cached_news =  await self.redis.hgetall(f'recommended_news:{user_id}:{news_index}')
@@ -86,11 +95,9 @@ class NewsCache():
     async def read_cached_news(self, user_id:str,):
         cached_news = [await self.read_from_cache(user_id,i) for i in range(0,101)]
         cached_ordered = OrderedDict((i,news) for i,news in enumerate(cached_news))
-
         # cached_ordered = OrderedDict((index,news) for index,news in enumerate([await self.read_from_cache(user_id,i) for i in range(0,101)]) )
-
-        
         return cached_ordered
+
 
     async def clear_cache_news(self,user_id:str,news_list_to_remove: List[int]):
         clear_news = [self.remove_cached_news(user_id,news_index) for news_index in news_list_to_remove]
@@ -99,3 +106,5 @@ class NewsCache():
         )
         
 newscache = NewsCache()
+
+
