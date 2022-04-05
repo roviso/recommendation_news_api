@@ -1,8 +1,9 @@
+from enum import unique
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String,ForeignKey, DateTime
 from database import Base
 from sqlalchemy.orm import relationship
 from typing import List, Optional
-
+from sqlalchemy_utils import EmailType
 
 
 
@@ -14,10 +15,21 @@ class User(Base):
     device_name = Column(String)
     device_id = Column(String)
     ip_address = Column(String)
+    registered = Column('type',Boolean)
 
     liked_articles = relationship("UserArticleLikes", back_populates="liked_user")
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     commened_articles = relationship("UserArticleComments", back_populates="commented_user")
+    __mapper_args__ = {'polymorphic_on': registered}
+
+class RegisteredUser(User):
+    __mapper_args__ = {'polymorphic_identity': 'registeredUser'}
+    username = Column(String(50))
+    password = Column(String)
+    first_name = Column(String(50))
+    last_name = Column(String(50))
+    email = Column(EmailType)
+
 
 
 class UserArticleLikes(Base):
