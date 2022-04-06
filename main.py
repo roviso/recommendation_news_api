@@ -42,9 +42,9 @@ author_model.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title='News Recommendation')
 
-@app.on_event("startup")
-async def startup():
-    await database.connect()
+# @app.on_event("startup")
+# async def startup():
+#     await database.connect()
 
 
 app.include_router(latest_recommender.router)
