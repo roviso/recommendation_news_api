@@ -18,7 +18,13 @@ class ArticleCrud():
     async def get_article(self,article_url: str) -> Article:
         query = select(Article).where(Article.url == article_url)
         results = await self.db_session.execute(query)
-        (result,) = results.one()
+        result = results.fetchone()
+        return result
+
+    async def get_article_by_id(self,article_id: str) -> Article:
+        query = select(Article).where(Article.id == article_id)
+        results = await self.db_session.execute(query)
+        result = results.fetchone()
         return result
 
     async def get_all_article(self) -> List[Article]:

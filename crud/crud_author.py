@@ -14,11 +14,17 @@ class AuthorCrud():
         self.db_session.add(author)
         await self.db_session.flush()
 
+    async def get_author_by_id(self,author_id: str) -> Author:
+        query = select(Author).where(Author.id == author_id)
+        results = await self.db_session.execute(query)
+        (result,) = results.one()
+        return result
+
 
     async def get_author_by_name(self,author_name: str) -> Author:
         query = select(Author).where(Author.author_name == author_name)
         results = await self.db_session.execute(query)
-        (result,) = results.one()
+        result = results.fetchone()
         return result
 
     async def get_all_author(self) -> List[Author]:

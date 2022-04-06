@@ -18,21 +18,67 @@ router = APIRouter(
 )
 
 
-@router.post('/create_user', response_model=user_schema.User)
-async def create_user(device_id: str, device_name: str,ip_address: str, db: Session = Depends(database.get_db)):
-    user_id = secrets.token_urlsafe(32)
-    user = user_model.User(
-            id = user_id,
-            device_id = device_id,
-            device_name = device_name,
-            ip_address = ip_address,
-            registered = False
-        )
-    async with async_session() as session:
+@router.post('/create_user')
+async def create_user(device_id: str, device_name: str,ip_address: str, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
-            return await usercrud.create_user(user)
-            
+            user_exists = await usercrud.check_user_exists(device_id=device_id, device_name=device_name)
+    if user_exists:
+        return user_exists.User.id
+    else:
+        user_id = secrets.token_urlsafe(32)
+        user = user_model.User(
+                id = user_id,
+                device_id = device_id,
+                device_name = device_name,
+                ip_address = ip_address,
+                registered = False
+            )
+        async with async_session as session:
+            async with session.begin():
+                usercrud= UserCrud(session)
+                await usercrud.create_user(user)
+        return user_id
+
+
+
+@router.get("/get_user")
+async def read_user(current_user: user_schema.User = Depends(), async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.get_user(current_user.id)
+
+@router.get("/get_all_user")
+async def read_all_user(async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.get_all_user()
+
+        
+@router.post('/register_user', response_model=user_schema.RegisterUser)
+async def register_user(user_info: user_schema.RegisterUser, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            await usercrud.register_user(user_id= user_info.id, username=user_info.username, password = user_info.password,
+                first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
+    
+    return user_info
+
+
+@router.get("/get_registered_user")
+async def get_registered_user(current_user: user_schema.User = Depends(), async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.get_registered_user(current_user.id)
+          
 
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

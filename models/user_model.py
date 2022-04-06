@@ -15,20 +15,32 @@ class User(Base):
     device_name = Column(String)
     device_id = Column(String)
     ip_address = Column(String)
-    registered = Column('type',Boolean)
+    registered = Column(Boolean)
 
     liked_articles = relationship("UserArticleLikes", back_populates="liked_user")
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     commened_articles = relationship("UserArticleComments", back_populates="commented_user")
-    __mapper_args__ = {'polymorphic_on': registered}
+    __mapper_args__ = {'polymorphic_on': registered,
+        'polymorphic_identity':'user'
+        }
 
 class RegisteredUser(User):
-    __mapper_args__ = {'polymorphic_identity': 'registeredUser'}
+    # __tablename__ = "registereduser"
     username = Column(String(50))
     password = Column(String)
     first_name = Column(String(50))
     last_name = Column(String(50))
     email = Column(EmailType)
+    __mapper_args__ = {'polymorphic_identity': True}
+    # id = Column(
+    #     String, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+    # )
+    
+
+class NonRegisteredUser(User):
+    __mapper_args__ = {'polymorphic_identity': False}
+
+
 
 
 
