@@ -118,32 +118,32 @@ def context_giver(top_20,pre):
     return_val = []
     for item in top_20:
         item_df = pre.df[pre.df.url == item].iloc[0]
-        try:
-            api_key  = '997ee09718596404b3e6edca59da47cf7d391f20'
-            likes,shares = get_shared_count(api_key, item_df.url)
-        except:
-            try:
-                api_key  = 'dbc159c8dcf39265dd0a5cde28cd603e0b62ced7'
-                likes,shares = get_shared_count(api_key, item_df.url)
-            except:
-                try:
-                    api_key  = '42c47e38ba96c8eb6f283a09a0ace27d44639466'
-                    likes,shares = get_shared_count(api_key, item_df.url)
-                except:
-                    try:
-                        api_key  = '43238bc406280d3abc1351bf24257008924a2ca3'
-                        likes,shares = get_shared_count(api_key, item_df.url)
-                    except:
-                        try:
-                            api_key  = '92c43723aa3d1ecf90a507861fcf8b227b121c38'
-                            likes,shares = get_shared_count(api_key, item_df.url)
-                        except:
-                            try:
-                                api_key  = '1bcfcf7c6de2e619003d9d106a7763c446b48c34'
-                                likes,shares = get_shared_count(api_key, item_df.url)
-                            except:
-                                likes = 0
-                                shares = 0
+        # try:
+        #     api_key  = '997ee09718596404b3e6edca59da47cf7d391f20'
+        #     likes,shares = get_shared_count(api_key, item_df.url)
+        # except:
+        #     try:
+        #         api_key  = 'dbc159c8dcf39265dd0a5cde28cd603e0b62ced7'
+        #         likes,shares = get_shared_count(api_key, item_df.url)
+        #     except:
+        #         try:
+        #             api_key  = '42c47e38ba96c8eb6f283a09a0ace27d44639466'
+        #             likes,shares = get_shared_count(api_key, item_df.url)
+        #         except:
+        #             try:
+        #                 api_key  = '43238bc406280d3abc1351bf24257008924a2ca3'
+        #                 likes,shares = get_shared_count(api_key, item_df.url)
+        #             except:
+        #                 try:
+        #                     api_key  = '92c43723aa3d1ecf90a507861fcf8b227b121c38'
+        #                     likes,shares = get_shared_count(api_key, item_df.url)
+        #                 except:
+        #                     try:
+        #                         api_key  = '1bcfcf7c6de2e619003d9d106a7763c446b48c34'
+        #                         likes,shares = get_shared_count(api_key, item_df.url)
+        #                     except:
+        likes = 0
+        shares = 0
 
         item_val = {
             "url": item_df.url,

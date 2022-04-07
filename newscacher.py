@@ -28,6 +28,7 @@ class UrlCache():
         return await self.redis.lrange(f'url_recommended:{user_id}',0,-1)
 
     async def delete_from_cache(self,user_id: str,url_to_remove:str):
+        print(f'url_recommended:{user_id}',0,url_to_remove)
         return await self.redis.lrem(f'url_recommended:{user_id}',0,url_to_remove)
 
     async def get_len(self,user_id: str):
@@ -78,7 +79,7 @@ class NewsCache(UserCache):
 
     async def read_from_cache(self, user_id: str,news_index:str):
         cached_news =  await self.redis.hgetall(f'recommended_news:{user_id}:{news_index}')
-        cached_news_changed = {key:content_filter(ast.literal_eval(value)) if key in ['content','additional_img'] else value for key,value in cached_news.items()}
+        cached_news_changed = {key:ast.literal_eval(value) if key in ['content','additional_img'] else int(value) if key in ['likes','shares'] else value for key,value in cached_news.items()}
         # print(cached_news_changed)
         return cached_news_changed
 
@@ -93,8 +94,9 @@ class NewsCache(UserCache):
 
     
     async def read_cached_news(self, user_id:str,):
-        cached_news = [await self.read_from_cache(user_id,i) for i in range(0,101)]
-        cached_ordered = OrderedDict((i,news) for i,news in enumerate(cached_news))
+        cached_news = [(i,await self.read_from_cache(user_id,i)) for i in range(0,101) if await self.read_from_cache(user_id,i) ]
+        cached_ordered = OrderedDict(cached_news)
+        # cached_ordered = OrderedDict((i,news) for i,news in enumerate(cached_news))
         # cached_ordered = OrderedDict((index,news) for index,news in enumerate([await self.read_from_cache(user_id,i) for i in range(0,101)]) )
         return cached_ordered
 

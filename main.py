@@ -40,7 +40,7 @@ from crud.crud_likes import Likes
 from database import async_session
 # user_model.Base.metadata.create_all(bind=engine)
 # author_model.Base.metadata.create_all(bind=engine)
-
+from config import pathconfig
 
 app = FastAPI(title='News Recommendation')
 
@@ -79,22 +79,20 @@ print("Using: ",device)
 load_model = True
 save_model = False
 load_pkl_flag = True
-data_path = '../repository/data/train.csv'
+# data_path = '../repository/data/train.csv'
 keyword_len = 20
 
 
 
 print('----------Preprocessing(loading data)--------------------')
-if os.path.isfile('/home/prixa-ml/Desktop/projects/recommendation_news_api/repository/data-processing/processed_data/train_data/pre.pkl'):
-    
-    pre = load_pkl('/home/prixa-ml/Desktop/projects/recommendation_news_api/repository/data-processing/processed_data/train_data/pre.pkl')
+if pathconfig.PRE_PKL_PATH.is_file():
+    pre = load_pkl(pathconfig.PRE_PKL_PATH)
     print('Successfully Loaded Pickle file')
-elif os.path.isfile('repository/data/train.csv'):
+
+elif pathconfig.TRAIN_CSV_PATH.is_file():
     print('No Pickle file found.')
     print('Using CSV file, train.csv.')
-    data_path = 'repository/data/train.csv'
-    print('Starting Pre-processing...')
-    pre = preprocessor(data_path,keywords_limit = keyword_len)
+    pre = preprocessor(pathconfig.TRAIN_CSV_PATH,keywords_limit = keyword_len)
     if pre:
         print('Successfully Loaded CSV file to train')
 print('----------Preprocessing Completed--------------------')
@@ -104,9 +102,13 @@ print('----------Preprocessing Completed--------------------')
 dropout = 0.01
 learning_rate = 0.001
 print("finish loading Data...)")
+if pathconfig.PRE_PKL_PATH.is_file():
+    print("... Model found... Initailizing Model ...")
+    model_name = pathconfig.MODEL_PATH
+else:
+    print("No Model Found... SORRY:(")
+    model_name = None
 
-print("Initailizing Model...")
-model_name = 'repository/trained_models/NCF_checkpoint_cuda.pth.tar'
 nlayer = 3
 dropout = 0.001
 model = NMF(user_emb_sizes = pre.user_emb_sizes, url_emb_sizes = pre.url_emb_sizes,url_to_keyword_dict= pre.url_to_keyword_dict ,  nlayer = nlayer, dropout = dropout, device = device).to(device)
@@ -144,11 +146,11 @@ async def get_all_liked_articles(user_id):
     return  liked_urls
 
 
-def url_remover(user_id: str,all_url_list: List[str],url_to_ignore: List[str] = None):
-    viewed_articles = get_all_viewed_articles(user_id)
+async def url_remover(user_id: str,all_url_list: List[str],url_to_ignore: List[str] = None):
+    viewed_articles = await get_all_viewed_articles(user_id)
     # viewed_article_list = [x.viewed_article.url for x in viewed_articles]
 
-    liked_articles = get_all_liked_articles(user_id)
+    liked_articles = await get_all_liked_articles(user_id)
     # liked_article_list = [x.liked_article.url for x in liked_articles]
 
     ignore_article_list = viewed_articles + liked_articles + url_to_ignore
@@ -160,7 +162,7 @@ def url_remover(user_id: str,all_url_list: List[str],url_to_ignore: List[str] = 
 async def get_url_list(user,user_id: str, site: Optional[str] = None, time: Optional[str] =  None):
     url_len = await urlcache.get_len(user_id)
     print(f"url_len : {url_len},")
-    Views()
+    # Views()
     if url_len == 0:
         print("NO ITEM FOUND IN CACHE")
         if site and time :
@@ -176,14 +178,14 @@ async def get_url_list(user,user_id: str, site: Optional[str] = None, time: Opti
 
         user_url_df = pre.df.groupby(['user'])
         prev_visited_url = user_url_df.get_group(user).url.to_list()
-        url_list = url_remover(user_id,all_url_list = all_url_list,url_to_ignore = prev_visited_url)
+        url_list = await url_remover(user_id,all_url_list = all_url_list,url_to_ignore = prev_visited_url)
 
 
         await urlcache.add_to_cache(user_id,url_list)
     else:
         print("ITEM ALREADY IN CACHE")
         url_list = await urlcache.read_from_cache(user_id)
-        viewed_articles = get_all_viewed_articles(user_id)
+        viewed_articles = await get_all_viewed_articles(user_id)
         
         # for article in viewed_articles:
         #     article_to_remove.append(urlchace.add_to_cache(user_id,i,{k: str(v) for k,v in news.items()}))
@@ -237,10 +239,11 @@ async def get_recommendation_cache(background_tasks: BackgroundTasks,user_id: st
     else:
         print('------------------------USER FOUND-----------------------------------')
         top_100_recommendation_ordered = await newscache.read_cached_news(user_id)
-        top_100_recommendation = list(filter(None, [dict(recommended_news) for recommended_news in top_100_recommendation_ordered.values()]))
-        print(f"len of all is :::::::: {len(top_100_recommendation)}")
-        if len(top_100_recommendation) > 20:
+        # top_100_recommendation = list(filter(None, [dict(recommended_news) for recommended_news in top_100_recommendation_ordered.values()]))
+        print(f"len of all is :::::::: {len(top_100_recommendation_ordered)}")
+        if len(top_100_recommendation_ordered) > 20:
             top_20_recommendation_ordered = OrderedDict(random.choices(list(top_100_recommendation_ordered.items()), k = 20))
+            print(f"len of recommended url is :::::::: {len(top_20_recommendation_ordered)}")
             recommended_news_index = top_20_recommendation_ordered.keys()
             top_20_recommendation = [dict(recommended_news) for recommended_news in top_20_recommendation_ordered.values()]
             await newscache.clear_cache_news(user_id, recommended_news_index)
