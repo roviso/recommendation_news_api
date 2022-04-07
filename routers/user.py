@@ -155,6 +155,30 @@ async def get_registered_user(current_user: user_schema.User = Depends(), async_
 #     return crud_user.get_all_viewed_articles(db=db, user_id=current_user.id)
 
 
+
+@router.post('/likes/',status_code = status.HTTP_201_CREATED)
+async def article_liked(article_liked: user_schema.CreateUserArticleLikes,db: Session = Depends(database.get_db)):
+    return crud_user.create_likes(db, article_liked)
+        # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
+
+
+
+
+@router.post('/views/',status_code = status.HTTP_201_CREATED)
+async def article_viewed(article_viewed: user_schema.CreateUserArticleViewed,db: Session = Depends(database.get_db)):
+    
+    return crud_user.create_views(db, article_viewed)
+
+
+
+@router.post('/comments/',status_code = status.HTTP_201_CREATED)
+async def article_commented(article_comment: user_schema.CreateUserArticleComments,db: Session = Depends(database.get_db)):
+    
+    return crud_user.create_comments(db, article_comment)
+
+
+
+
 # @router.get("/users/me/items/")
 # async def read_own_items(current_user: user_schema.User = Depends(get_current_active_user)):
 #     return [{"item_id": "Foo", "owner": current_user.username}]
