@@ -1,14 +1,16 @@
-from fastapi import FastAPI, Depends,APIRouter, HTTPException, status
+from fastapi import  Depends,APIRouter
 from typing import List
 from sqlalchemy.orm import Session
 from schemas import token_schema, user_schema
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from config import authconfig
-from crud import crud_user
+from crud.crud_user import UserCrud
 import database
 from models import user_model
 import secrets
+from database import async_session
+
 
 router = APIRouter(
     prefix = "/user",
@@ -16,9 +18,69 @@ router = APIRouter(
 )
 
 
+@router.post('/create_user')
+async def create_user(device_id: str, device_name: str,ip_address: str, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            user_exists = await usercrud.check_user_exists(device_id=device_id, device_name=device_name)
+    if user_exists:
+        return user_exists.User.id
+    else:
+        user_id = secrets.token_urlsafe(32)
+        user = user_model.User(
+                id = user_id,
+                device_id = device_id,
+                device_name = device_name,
+                ip_address = ip_address,
+                registered = False
+            )
+        async with async_session as session:
+            async with session.begin():
+                usercrud= UserCrud(session)
+                await usercrud.create_user(user)
+        return user_id
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@router.get("/get_user")
+async def read_user(current_user: user_schema.User = Depends(), async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.get_user(current_user.id)
+
+@router.get("/get_all_user")
+async def read_all_user(async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.get_all_user()
+
+        
+@router.post('/register_user', response_model=user_schema.RegisterUser)
+async def register_user(user_info: user_schema.RegisterUser, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            await usercrud.register_user(user_id= user_info.id, username=user_info.username, password = user_info.password,
+                first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
+    
+    return user_info
+
+
+@router.get("/get_registered_user")
+async def get_registered_user(current_user: user_schema.User = Depends(), async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.get_registered_user(current_user.id)
+          
+
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 # async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
@@ -39,36 +101,36 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 #     return user
 
 
-async def get_current_active_user(current_user: user_model.User = Depends()):
-    current_user_schema = user_schema.User(user_id = current_user.user_id) 
+# async def get_current_active_user(current_user: user_model.User = Depends()):
+#     current_user_schema = user_schema.User(user_id = current_user.user_id) 
  
-    # if current_user.disabled:
-    #     raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user_schema
+#     # if current_user.disabled:
+#     #     raise HTTPException(status_code=400, detail="Inactive user")
+#     return current_user_schema
 
-@router.post("/create_user_id/", response_model=user_schema.User)
-def create_user_id(device_id: str, device_name: str,ip_address: str, db: Session = Depends(database.get_db)):
-    # db_user = crud_user.get_user(db, id = user.id)
-    # if db_user:
-    #     raise HTTPException(status_code=400, detail="Email already registered")
+# @router.post("/create_user_id/", response_model=user_schema.User)
+# def create_user_id(device_id: str, device_name: str,ip_address: str, db: Session = Depends(database.get_db)):
+#     # db_user = crud_user.get_user(db, id = user.id)
+#     # if db_user:
+#     #     raise HTTPException(status_code=400, detail="Email already registered")
     
-    user_exists = crud_user.user_exists(db=db, device_id=device_id, device_name=device_name)
-    if user_exists:
-        return user_exists
-    else:
-        user = user_model.User(
-            id = secrets.token_urlsafe(32),
-            device_id = device_id,
-            device_name = device_name,
-            ip_address = ip_address
-        )
-        # print(user,user.__dict__)
-        return crud_user.create_user(db=db, user=user)
+#     user_exists = crud_user.user_exists(db=db, device_id=device_id, device_name=device_name)
+#     if user_exists:
+#         return user_exists
+#     else:
+#         user = user_model.User(
+#             id = secrets.token_urlsafe(32),
+#             device_id = device_id,
+#             device_name = device_name,
+#             ip_address = ip_address
+#         )
+#         # print(user,user.__dict__)
+#         return crud_user.create_user(db=db, user=user)
          
 
-@router.get("/get_user", response_model=user_schema.UserInDB)
-async def read_user(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
-    return crud_user.get_user(db=db, user_id=current_user.id)
+# @router.get("/get_user", response_model=user_schema.UserInDB)
+# async def read_user(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
+#     return crud_user.get_user(db=db, user_id=current_user.id)
 
 # @router.post("/user_exists",)
 # async def user_exists(device_id: str, device_name: str, db: Session = Depends(database.get_db)):
@@ -82,15 +144,15 @@ async def read_user(current_user: user_schema.User = Depends(), db: Session = De
 #         return user_exists.id
 
 
-@router.get("/get_user_liked_articles")
-async def read_liked_articles(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
+# @router.get("/get_user_liked_articles")
+# async def read_liked_articles(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
 
-    return crud_user.get_all_liked_articles(db=db, user_id=current_user.id)
+#     return crud_user.get_all_liked_articles(db=db, user_id=current_user.id)
 
-@router.get("/get_user_viewed_articles")
-async def read_viewed_articles(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
+# @router.get("/get_user_viewed_articles")
+# async def read_viewed_articles(current_user: user_schema.User = Depends(), db: Session = Depends(database.get_db)):
 
-    return crud_user.get_all_viewed_articles(db=db, user_id=current_user.id)
+#     return crud_user.get_all_viewed_articles(db=db, user_id=current_user.id)
 
 
 

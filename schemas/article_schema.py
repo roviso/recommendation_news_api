@@ -14,7 +14,10 @@ class Article(BaseModel):
     additional_img : Optional[str] = None
     source : Optional[str]
 
-    
+class CreateArticle(Article):
+    author_id = str
+    class Config:
+        orm_mode = True
 
 class ArticleInDB(Article):
     id: str
