@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from models import user_model, author_model
 from database import engine, Base
 # from routers import user, token, latest_recommender, cache, article
-from routers import article,cache, author,user,likes, views
+from routers import article,cache, author,user,likes, views, token
 from preprocessor import preprocessor
 import aioredis
 from fastapi_cache import FastAPICache
@@ -40,6 +40,7 @@ from crud.crud_likes import Likes
 from database import async_session
 # user_model.Base.metadata.create_all(bind=engine)
 # author_model.Base.metadata.create_all(bind=engine)
+
 from config import pathconfig
 
 app = FastAPI(title='News Recommendation')
@@ -57,6 +58,7 @@ async def startup():
 # app.include_router(latest_recommender.router)
 
 # app.include_router(recommendation_ncf.router)
+app.include_router(token.router)
 app.include_router(user.router)
 app.include_router(article.router)
 app.include_router(cache.router)
@@ -256,7 +258,34 @@ async def get_recommendation_cache(background_tasks: BackgroundTasks,user_id: st
     return top_20_recommendation
 
 
-
+@app.get('/with_token/', status_code = 200)
+async def get_recommendation_cache(background_tasks: BackgroundTasks,current_user: user_model.User = Depends(user.get_current_user), site: Optional[str] = None, time: Optional[str] =  None,):
+    user_id = current_user.User.id
+    print(f"user_id is :{user_id}")
+    cached_users = await usercache.get_users()
+    if user_id not in cached_users:
+        print('---------------------------No-user Found--------------------------')
+        top_100_recommendation = await get_top_100_recommendation(user_id,site,time)
+        background_tasks.add_task(cache_news,user_id,top_100_recommendation)
+        top_20_recommendation = top_100_recommendation[:20]
+    else:
+        print('------------------------USER FOUND-----------------------------------')
+        top_100_recommendation_ordered = await newscache.read_cached_news(user_id)
+        # top_100_recommendation = list(filter(None, [dict(recommended_news) for recommended_news in top_100_recommendation_ordered.values()]))
+        print(f"len of all is :::::::: {len(top_100_recommendation_ordered)}")
+        if len(top_100_recommendation_ordered) > 20:
+            top_20_recommendation_ordered = OrderedDict(random.choices(list(top_100_recommendation_ordered.items()), k = 20))
+            print(f"len of recommended url is :::::::: {len(top_20_recommendation_ordered)}")
+            recommended_news_index = top_20_recommendation_ordered.keys()
+            top_20_recommendation = [dict(recommended_news) for recommended_news in top_20_recommendation_ordered.values()]
+            await newscache.clear_cache_news(user_id, recommended_news_index)
+            top_20_recommendation = list(filter(None, top_20_recommendation))
+        else:
+            top_100_recommendation = await get_top_100_recommendation(user_id,site,time)
+            background_tasks.add_task(cache_news,user_id,top_100_recommendation)
+            top_20_recommendation = top_100_recommendation[:20]
+        
+    return top_20_recommendation
 
 
 

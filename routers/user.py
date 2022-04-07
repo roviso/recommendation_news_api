@@ -1,4 +1,4 @@
-from fastapi import  Depends,APIRouter
+from fastapi import  Depends,APIRouter, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
 from schemas import token_schema, user_schema
@@ -18,6 +18,44 @@ router = APIRouter(
 )
 
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme), async_session: Session = Depends(database.get_session)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, authconfig.SECRET_KEY, algorithms=[authconfig.ALGORITHM])
+
+        user_id: str = payload.get("user_id")
+        # if email is None:
+        #     raise credentials_exception
+        token_data = token_schema.TokenData(user_id=user_id)
+    except JWTError:
+        raise credentials_exception
+
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+
+            user = await usercrud.get_user(user_id=token_data.user_id)
+    # print(user,"user")
+    if user is None:
+        raise credentials_exception
+    return user
+
+# async def get_current_active_user(current_user: User = Depends(get_current_user)):
+#     if current_user.disabled:
+#         raise HTTPException(status_code=400, detail="Inactive user")
+#     return current_user
+
+@router.get("/me")
+async def read_users_me(current_user: user_model.User = Depends(get_current_user)):
+    return current_user
+    
 @router.post('/create_user')
 async def create_user(device_id: str, device_name: str,ip_address: str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
