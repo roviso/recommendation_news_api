@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 from typing import Optional
-
+from schemas import author_schema
 
 
 class Article(BaseModel):
@@ -13,14 +13,21 @@ class Article(BaseModel):
     content : Optional[str]
     additional_img : Optional[str] = None
     source : Optional[str]
+    likes: Optional[int]
+    shares: Optional[int]
+    # class Config:
+    #     orm_mode = True
 
-class CreateArticle(Article):
-    author_id = str
-    class Config:
-        orm_mode = True
+# class CreateArticle(Article):
+#     author_id = str
+#     type = str
+#     class Config:
+#         orm_mode = True
 
-class ArticleInDB(Article):
-    id: str
+class RecommendedArticle(Article):
+    author : author_schema.Author
+    type : str
+    
     class Config:
         orm_mode = True
 

@@ -14,8 +14,8 @@ router = APIRouter(
 
 
 
-@router.post('/create_articles', status_code = 200)
-async def create_articles(article: article_schema.CreateArticle):
+@router.post('/create_articles/', status_code = 200)
+async def create_articles(article: article_schema.RecommendedArticle):
     article_id = secrets.token_urlsafe(32)
     # author_id = 'IXg3IFtmGOGeIKffh3iAKWGFjrPmnvjy4wOuNLso-rM'
     new_article = Article(id = article_id,**article.dict())

@@ -37,7 +37,7 @@ class Likes():
     async def like_article(self, article_liked:user_schema.CreateUserArticleLikes,):
         user = await self.userdb.get_user(article_liked.id)
         article = await self.articledb.get_article(article_liked.article.url)
-        author = await self.authordb.get_author_by_name(article_liked.author.author_name)
+        author = await self.authordb.get_author_by_name(article_liked.article.author.author_name)
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
@@ -46,27 +46,31 @@ class Likes():
 
         if not author:
             author_id = secrets.token_urlsafe(32)
-            new_author = author_model.Author(id = author_id,**article_liked.author.dict())
+            new_author = author_model.Author(id = author_id,**article_liked.article.author.dict())
             print('no author found in db... Adding the author in db.')
             try:
                 await self.authordb.create_author(new_author)
 
                 author = new_author
-                print("Successfully added article in db")
+                print("Successfully added Author in db")
             except:
                 print("Unable to add author in db")
                 # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
         else:
+            
             author = author._mapping.Author
+            # print(f"Author already present: {author}")
 
         
         if not article:
             article_id = secrets.token_urlsafe(32)
-            new_article = article_model.Article(id = article_id,**article_liked.article.dict(),author_id=author.id )
+            article_dict = article_liked.article.dict()
+            article_dict['likes'] += 1 ##Increasing like count
+            article_dict['views'] = 1 ##Increasing views count
+            del article_dict['author'] 
+            new_article = article_model.RecommendedArticle(id = article_id,**article_dict,author_id=author.id )
             print('no article found in db... Adding the article in db.')
-            # author_article = author_model.AuthorArticle(author_id = author.id, article_id = new_article.id)
-            # create_article(db, new_article)
             try:
                 await self.articledb.create_article(new_article)
     
@@ -79,15 +83,18 @@ class Likes():
         else:
             article = article._mapping.Article
 
+
         already_liked = await self.check_liked_articles(user.id,article.id)
-
-
         if already_liked:
-            # return JSONResponse(status_code=status.HTTP_201_CREATED, content="article already viewed")
             await self.remove_liked_articles(user_id = user.id,article_id = article.id)
+            await self.articledb.update_like(article_id = article.id, increase_like= None, decrease_like = 1)
             return JSONResponse(status_code=status.HTTP_201_CREATED, content="article Successfully Unliked")
+
         else:
             like_article = user_model.UserArticleLikes(user_id = user.id,article_id = article.id)
             self.db_session.add(like_article)
             await self.db_session.flush()
+            await self.articledb.update_like(article_id = article.id, increase_like = 1, decrease_like=None)
             return JSONResponse(status_code=status.HTTP_201_CREATED, content="article Successfully liked")
+
+       

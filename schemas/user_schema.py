@@ -28,16 +28,16 @@ class RegisterUser(User):
 
 
 class CreateUserArticleLikes(User):
-    article: article_schema.Article
-    author: author_schema.Author
+    article: article_schema.RecommendedArticle
+    # author: author_schema.Author
 
     class Config:
         orm_mode = True
 
 
 class CreateUserArticleViewed(User):
-    article: article_schema.Article
-    author: author_schema.Author
+    article: article_schema.RecommendedArticle
+    # author: author_schema.Author
     viewed: article_schema.ArticleViewed
 
     class Config:

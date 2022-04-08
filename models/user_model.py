@@ -18,7 +18,10 @@ class User(Base):
     registered = Column(Boolean)
 
     liked_articles = relationship("UserArticleLikes", back_populates="liked_user")
+
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
+    ignored_articles = relationship("UserArticleIgnored", back_populates="ignored_user")
+    
     commened_articles = relationship("UserArticleComments", back_populates="commented_user")
     __mapper_args__ = {'polymorphic_on': registered,
         'polymorphic_identity':'user'
@@ -70,6 +73,22 @@ class UserArticleViewed(Base):
 
     viewed_user = relationship("User", back_populates="viewed_articles")
     viewed_article = relationship("Article", back_populates="viewed_by")
+
+
+
+
+class UserArticleIgnored(Base):
+    __tablename__ = 'ignored'
+
+    user_id = Column(ForeignKey('user.id'), primary_key=True)
+    article_id = Column(ForeignKey('article.id'), primary_key=True)
+
+    total_time_spend = Column(Integer)
+
+    ignored_user = relationship("User", back_populates="ignored_articles")
+    ignored_article = relationship("Article", back_populates="ignored_by")
+
+    
 
 
 class UserArticleComments(Base):

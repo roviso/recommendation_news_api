@@ -3,13 +3,13 @@ from typing import List, Optional
 from fastapi import status, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from sqlalchemy.future import select
 from schemas import user_schema
 from crud import crud_article, crud_author, crud_user
 import secrets
 from models  import author_model,article_model,user_model
-
+from config import timeconfig
 from timefhuman import timefhuman
 
 
@@ -26,6 +26,16 @@ class Views():
         return results.fetchone()
 
 
+    async def check_ignored_articles(self, user_id: str, article_id:str):
+        query = select(user_model.UserArticleIgnored).where(user_model.UserArticleIgnored.article_id == article_id,user_model.UserArticleIgnored.user_id == user_id)
+        results = await self.db_session.execute(query)
+        return results.fetchone()
+
+
+    async def remove_ignored_articles(self, user_id: str, article_id:str):
+        query = delete(user_model.UserArticleIgnored).where(user_model.UserArticleIgnored.article_id == article_id,user_model.UserArticleIgnored.user_id == user_id)
+        await self.db_session.execute(query)
+
     async def get_all_viewed_articles(self, user_id: str):
         query = select(user_model.UserArticleViewed).where(user_model.UserArticleViewed.user_id == user_id)
         results = await self.db_session.execute(query)
@@ -35,7 +45,10 @@ class Views():
     async def view_article(self, article_viewed:user_schema.CreateUserArticleViewed,):
         user = await self.userdb.get_user(article_viewed.id)
         article = await self.articledb.get_article(article_viewed.article.url)
-        author = await self.authordb.get_author_by_name(article_viewed.author.author_name)
+        author = await self.authordb.get_author_by_name(article_viewed.article.author.author_name)
+        start_time = timefhuman(article_viewed.viewed.start_time)
+        end_time = timefhuman(article_viewed.viewed.end_time)
+        total_time_spend = article_viewed.viewed.total_time_spend
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
@@ -44,7 +57,7 @@ class Views():
 
         if not author:
             author_id = secrets.token_urlsafe(32)
-            new_author = author_model.Author(id = author_id,**article_viewed.author.dict())
+            new_author = author_model.Author(id = author_id,**article_viewed.article.author.dict())
             print('no author found in db... Adding the author in db.')
             try:
                 await self.authordb.create_author(new_author)
@@ -60,7 +73,14 @@ class Views():
 
         if not article:
             article_id = secrets.token_urlsafe(32)
-            new_article = article_model.Article(id = article_id,**article_viewed.article.dict(),author_id=author.id )
+            article_dict = article_viewed.article.dict()
+
+            article_dict['views'] = 0
+            article_dict['ignores'] = 0
+    
+            del article_dict['author'] 
+
+            new_article = article_model.RecommendedArticle(id = article_id,**article_dict,author_id=author.id )
             print('no article found in db... Adding the article in db.')
             # author_article = author_model.AuthorArticle(author_id = author.id, article_id = new_article.id)
             # create_article(db, new_article)
@@ -75,20 +95,30 @@ class Views():
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unable to add Article in database, {e}")
         else:
             article = article._mapping.Article
+        
 
-
-
-        start_time = timefhuman(article_viewed.viewed.start_time)
-        end_time = timefhuman(article_viewed.viewed.end_time)
-        total_time_spend = article_viewed.viewed.total_time_spend
-
+        already_ignored = await self.check_ignored_articles(user.id,article.id)
+        if already_ignored and total_time_spend >= timeconfig.IGNORE_TIME:
+            await self.articledb.update_ignores(article_id= article.id, decrease_ignores = 1)
+            await self.remove_ignored_articles(user.id,article.id)
 
         already_viewed = await self.check_viewed_articles(user.id,article.id)
 
         if already_viewed:
             return JSONResponse(status_code=status.HTTP_201_CREATED, content="article already viewed")
         else:
-            view_article = user_model.UserArticleViewed(user_id = user.id,article_id = article.id,start_time= start_time, end_time= end_time, total_time_spend= total_time_spend)
-            self.db_session.add(view_article)
-            await self.db_session.flush()
-            return JSONResponse(status_code=status.HTTP_201_CREATED, content="article Successfully viewed")
+            if total_time_spend < timeconfig.IGNORE_TIME:
+                if not already_ignored:
+                    await self.articledb.update_ignores(article_id= article.id, increase_ignores = 1)
+                    ignore_article = user_model.UserArticleIgnored(user_id = user.id,article_id = article.id,total_time_spend= total_time_spend)
+                    self.db_session.add(ignore_article)
+                    await self.db_session.flush()
+                    return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has been ignored")
+                else:
+                    return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has already been ignored")
+            else:
+                await self.articledb.update_views(article_id= article.id, increase_views = 1)
+                view_article = user_model.UserArticleViewed(user_id = user.id,article_id = article.id,start_time= start_time, end_time= end_time, total_time_spend= total_time_spend)
+                self.db_session.add(view_article)
+                await self.db_session.flush()
+                return JSONResponse(status_code=status.HTTP_201_CREATED, content="article Successfully viewed")

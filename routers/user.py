@@ -194,25 +194,25 @@ async def get_registered_user(current_user: user_schema.User = Depends(), async_
 
 
 
-@router.post('/likes/',status_code = status.HTTP_201_CREATED)
-async def article_liked(article_liked: user_schema.CreateUserArticleLikes,db: Session = Depends(database.get_db)):
-    return crud_user.create_likes(db, article_liked)
-        # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
+# @router.post('/likes/',status_code = status.HTTP_201_CREATED)
+# async def article_liked(article_liked: user_schema.CreateUserArticleLikes,db: Session = Depends(database.get_db)):
+#     return crud_user.create_likes(db, article_liked)
+#         # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
 
 
 
 
-@router.post('/views/',status_code = status.HTTP_201_CREATED)
-async def article_viewed(article_viewed: user_schema.CreateUserArticleViewed,db: Session = Depends(database.get_db)):
+# @router.post('/views/',status_code = status.HTTP_201_CREATED)
+# async def article_viewed(article_viewed: user_schema.CreateUserArticleViewed,db: Session = Depends(database.get_db)):
     
-    return crud_user.create_views(db, article_viewed)
+#     return crud_user.create_views(db, article_viewed)
 
 
 
-@router.post('/comments/',status_code = status.HTTP_201_CREATED)
-async def article_commented(article_comment: user_schema.CreateUserArticleComments,db: Session = Depends(database.get_db)):
+# @router.post('/comments/',status_code = status.HTTP_201_CREATED)
+# async def article_commented(article_comment: user_schema.CreateUserArticleComments,db: Session = Depends(database.get_db)):
     
-    return crud_user.create_comments(db, article_comment)
+#     return crud_user.create_comments(db, article_comment)
 
 
 
