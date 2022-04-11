@@ -66,7 +66,7 @@ class Likes():
         if not article:
             article_id = secrets.token_urlsafe(32)
             article_dict = article_liked.article.dict()
-            article_dict['likes'] += 1 ##Increasing like count
+            article_dict['likes'] += 0 ##Increasing like count
             article_dict['views'] = 1 ##Increasing views count
             del article_dict['author'] 
             new_article = article_model.RecommendedArticle(id = article_id,**article_dict,author_id=author.id )

@@ -10,6 +10,7 @@ import database
 from models import user_model
 import secrets
 from database import async_session
+from helper.username_generator import username_generator
 
 
 router = APIRouter(
@@ -66,8 +67,10 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
         return user_exists.User.id
     else:
         user_id = secrets.token_urlsafe(32)
+        username = username_generator.generate_username(1)[0]
         user = user_model.User(
                 id = user_id,
+                username = username,
                 device_id = device_id,
                 device_name = device_name,
                 ip_address = ip_address,
@@ -77,7 +80,8 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
             async with session.begin():
                 usercrud= UserCrud(session)
                 await usercrud.create_user(user)
-        return user_id
+        return {'user_id': user_id,
+                'username': username}
 
 
 

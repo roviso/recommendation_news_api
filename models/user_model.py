@@ -12,6 +12,7 @@ class User(Base):
     # id = Column(Integer, primary_key =True, index=True)
     
     id = Column(String, primary_key =True, index=True)
+    username = Column(String)
     device_name = Column(String)
     device_id = Column(String)
     ip_address = Column(String)
@@ -29,7 +30,6 @@ class User(Base):
 
 class RegisteredUser(User):
     # __tablename__ = "registereduser"
-    username = Column(String(50))
     password = Column(String)
     first_name = Column(String(50))
     last_name = Column(String(50))

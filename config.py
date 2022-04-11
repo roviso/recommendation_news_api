@@ -54,6 +54,7 @@ class CacheConfig(BaseSettings):
     redis_url: str = 'redis://localhost'
     URL_EXPIRY_TIME = 60*60*3 ##3 hours
     EXPIRY_TIME = 60 * 60
+    LATEST_EXPIRY_TIME = 60*5
 
 cacheconfig = CacheConfig()
 

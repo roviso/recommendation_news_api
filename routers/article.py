@@ -75,12 +75,6 @@ async def get_articles() -> List[RecommendedArticle]:
             articlecrud = ArticleCrud(session)
             return await articlecrud.get_all_recommended_article()
 
-@router.get('/get_Latest_articles', status_code = 200)
-async def get_articles() -> List[LatestArticle]:
-    async with async_session() as session:
-        async with session.begin():
-            articlecrud = ArticleCrud(session)
-            return await articlecrud.get_all_latest_article()
 
 
 @router.get('/search_article', status_code = 200)

@@ -34,6 +34,19 @@ class RecommendedArticle(Article):
         orm_mode = True
 
 
+class CreateLatestArticle(Article):
+    author : author_schema.Author
+    class Config:
+        orm_mode = True
+
+
+class LatestArticle(RecommendedArticle):
+    type : str
+    class Config:
+        orm_mode = True
+
+
+
 class ArticleViewed(BaseModel):
     start_time: str
     end_time: str 
