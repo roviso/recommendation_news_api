@@ -77,7 +77,7 @@ class Views():
 
             article_dict['views'] = 0
             article_dict['ignores'] = 0
-    
+
             del article_dict['author'] 
 
             new_article = article_model.RecommendedArticle(id = article_id,**article_dict,author_id=author.id )

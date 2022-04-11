@@ -10,6 +10,8 @@ class Article(BaseModel):
     heading : Optional[str]
     date : Optional[str]
 
+    label: Optional[str]
+
     content : Optional[str]
     additional_img : Optional[str] = None
     source : Optional[str]

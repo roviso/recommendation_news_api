@@ -152,7 +152,7 @@ def context_giver(top_20,pre):
             "date": item_df.date.split()[0],
             "label": item_df.label,
             # "content": content_filter(ast.literal_eval(item_df.content)),
-            "content": ast.literal_eval(item_df.content),
+            "content": list(filter(None, ast.literal_eval(item_df.content))),
             "additional_img": ast.literal_eval(item_df.additional_images),
             "source": item_df.source,
             "author": item_df.author,

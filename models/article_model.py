@@ -17,6 +17,9 @@ class Article(Base):
     source = Column(String)
     likes = Column(Integer)
     shares = Column(Integer)
+
+    label = Column(String)
+    
     author_id = Column(String, ForeignKey('author.id'))
     type = Column(String)
 
@@ -35,11 +38,11 @@ class Article(Base):
         }
 
 class LatestArticle(Article):
-    __tablename__ = "latest"
+    # __tablename__ = "latest"
     __mapper_args__ = {'polymorphic_identity': 'latest'}
-    id = Column(
-        String, ForeignKey("article.id"), primary_key=True
-    )
+    # id = Column(
+    #     String, ForeignKey("article.id"), primary_key=True
+    # )
     
 class RecommendedArticle(Article):
     # __tablename__ = "recommended"

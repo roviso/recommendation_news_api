@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
-from models.article_model import Article,RecommendedArticle
+from models.article_model import Article,RecommendedArticle, LatestArticle
 
 
 class ArticleCrud():
@@ -27,15 +27,26 @@ class ArticleCrud():
         result = results.fetchone()
         return result
 
-    async def get_all_article(self) -> List[RecommendedArticle]:
-        query = select(RecommendedArticle).order_by(RecommendedArticle.id)
+    async def get_all_article(self):
+        query = select(Article).order_by(Article.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
 
+    async def get_all_recommended_article(self):
+        query = select(RecommendedArticle).order_by(RecommendedArticle.id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+    async def get_all_latest_article(self) -> List[LatestArticle]:
+        query = select(LatestArticle).order_by(LatestArticle.id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
     async def update_article(self, article_id: str, url: Optional[str], head_image: Optional[str], heading: Optional[str],
         date: Optional[str], content: Optional[str], additional_img: Optional[str],
-        source: Optional[str], author_id: Optional[str]
+        source: Optional[str], author_id: Optional[str], label: Optional[str]
         ):
         q = update(Article).where(Article.id == article_id)
         if url:
@@ -54,6 +65,8 @@ class ArticleCrud():
             q = q.values(source=source)
         if author_id:
             q = q.values(author_id=author_id)
+        if label:
+            q = q.values(label= label)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
