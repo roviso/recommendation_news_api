@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , recommendation
+from routers import article,cache, author,user,likes, views, token, latest , comments
+# , recommendation
 
 app = FastAPI(title='News Recommendation')
 
@@ -9,11 +10,11 @@ app = FastAPI(title='News Recommendation')
 async def startup():
     # create db tables
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
 
-app.include_router(recommendation.router)
+# app.include_router(recommendation.router)
 app.include_router(token.router)
 app.include_router(user.router)
 app.include_router(article.router)
@@ -22,7 +23,7 @@ app.include_router(cache.router)
 app.include_router(author.router)
 app.include_router(likes.router)
 app.include_router(views.router)
-
+app.include_router(comments.router)
 
 if __name__ == "__main__":
     # Use this for debugging purposes only

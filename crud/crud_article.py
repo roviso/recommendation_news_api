@@ -4,11 +4,14 @@ from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.article_model import Article,RecommendedArticle, LatestArticle
+from crud.crud_comments import Comments
 
 
 class ArticleCrud():
     def __init__(self, db_session: Session):
         self.db_session = db_session
+        
+
 
     async def create_article(self, article: Article):
         self.db_session.add(article)
@@ -108,6 +111,18 @@ class ArticleCrud():
             q = q.values(ignores=new_ignores)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
+
+
+    async def update_comments(self,  article_id: str,):
+        article = await self.get_article_by_id(article_id)
+        article = article._mapping.RecommendedArticle
+        commentdb = Comments(self.db_session)
+        comments = len(await commentdb.get_comments_by_article(article_id))
+        q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
+        q = q.values(comments=comments)
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
 
 
 # def get_article(db: Session, article_url: str):

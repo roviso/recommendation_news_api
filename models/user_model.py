@@ -23,7 +23,12 @@ class User(Base):
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     ignored_articles = relationship("UserArticleIgnored", back_populates="ignored_user")
     
-    commened_articles = relationship("UserArticleComments", back_populates="commented_user")
+    commented_articles = relationship("Comments", back_populates="commented_user")
+    liked_comments = relationship("UserCommentLikes", back_populates="liked_user")
+
+    replied_comments = relationship("Replies", back_populates="replied_user")
+    liked_replies = relationship("Replies", back_populates="replied_user")
+    
     __mapper_args__ = {'polymorphic_on': registered,
         'polymorphic_identity':'user'
         }
@@ -91,13 +96,3 @@ class UserArticleIgnored(Base):
     
 
 
-class UserArticleComments(Base):
-    __tablename__ = 'comments'
-
-    user_id = Column(ForeignKey('user.id'), primary_key=True)
-    article_id = Column(ForeignKey('article.id'), primary_key=True)
-
-    comment = Column(String)
-
-    commented_user = relationship("User", back_populates="commened_articles")
-    commented_article = relationship("Article", back_populates="commented_by")
