@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies
 # , recommendation
 
 app = FastAPI(title='News Recommendation')
@@ -24,6 +24,7 @@ app.include_router(author.router)
 app.include_router(likes.router)
 app.include_router(views.router)
 app.include_router(comments.router)
+app.include_router(replies.router)
 
 if __name__ == "__main__":
     # Use this for debugging purposes only

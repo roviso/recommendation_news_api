@@ -3,6 +3,8 @@ from sqlalchemy import Column, ForeignKey, Integer, String,ForeignKey, DateTime
 from database import Base
 from sqlalchemy.orm import relationship
 
+from sqlalchemy.dialects.postgresql import ARRAY
+
 class Article(Base):
     __tablename__ = 'article'
 
@@ -12,8 +14,8 @@ class Article(Base):
     heading = Column(String)
     date = Column(String)
 
-    content = Column(String)
-    additional_img = Column(String)
+    content = Column(ARRAY(String))
+    additional_img = Column(ARRAY(String))
     source = Column(String)
     likes = Column(Integer)
     shares = Column(Integer)
@@ -49,7 +51,7 @@ class RecommendedArticle(Article):
     __mapper_args__ = {'polymorphic_identity': 'recommended'}
     views = Column(Integer)
     ignores = Column(Integer)
-    comments = Column(Integer)
+    total_comments = Column(Integer)
     bookmarks = Column(Integer)
 
 # class HomescreenArticle(Article):

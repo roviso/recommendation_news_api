@@ -7,7 +7,7 @@ from database import async_session
 from sqlalchemy.orm import Session
 import database
 from crud.crud_comments import Comments
-
+from crud.crud_replies import Replies
 
 router = APIRouter(
     prefix = "/comments",
@@ -39,11 +39,12 @@ async def comment_article(comment_like: comments_schema.LikeComments, async_sess
 
 
 @router.get('/get_article_comments')
-async def get_article_comments(article_id: str, async_session: Session = Depends(database.get_session)) -> List[comments_schema.ArticleComments]:
+async def get_article_comments(article_id: str) -> List[comments_schema.ArticleComments]:
     res = []
-    async with async_session as session:
+    async with async_session() as session:
         async with session.begin():
             comments = Comments(session)
+            replies = Replies(session)
             all_comments = await comments.get_comments_by_article(article_id)
 
             for comment in all_comments:
@@ -54,11 +55,13 @@ async def get_article_comments(article_id: str, async_session: Session = Depends
                 user_dict['user_id'] = user.id
                 user_dict['username'] = user.username
                 
-                response_dict['user'] = user_dict
-                response_dict['id'] = comment.id
-                response_dict['date_of_comment'] = comment.date_of_comment
-                response_dict['comment'] = comment.comment
-                response_dict['likes'] = comment.likes
+                response_dict['commented_by'] = user_dict
+                # response_dict['id'] = comment.id
+                # response_dict['date_of_comment'] = comment.date_of_comment
+                response_dict['comments'] = comment
+                # response_dict['likes'] = comment.likes
+                response_dict['replies'] = await replies.get_replies_by_comment(comment.id)
+
                 res.append(response_dict)
 
     return res

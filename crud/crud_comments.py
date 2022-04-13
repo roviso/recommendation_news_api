@@ -40,21 +40,20 @@ class Comments():
         query = delete(comments_model.UserCommentLikes).where(comments_model.UserCommentLikes.comments_id == comment_id,comments_model.UserCommentLikes.user_id == user_id)
         await self.db_session.execute(query)
 
+    
+    async def get_comment_likes(self, comment_id: str):
+        query = select(comments_model.UserCommentLikes).where(comments_model.UserCommentLikes.comments_id == comment_id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
 
-    async def update_comment_likes(self, comment_id: str, increase_like: Optional[int]= None, decrease_like: Optional[int]= None,):
-        comment = await self.get_comment_by_id(comment_id)
-        comment = comment._mapping.Comments
+
+    async def update_comment_likes(self, comment_id: str):
+        total_likes = len(await self.get_comment_likes(comment_id))
         q = update(comments_model.Comments).where(comments_model.Comments.id == comment_id)
-        if increase_like:
-            print(f"Increasing the likes")
-            new_like = comment.likes + increase_like
-            q = q.values(likes=new_like)
-        if decrease_like:
-            print(f"Decreasing the likes")
-            new_like = comment.likes - decrease_like
-            q = q.values(likes=new_like)
+        q = q.values(likes=total_likes)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
+
 
     
     async def create_comment(self, article_commented:comments_schema.CreateComments,):
@@ -111,7 +110,7 @@ class Comments():
         date_of_comment = timefhuman(article_commented.date_of_comment)
         likes  = 0 
 
-        new_comment = comments_model.Comments(id = comment_id, user_id = user.id, article_id= article.id,date_of_comment =date_of_comment , comment = article_commented.comment, likes = likes)
+        new_comment = comments_model.Comments(id = comment_id, user_id = user.id, article_id= article.id,date_of_comment =date_of_comment , comments = article_commented.comment, likes = likes)
         self.db_session.add(new_comment)
         await self.db_session.flush()
         await self.articledb.update_comments(article.id)
@@ -134,11 +133,22 @@ class Comments():
         already_liked = await self.check_comment_likes(user.id,comment.id)
         if already_liked:
             await self.remove_comment_likes(user_id = user.id,comment_id = comment.id)
-            await self.update_comment_likes(comment_id = comment.id, increase_like= None, decrease_like = 1)
+            await self.update_comment_likes(comment_id = comment.id)
             return JSONResponse(status_code=status.HTTP_201_CREATED, content="Comment Successfully Unliked")
         else:
             new_comment_like = comments_model.UserCommentLikes(user_id = user.id, comments_id = comment.id)
             self.db_session.add(new_comment_like)
             await self.db_session.flush()
-            await self.update_comment_likes(comment_id = comment.id, increase_like = 1, decrease_like=None)
+            await self.update_comment_likes(comment_id = comment.id)
             return JSONResponse(status_code=status.HTTP_201_CREATED, content="Comment Successfully liked")
+
+
+    
+    async def update_replies(self, comment_id: str, total_replies : int):
+        comment = await self.get_comment_by_id(comment_id)
+        comment = comment._mapping.Comments
+
+        q = update(comments_model.Comments).where(comments_model.Comments.id == comment.id)
+        q = q.values(totalreplies=total_replies)
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)

@@ -1,12 +1,14 @@
 from fastapi import APIRouter, status, HTTPException
 from crud.crud_article import ArticleCrud
 from crud.crud_author import AuthorCrud
+from crud.crud_comments import Comments
 from models.article_model import Article,LatestArticle, RecommendedArticle
 from models import author_model
 from schemas import article_schema
 from typing import List, Optional
 import secrets
 from database import async_session
+from routers.comments import get_article_comments
 
 router = APIRouter(
     prefix = "/articles",
@@ -14,7 +16,22 @@ router = APIRouter(
 )
 
 
-
+async def add_comments_and_replies(articles: List[Article]):
+    for article in articles:
+        article = article.__dict__
+        comments = await get_article_comments(article['id'])
+        article['comments'] = comments
+    # async with async_session() as session:
+    #     async with session.begin():
+    #         comment = Comments(session)
+    #         for article in articles:
+    #             article = article.__dict__
+    #             print(article)
+    #             comments = await comment.get_comments_by_article(article['id'])
+    #             article['comments'] = comments
+    #             article['comments']['replies'] = "this is replies1 this is 2"
+    
+    return articles
 
 @router.post('/create_articles/', status_code = 200)
 async def create_articles(article: article_schema.RecommendedArticle):
@@ -62,11 +79,15 @@ async def update_articles(article_id: str, url: Optional[str] = None, head_image
 
 
 @router.get('/get_all_articles', status_code = 200)
-async def get_articles() -> List[Article]:
+async def get_articles() -> List[RecommendedArticle]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            return await articlecrud.get_all_article()
+            articles =  await articlecrud.get_all_article()
+
+    return await add_comments_and_replies(articles)
+
+
 
 @router.get('/get_recommended_articles', status_code = 200)
 async def get_articles() -> List[RecommendedArticle]:

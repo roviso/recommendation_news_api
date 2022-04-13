@@ -27,7 +27,7 @@ class User(Base):
     liked_comments = relationship("UserCommentLikes", back_populates="liked_user")
 
     replied_comments = relationship("Replies", back_populates="replied_user")
-    liked_replies = relationship("Replies", back_populates="replied_user")
+    liked_replies = relationship("UserRepliesLikes", back_populates="liked_user")
     
     __mapper_args__ = {'polymorphic_on': registered,
         'polymorphic_identity':'user'

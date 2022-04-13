@@ -31,7 +31,7 @@ class ArticleCrud():
         return result
 
     async def get_all_article(self):
-        query = select(Article).order_by(Article.id)
+        query = select(RecommendedArticle).order_by(RecommendedArticle.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
@@ -117,9 +117,9 @@ class ArticleCrud():
         article = await self.get_article_by_id(article_id)
         article = article._mapping.RecommendedArticle
         commentdb = Comments(self.db_session)
-        comments = len(await commentdb.get_comments_by_article(article_id))
+        total_comments = len(await commentdb.get_comments_by_article(article_id))
         q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
-        q = q.values(comments=comments)
+        q = q.values(total_comments=total_comments)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 

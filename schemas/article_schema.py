@@ -12,8 +12,8 @@ class Article(BaseModel):
 
     label: Optional[str]
 
-    content : Optional[str]
-    additional_img : Optional[str] = None
+    content : List[Optional[str]]
+    additional_img : List[Optional[str]] = None
     source : Optional[str]
     likes: Optional[int]
     shares: Optional[int]
@@ -28,7 +28,7 @@ class Article(BaseModel):
 
 class RecommendedArticle(Article):
     author : author_schema.Author
-    type : str
+    type : str = "recommended"
     
     class Config:
         orm_mode = True
