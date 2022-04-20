@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies
-# , recommendation
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, recommendation
 
 app = FastAPI(title='News Recommendation')
 
@@ -14,7 +13,7 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
 
 
-# app.include_router(recommendation.router)
+app.include_router(recommendation.router)
 app.include_router(token.router)
 app.include_router(user.router)
 app.include_router(article.router)
