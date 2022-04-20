@@ -165,8 +165,11 @@ async def cache_news(user_id: str,top_100_recommendation):
     await newscache.cache_news(user_id,top_100_recommendation)
 
 async def get_top_100_recommendation(user_id: str,site: str, time: str):
-    r = RandomDict(pre.index_user_mapping)
-    user = r.random_value()
+    if user_id in pre.index_user_mapping.values():
+        user = user_id
+    else:
+        r = RandomDict(pre.index_user_mapping)
+        user = r.random_value()
 
     url_list = await get_url_list(user,user_id, site, time)
 
@@ -220,6 +223,27 @@ async def get_recommendation_cache(background_tasks: BackgroundTasks,user_id: st
             top_20_recommendation = top_100_recommendation[:20]
         
     return top_20_recommendation
+
+
+@router.get('/random_user/')
+def get_random_user():
+    r = RandomDict(pre.index_user_mapping)
+    user = r.random_value()
+
+    user_url_df = pre.df.groupby(['user'])
+    prev_visited_url = user_url_df.get_group(user).url.to_list()
+    prev_visited_articles =  utils.context_giver(prev_visited_url,pre)
+
+
+    return {"user": user,
+            "prev_visited_articles": prev_visited_articles}
+
+
+@router.get('/get_previously_visited_urls/{user_id}')
+def get_previously_visited_urls(user_id: str):
+    user_url_df = pre.df.groupby(['user'])
+    prev_visited_url = user_url_df.get_group(user_id).url.to_list()
+    return utils.context_giver(prev_visited_url,pre)
 
 
 @router.get('/with_token/', status_code = 200)
