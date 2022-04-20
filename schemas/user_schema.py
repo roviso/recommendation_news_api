@@ -27,17 +27,24 @@ class RegisterUser(User):
     email: Optional[str] = None
 
 
+class CommentedUsers(User):
+    username: str 
+
+    class Config:
+        orm_mode = True
+
+
 class CreateUserArticleLikes(User):
-    article: article_schema.Article
-    author: author_schema.Author
+    article: article_schema.RecommendedArticle
+    # author: author_schema.Author
 
     class Config:
         orm_mode = True
 
 
 class CreateUserArticleViewed(User):
-    article: article_schema.Article
-    author: author_schema.Author
+    article: article_schema.RecommendedArticle
+    # author: author_schema.Author
     viewed: article_schema.ArticleViewed
 
     class Config:
@@ -45,13 +52,7 @@ class CreateUserArticleViewed(User):
 
 
 
-class CreateUserArticleComments(User):
-    article: article_schema.Article
-    author: author_schema.Author
-    comment: article_schema.ArticleComments
 
-    class Config:
-        orm_mode = True
 
 # class User(BaseModel):
 #     user_id: str

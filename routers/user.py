@@ -1,4 +1,4 @@
-from fastapi import  Depends,APIRouter
+from fastapi import  Depends,APIRouter, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
 from schemas import token_schema, user_schema
@@ -10,6 +10,7 @@ import database
 from models import user_model
 import secrets
 from database import async_session
+from helper.username_generator import username_generator
 
 
 router = APIRouter(
@@ -18,6 +19,44 @@ router = APIRouter(
 )
 
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme), async_session: Session = Depends(database.get_session)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, authconfig.SECRET_KEY, algorithms=[authconfig.ALGORITHM])
+
+        user_id: str = payload.get("user_id")
+        # if email is None:
+        #     raise credentials_exception
+        token_data = token_schema.TokenData(user_id=user_id)
+    except JWTError:
+        raise credentials_exception
+
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+
+            user = await usercrud.get_user(user_id=token_data.user_id)
+    # print(user,"user")
+    if user is None:
+        raise credentials_exception
+    return user
+
+# async def get_current_active_user(current_user: User = Depends(get_current_user)):
+#     if current_user.disabled:
+#         raise HTTPException(status_code=400, detail="Inactive user")
+#     return current_user
+
+@router.get("/me")
+async def read_users_me(current_user: user_model.User = Depends(get_current_user)):
+    return current_user
+    
 @router.post('/create_user')
 async def create_user(device_id: str, device_name: str,ip_address: str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
@@ -28,8 +67,10 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
         return user_exists.User.id
     else:
         user_id = secrets.token_urlsafe(32)
+        username = username_generator.generate_username(1)[0]
         user = user_model.User(
                 id = user_id,
+                username = username,
                 device_id = device_id,
                 device_name = device_name,
                 ip_address = ip_address,
@@ -39,7 +80,8 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
             async with session.begin():
                 usercrud= UserCrud(session)
                 await usercrud.create_user(user)
-        return user_id
+        return {'user_id': user_id,
+                'username': username}
 
 
 
@@ -156,25 +198,25 @@ async def get_registered_user(current_user: user_schema.User = Depends(), async_
 
 
 
-@router.post('/likes/',status_code = status.HTTP_201_CREATED)
-async def article_liked(article_liked: user_schema.CreateUserArticleLikes,db: Session = Depends(database.get_db)):
-    return crud_user.create_likes(db, article_liked)
-        # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
+# @router.post('/likes/',status_code = status.HTTP_201_CREATED)
+# async def article_liked(article_liked: user_schema.CreateUserArticleLikes,db: Session = Depends(database.get_db)):
+#     return crud_user.create_likes(db, article_liked)
+#         # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
 
 
 
 
-@router.post('/views/',status_code = status.HTTP_201_CREATED)
-async def article_viewed(article_viewed: user_schema.CreateUserArticleViewed,db: Session = Depends(database.get_db)):
+# @router.post('/views/',status_code = status.HTTP_201_CREATED)
+# async def article_viewed(article_viewed: user_schema.CreateUserArticleViewed,db: Session = Depends(database.get_db)):
     
-    return crud_user.create_views(db, article_viewed)
+#     return crud_user.create_views(db, article_viewed)
 
 
 
-@router.post('/comments/',status_code = status.HTTP_201_CREATED)
-async def article_commented(article_comment: user_schema.CreateUserArticleComments,db: Session = Depends(database.get_db)):
+# @router.post('/comments/',status_code = status.HTTP_201_CREATED)
+# async def article_commented(article_comment: user_schema.CreateUserArticleComments,db: Session = Depends(database.get_db)):
     
-    return crud_user.create_comments(db, article_comment)
+#     return crud_user.create_comments(db, article_comment)
 
 
 

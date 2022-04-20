@@ -1,10 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status, HTTPException
 from crud.crud_article import ArticleCrud
-from models.article_model import Article
+from crud.crud_author import AuthorCrud
+from crud.crud_comments import Comments
+from models.article_model import Article,LatestArticle, RecommendedArticle
+from models import author_model
 from schemas import article_schema
 from typing import List, Optional
 import secrets
 from database import async_session
+from routers.comments import get_article_comments
 
 router = APIRouter(
     prefix = "/articles",
@@ -12,15 +16,53 @@ router = APIRouter(
 )
 
 
+async def add_comments_and_replies(articles: List[Article]):
+    for article in articles:
+        article = article.__dict__
+        comments = await get_article_comments(article['id'])
+        article['comments'] = comments
+    # async with async_session() as session:
+    #     async with session.begin():
+    #         comment = Comments(session)
+    #         for article in articles:
+    #             article = article.__dict__
+    #             print(article)
+    #             comments = await comment.get_comments_by_article(article['id'])
+    #             article['comments'] = comments
+    #             article['comments']['replies'] = "this is replies1 this is 2"
+    
+    return articles
 
-
-@router.post('/create_articles', status_code = 200)
-async def create_articles(article: article_schema.CreateArticle):
+@router.post('/create_articles/', status_code = 200)
+async def create_articles(article: article_schema.RecommendedArticle):
     article_id = secrets.token_urlsafe(32)
-    # author_id = 'IXg3IFtmGOGeIKffh3iAKWGFjrPmnvjy4wOuNLso-rM'
-    new_article = Article(id = article_id,**article.dict())
+
+    article_dict = article.dict()
+    del article_dict['author'] 
+
+    author_name = article.author.author_name
+    
     async with async_session() as session:
         async with session.begin():
+            authorcrud = AuthorCrud(session)
+            author = await authorcrud.get_author_by_name(author_name)
+            if not author:
+                author_id = secrets.token_urlsafe(32)
+                new_author = author_model.Author(id = author_id,**article.author.dict())
+                print('no author found in db... Adding the author in db.')
+                try:
+                    await authorcrud.create_author(new_author)
+
+                    author = new_author
+                    print("Successfully added article in db")
+                except:
+                    print("Unable to add author in db")
+                    # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
+            else:
+                author = author._mapping.Author
+            new_article = Article(id = article_id,**article_dict, author_id = author.id)
+            
             articlecrud = ArticleCrud(session)
             return await articlecrud.create_article(new_article)
 
@@ -36,12 +78,25 @@ async def update_articles(article_id: str, url: Optional[str] = None, head_image
                 date, content, additional_img,source, author_id)
 
 
-@router.get('/get_articles', status_code = 200)
-async def get_articles() -> List[Article]:
+@router.get('/get_all_articles', status_code = 200)
+async def get_articles() -> List[RecommendedArticle]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            return await articlecrud.get_all_article()
+            articles =  await articlecrud.get_all_article()
+
+    return await add_comments_and_replies(articles)
+
+
+
+@router.get('/get_recommended_articles', status_code = 200)
+async def get_articles() -> List[RecommendedArticle]:
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            return await articlecrud.get_all_recommended_article()
+
+
 
 @router.get('/search_article', status_code = 200)
 async def search_article(article_ur: str) -> List[Article]:

@@ -5,6 +5,7 @@ from preprocessor import preprocessor
 import os
 from loader import load_pkl
 from model_trainer import trainer
+from config import pathconfig
 
 
 # Creating the parser
@@ -44,20 +45,34 @@ print(f"Using device: {device}, Load Model: {load_model}, Save Model: {save_mode
 print(f"Using epochs: {args.epochs}, Batch Size: {args.bs}, Learning Rate: {args.lr}, Keyword Len: {keyword_len}")
 
 
-
-
-if os.path.isfile('../data/pre.pkl'):
-    pre = load_pkl('../data/pre.pkl')
+print('----------Preprocessing(loading data)--------------------')
+if pathconfig.PRE_PKL_PATH.is_file():
+    pre = load_pkl(pathconfig.PRE_PKL_PATH)
     print('Successfully Loaded Pickle file')
-elif os.path.isfile('../data/train.csv'):
+
+elif pathconfig.TRAIN_CSV_PATH.is_file():
     print('No Pickle file found.')
     print('Using CSV file, train.csv.')
-    data_path = '../data/train.csv'
-    print('Starting Pre-processing...')
-    pre = preprocessor(data_path,keywords_limit = keyword_len)
+    pre = preprocessor(pathconfig.TRAIN_CSV_PATH,keywords_limit = keyword_len)
     if pre:
         print('Successfully Loaded CSV file to train')
 print('----------Preprocessing Completed--------------------')
+
+
+
+
+# if os.path.isfile('../data/pre.pkl'):
+#     pre = load_pkl('../data/pre.pkl')
+#     print('Successfully Loaded Pickle file')
+# elif os.path.isfile('../data/train.csv'):
+#     print('No Pickle file found.')
+#     print('Using CSV file, train.csv.')
+#     data_path = '../data/train.csv'
+#     print('Starting Pre-processing...')
+#     pre = preprocessor(data_path,keywords_limit = keyword_len)
+#     if pre:
+#         print('Successfully Loaded CSV file to train')
+# print('----------Preprocessing Completed--------------------')
 
 
 
