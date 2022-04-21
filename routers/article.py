@@ -99,8 +99,8 @@ async def get_articles() -> List[RecommendedArticle]:
 
 
 @router.get('/search_article', status_code = 200)
-async def search_article(article_ur: str) -> List[Article]:
+async def search_article(article_url: str) -> List[Article]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            return await articlecrud.get_article(article_ur)
+            return await articlecrud.get_article(article_url)

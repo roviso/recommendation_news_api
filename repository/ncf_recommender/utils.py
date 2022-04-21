@@ -8,6 +8,8 @@ from sharedcount import SharedCountApi
 import ast
 from itertools import islice
 import operator
+from pathlib import Path
+import pickle 
 
 # Configer converts a dictionary to class:
 class configer(object):
@@ -115,7 +117,12 @@ def get_shared_count(api_key, response_url):
     likes = fb_info['total_count']
     return likes,shares
 
-def context_giver(top_20,pre):
+
+def get_redirect_url(url_string_dict,url, user_id):
+    redirect_url = "http://127.0.0.1:8000/redirect/" + url_string_dict[url] + "?user_id=" + user_id
+    return redirect_url
+
+def context_giver(top_20,pre,url_string_dict,user_id):
     return_val = []
     for item in top_20:
         item_df = pre.df[pre.df.url == item].iloc[0]
@@ -147,7 +154,7 @@ def context_giver(top_20,pre):
         shares = 0
 
         item_val = {
-            "url": item_df.url,
+            "url": get_redirect_url(url_string_dict,item_df.url,user_id),
             "head_image": item_df.head_image,
             "heading": item_df.heading,
             "date": item_df.date.split()[0],

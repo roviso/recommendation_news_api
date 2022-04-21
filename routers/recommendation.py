@@ -25,6 +25,8 @@ from collections import OrderedDict
 from crud.crud_views import Views
 from crud.crud_likes import Likes
 from database import async_session
+import pickle
+import secrets
 # user_model.Base.metadata.create_all(bind=engine)
 # author_model.Base.metadata.create_all(bind=engine)
 
@@ -40,6 +42,7 @@ router = APIRouter(
 print('-------importing modules done-----------------')
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cuda")
+# device = torch.device("cpu")
 print("Using: ",device)
 
 load_model = True
@@ -61,6 +64,19 @@ elif pathconfig.TRAIN_CSV_PATH.is_file():
     pre = preprocessor(pathconfig.TRAIN_CSV_PATH,keywords_limit = keyword_len)
     if pre:
         print('Successfully Loaded CSV file to train')
+        
+if pathconfig.REDIRECT_DICT_PATH.is_file():
+    with open(pathconfig.REDIRECT_DICT_PATH, 'rb') as f:
+        redirect_dict = pickle.load(f)
+    print('Successfully Loaded redirection url file')
+
+else:
+    print("no redirection url found :(( so making our own")
+    redirect_dict = {secrets.token_urlsafe(7) : url for url in pre.df.url.unique()}
+    with open('redirect_dictionary.pkl', 'wb') as f:
+        pickle.dump(redirect_dict, f)
+
+rev_redirect_dict = {y:x for x,y in redirect_dict.items()}
 print('----------Preprocessing Completed--------------------')
 
 
@@ -180,7 +196,7 @@ async def get_top_100_recommendation(user_id: str,site: str, time: str):
 
     top_100_recommended_urls = list(top_100_dictionary.keys())
     top_100_urls = top_100_recommended_urls
-    top_100_recommendation = utils.context_giver(top_100_urls,pre)
+    top_100_recommendation = utils.context_giver(top_100_urls,pre,rev_redirect_dict,user_id)
 
     return top_100_recommendation
 
