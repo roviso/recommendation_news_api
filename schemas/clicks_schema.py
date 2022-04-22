@@ -11,7 +11,7 @@ class CreateUserArticleClicks(BaseModel):
     article_url: str 
     author_name: str 
 
-    source: Optional[str]
+    referrer: Optional[str]
     # author: author_schema.Author
 
     class Config:

@@ -118,11 +118,11 @@ def get_shared_count(api_key, response_url):
     return likes,shares
 
 
-def get_redirect_url(url_string_dict,url, user_id):
-    redirect_url = "http://127.0.0.1:8000/redirect/" + url_string_dict[url] + "?user_id=" + user_id
+def get_redirect_url(url_string_dict,url, user_id,current_page):
+    redirect_url = "http://127.0.0.1:8000/redirect/" + url_string_dict[url] + "?zxc=" + user_id + "&current_page="+current_page
     return redirect_url
 
-def context_giver(top_20,pre,url_string_dict,user_id):
+def context_giver(top_20,pre,url_string_dict,user_id,current_page):
     return_val = []
     for item in top_20:
         item_df = pre.df[pre.df.url == item].iloc[0]
@@ -154,7 +154,7 @@ def context_giver(top_20,pre,url_string_dict,user_id):
         shares = 0
 
         item_val = {
-            "url": get_redirect_url(url_string_dict,item_df.url,user_id),
+            "url": get_redirect_url(url_string_dict,item_df.url,user_id,current_page),
             "head_image": item_df.head_image,
             "heading": item_df.heading,
             "date": item_df.date.split()[0],

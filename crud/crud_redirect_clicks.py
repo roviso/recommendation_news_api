@@ -59,14 +59,14 @@ class ClicksCrud():
             article = article._mapping.Article
 
         date_of_click = datetime.now()
-        source = article_liked.source
+        referrer = article_liked.referrer
 
         already_clicked = await self.check_article_is_clicked(user.id,article.id)
 
         if already_clicked:
             await self.articledb.update_views(article_id = article.id, increase_views= 1)
         else:
-            clicked_article = click_model.Clicks(user_id = user.id,article_id = article.id, date_of_click= date_of_click, source=source)
+            clicked_article = click_model.Clicks(user_id = user.id,article_id = article.id, date_of_click= date_of_click, referrer=referrer)
             self.db_session.add(clicked_article)
             await self.db_session.flush()
             await self.articledb.update_views(article_id = article.id, increase_views = 1)
