@@ -263,13 +263,14 @@ def get_previously_visited_urls(user_id: str):
 
 
 @router.get('/with_token/', status_code = 200)
-async def get_recommendation_cache(background_tasks: BackgroundTasks,current_user: user_model.User = Depends(user.get_current_user), site: Optional[str] = None, time: Optional[str] =  None,):
+async def get_recommendation_cache(background_tasks: BackgroundTasks,current_user: user_model.User = Depends(user.get_current_user), site: Optional[str] = None, time: Optional[str] =  None,current_page: str = "https://example.com/"):
     user_id = current_user.User.id
     print(f"user_id is :{user_id}")
     cached_users = await usercache.get_users()
     if user_id not in cached_users:
         print('---------------------------No-user Found--------------------------')
-        top_100_recommendation = await get_top_100_recommendation(user_id,site,time)
+
+        top_100_recommendation = await get_top_100_recommendation(user_id,site,time,current_page)
         background_tasks.add_task(cache_news,user_id,top_100_recommendation)
         top_20_recommendation = top_100_recommendation[:20]
     else:
@@ -285,7 +286,7 @@ async def get_recommendation_cache(background_tasks: BackgroundTasks,current_use
             await newscache.clear_cache_news(user_id, recommended_news_index)
             top_20_recommendation = list(filter(None, top_20_recommendation))
         else:
-            top_100_recommendation = await get_top_100_recommendation(user_id,site,time)
+            top_100_recommendation = await get_top_100_recommendation(user_id,site,time,current_page)
             background_tasks.add_task(cache_news,user_id,top_100_recommendation)
             top_20_recommendation = top_100_recommendation[:20]
         

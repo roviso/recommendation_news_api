@@ -64,7 +64,8 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
             usercrud= UserCrud(session)
             user_exists = await usercrud.check_user_exists(device_id=device_id, device_name=device_name)
     if user_exists:
-        return user_exists.User.id
+        return {'user_id':user_exists.User.id,
+                'username': user_exists.User.username}
     else:
         user_id = secrets.token_urlsafe(32)
         username = username_generator.generate_username(1)[0]
