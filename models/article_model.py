@@ -28,6 +28,8 @@ class Article(Base):
     written_by = relationship("Author", back_populates="articles")
     liked_by = relationship("UserArticleLikes", back_populates="liked_article")
 
+    clicked_by = relationship("Clicks", back_populates="clicked_article")
+
 
     viewed_by = relationship("UserArticleViewed", back_populates="viewed_article")
     ignored_by = relationship("UserArticleIgnored", back_populates="ignored_article")
