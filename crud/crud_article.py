@@ -74,11 +74,11 @@ class ArticleCrud():
         q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
         if increase_like:
             print(f"Increasing the likes")
-            new_like = article.likes + increase_like
+            new_like = (article.likes or 0) + increase_like
             q = q.values(likes=new_like)
         if decrease_like:
             print(f"Decreasing the likes")
-            new_like = article.likes - decrease_like
+            new_like = (article.likes or 0) - decrease_like
             q = q.values(likes=new_like)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
@@ -89,7 +89,7 @@ class ArticleCrud():
         q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
         if increase_views:
             print(f"Increasing the Views")
-            new_views = article.views + increase_views
+            new_views = (article.views or 0) + increase_views
             q = q.values(views=new_views)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
@@ -103,11 +103,11 @@ class ArticleCrud():
             print(f"Increasing the Ignores")
             if article.ignores == None:
                 article.ignores = 0
-            new_ignores = article.ignores + increase_ignores
+            new_ignores = (article.ignores or 0) + increase_ignores
             q = q.values(ignores=new_ignores)
         if decrease_ignores:
             print(f"Decrease the Ignores")
-            new_ignores = article.ignores - decrease_ignores
+            new_ignores = (article.ignores or 0) - decrease_ignores
             q = q.values(ignores=new_ignores)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)

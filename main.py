@@ -1,8 +1,23 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, recommendation
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, recommendation, redirect
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title='News Recommendation')
+
+origins = [
+    "*"
+]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 @app.on_event("startup")
@@ -14,6 +29,7 @@ async def startup():
 
 
 app.include_router(recommendation.router)
+app.include_router(redirect.router)
 app.include_router(token.router)
 app.include_router(user.router)
 app.include_router(article.router)

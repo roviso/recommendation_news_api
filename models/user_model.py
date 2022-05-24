@@ -18,6 +18,8 @@ class User(Base):
     ip_address = Column(String)
     registered = Column(Boolean)
 
+    clicked_articles = relationship("Clicks", back_populates="clicked_user")
+
     liked_articles = relationship("UserArticleLikes", back_populates="liked_user")
 
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")

@@ -19,6 +19,10 @@ class PathConfig:
         Path(__file__).parent,'repository','trained_models','NCF_checkpoint_cuda.pth.tar'
     ).resolve()
 
+    REDIRECT_DICT_PATH: Path = Path(
+        Path(__file__).parent,'redirect_dictionary.pkl'
+    ).resolve()
+
 pathconfig = PathConfig()
 
 
