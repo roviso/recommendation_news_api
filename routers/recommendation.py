@@ -39,7 +39,7 @@ router = APIRouter(
 
 print('-------importing modules done-----------------')
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cuda")
+device = torch.device("cpu")
 print("Using: ",device)
 
 load_model = True
