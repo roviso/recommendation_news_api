@@ -22,6 +22,8 @@ class User(Base):
 
     liked_articles = relationship("UserArticleLikes", back_populates="liked_user")
 
+    bookmarked_articles = relationship("UserArticleBookmarks", back_populates="bookmarked_user")
+
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     ignored_articles = relationship("UserArticleIgnored", back_populates="ignored_user")
     
@@ -64,6 +66,15 @@ class UserArticleLikes(Base):
     liked_article = relationship("Article", back_populates="liked_by")
 
 
+
+class UserArticleBookmarks(Base):
+    __tablename__ = 'bookmarks'
+
+    user_id = Column(ForeignKey('user.id'), primary_key=True)
+    article_id = Column(ForeignKey('article.id'), primary_key=True)
+
+    bookmarked_user = relationship("User", back_populates="bookmarked_articles")
+    bookmarked_article = relationship("Article", back_populates="bookmarked_by")
 
 
 
