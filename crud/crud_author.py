@@ -17,7 +17,7 @@ class AuthorCrud():
     async def get_author_by_id(self,author_id: str) -> Author:
         query = select(Author).where(Author.id == author_id)
         results = await self.db_session.execute(query)
-        (result,) = results.one()
+        result = results.fetchone()
         return result
 
 

@@ -9,7 +9,9 @@ class Author(Base):
     author_name = Column(String)
     author_img = Column(String)
 
-    articles = relationship("Article", back_populates="written_by")
+    articles = relationship("Article", back_populates="author")
+
+    
 
 
 

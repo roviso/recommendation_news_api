@@ -42,6 +42,14 @@ class CreateUserArticleLikes(User):
         orm_mode = True
 
 
+class CreateUserArticleLikes(User):
+    article: article_schema.RecommendedArticle
+    # author: author_schema.Author
+
+    class Config:
+        orm_mode = True
+
+
 class CreateUserArticleViewed(User):
     article: article_schema.RecommendedArticle
     # author: author_schema.Author
