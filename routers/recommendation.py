@@ -29,7 +29,8 @@ import pickle
 import secrets
 # user_model.Base.metadata.create_all(bind=engine)
 # author_model.Base.metadata.create_all(bind=engine)
-
+import pickle
+import secrets
 from config import pathconfig
 
 
@@ -64,7 +65,8 @@ elif pathconfig.TRAIN_CSV_PATH.is_file():
     pre = preprocessor(pathconfig.TRAIN_CSV_PATH,keywords_limit = keyword_len)
     if pre:
         print('Successfully Loaded CSV file to train')
-        
+
+
 if pathconfig.REDIRECT_DICT_PATH.is_file():
     with open(pathconfig.REDIRECT_DICT_PATH, 'rb') as f:
         redirect_dict = pickle.load(f)
@@ -196,7 +198,7 @@ async def get_top_100_recommendation(user_id: str,site: str, time: str,current_p
 
     top_100_recommended_urls = list(top_100_dictionary.keys())
     top_100_urls = top_100_recommended_urls
-    top_100_recommendation = utils.context_giver(top_100_urls,pre,rev_redirect_dict,user_id,current_page)
+    top_100_recommendation = utils.context_giver(top_100_urls,pre,rev_redirect_dict,user_id)
 
     return top_100_recommendation
 
@@ -248,7 +250,7 @@ def get_random_user():
 
     user_url_df = pre.df.groupby(['user'])
     prev_visited_url = user_url_df.get_group(user).url.to_list()
-    prev_visited_articles =  utils.context_giver(prev_visited_url,pre)
+    prev_visited_articles =  utils.context_giver(prev_visited_url,pre,rev_redirect_dict,user)
 
 
     return {"user": user,
@@ -259,7 +261,7 @@ def get_random_user():
 def get_previously_visited_urls(user_id: str):
     user_url_df = pre.df.groupby(['user'])
     prev_visited_url = user_url_df.get_group(user_id).url.to_list()
-    return utils.context_giver(prev_visited_url,pre)
+    return utils.context_giver(prev_visited_url,pre,rev_redirect_dict,user_id)
 
 
 @router.get('/with_token/', status_code = 200)

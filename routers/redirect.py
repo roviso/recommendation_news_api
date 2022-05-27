@@ -89,13 +89,13 @@ async def get_article(article_url: str):
 
 
 @router.get("/{redirect_str}")
-async def redirect(redirect_str:str,zxc:str,current_page:str):
+async def redirect(redirect_str:str,id:str,current_page:str):
     # print(f"using user_id: {user_id}")
     article_url = redirect_dict[redirect_str]
     article,author = await get_article(article_url)
 
     article_liked = clicks_schema.CreateUserArticleClicks(
-        user_id =  zxc,
+        user_id =  id,
         article_url = article.url,
         author_name = author.author_name,
         referrer = current_page,

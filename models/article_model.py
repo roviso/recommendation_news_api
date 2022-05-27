@@ -25,11 +25,13 @@ class Article(Base):
     author_id = Column(String, ForeignKey('author.id'))
     type = Column(String)
 
-    written_by = relationship("Author", back_populates="articles")
-
+    author = relationship("Author", back_populates="articles")
     liked_by = relationship("UserArticleLikes", back_populates="liked_article")
 
+    bookmarked_by = relationship("UserArticleBookmarks", back_populates="bookmarked_article")
+
     clicked_by = relationship("Clicks", back_populates="clicked_article")
+
 
     viewed_by = relationship("UserArticleViewed", back_populates="viewed_article")
     ignored_by = relationship("UserArticleIgnored", back_populates="ignored_article")

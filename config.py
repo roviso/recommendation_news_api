@@ -24,7 +24,6 @@ class PathConfig:
         Path(__file__).parent,'redirect_dictionary.pkl'
     ).resolve()
 
-
 pathconfig = PathConfig()
 
 
