@@ -17,6 +17,7 @@ class PathConfig:
 
     MODEL_PATH: Path = Path(
         Path(__file__).parent,'repository','trained_models','NCF_checkpoint_cuda.pth.tar'
+        # Path(__file__).parent,'repository','trained_models','NCF_checkpoint_cpu.pth.tar'
     ).resolve()
 
     REDIRECT_DICT_PATH: Path = Path(

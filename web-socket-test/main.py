@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from starlette.responses import RedirectResponse
 
 app = FastAPI()
 
@@ -81,3 +82,31 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{client_id} left the chat")
+
+
+redirect_helper = {
+    0: "https://github.com/tiangolo/fastapi/issues/199",
+    1: "https://chat.prixa.net/direct/rajankafle",
+    2: "https://www.youtube.com/watch?v=YCKO1qgotHY"
+}
+
+from pathlib import Path
+import pickle 
+
+REDIRECT_DICT_PATH: Path = Path(
+    Path(__file__).parent,'..','redirect_dictionary.pkl'
+).resolve()
+
+if REDIRECT_DICT_PATH.is_file():
+    with open(REDIRECT_DICT_PATH, 'rb') as f:
+        redirect_dict = pickle.load(f)
+    print('Successfully Loaded Pickle file')
+
+
+@app.get("/redirct/{redirect_str}")
+async def redirect(redirect_str: str, user_id: str):
+    print(f"using user_id: {user_id}")
+    response = RedirectResponse(url=redirect_dict[redirect_str])
+    return response
+
+

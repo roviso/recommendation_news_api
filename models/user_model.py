@@ -1,5 +1,5 @@
 from enum import unique
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String,ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String,ForeignKey, DateTime, Table
 from database import Base
 from sqlalchemy.orm import relationship
 from typing import List, Optional
@@ -17,6 +17,14 @@ class User(Base):
     device_id = Column(String)
     ip_address = Column(String)
     registered = Column(Boolean)
+
+    following = relationship(
+        'User', lambda: user_following,
+        primaryjoin=lambda: User.id == user_following.c.user_id,
+        secondaryjoin=lambda: User.id == user_following.c.following_id,
+        backref='followers'
+    )
+
 
     clicked_articles = relationship("Clicks", back_populates="clicked_user")
 
@@ -37,6 +45,14 @@ class User(Base):
         'polymorphic_identity':'user'
         }
 
+
+
+user_following = Table(
+    'user_following', Base.metadata,
+    Column('user_id', String, ForeignKey(User.id), primary_key=True),
+    Column('following_id', String, ForeignKey(User.id), primary_key=True)
+)
+
 class RegisteredUser(User):
     # __tablename__ = "registereduser"
     password = Column(String)
@@ -51,7 +67,6 @@ class RegisteredUser(User):
 
 class NonRegisteredUser(User):
     __mapper_args__ = {'polymorphic_identity': False}
-
 
 
 
