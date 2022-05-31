@@ -1,7 +1,7 @@
 from fastapi import APIRouter,status,Depends
 from crud.crud_likes import Likes
 from models.article_model import Article
-from schemas import user_schema
+from schemas import user_schema, likes_schema
 from typing import List, Optional
 import secrets
 from database import async_session
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.post('/', status_code = status.HTTP_201_CREATED)
-async def like_article(article_liked: user_schema.CreateUserArticleLikes, async_session: Session = Depends(database.get_session)):
+async def like_article(article_liked: likes_schema.CreateUserArticleLikes, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             likes = Likes(session)

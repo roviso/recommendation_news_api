@@ -8,6 +8,7 @@ class Author(Base):
     id = Column(String, primary_key=True, index=True)
     author_name = Column(String)
     author_img = Column(String)
+    source = Column(String)
 
     articles = relationship("Article", back_populates="author")
 
