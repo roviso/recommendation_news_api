@@ -1,7 +1,7 @@
 from fastapi import APIRouter,status,Depends
 from crud.crud_views import Views
 from models.article_model import Article
-from schemas import user_schema
+from schemas import user_schema, views_schema
 from typing import List, Optional
 import secrets
 from database import async_session
@@ -13,8 +13,8 @@ router = APIRouter(
     tags=['views']
 )
 
-@router.post('/', status_code = status.HTTP_201_CREATED)
-async def view_article(article_viewed: user_schema.CreateUserArticleViewed, async_session: Session = Depends(database.get_session)):
+@router.put('/', status_code = status.HTTP_201_CREATED)
+async def view_article(article_viewed: views_schema.CreateUserArticleViews, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             views = Views(session)
