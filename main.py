@@ -25,8 +25,8 @@ app.add_middleware(
 async def startup():
     # create db tables
     async with engine.begin() as conn:
-        # await conn.run_sync(Base.metadata.drop_all)
-        # db_loader.load_model_data()
+        await conn.run_sync(Base.metadata.drop_all)
+        db_loader.load_model_data()
         await conn.run_sync(Base.metadata.create_all)
 
 
