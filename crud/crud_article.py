@@ -24,20 +24,20 @@ class ArticleCrud():
         result = results.fetchone()
         return result
 
-    async def get_article_by_id(self,article_id: str) -> RecommendedArticle:
-        query = select(RecommendedArticle).where(RecommendedArticle.id == article_id)
+    async def get_article_by_id(self,article_id: str) -> Article:
+        query = select(Article).where(Article.id == article_id)
         results = await self.db_session.execute(query)
         result = results.fetchone()
         return result
 
     async def get_all_article(self):
-        query = select(RecommendedArticle).order_by(RecommendedArticle.id)
+        query = select(Article).order_by(Article.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
 
     async def get_all_recommended_article(self):
-        query = select(RecommendedArticle).order_by(RecommendedArticle.id)
+        query = select(Article).order_by(Article.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
@@ -70,8 +70,8 @@ class ArticleCrud():
 
     async def update_like(self, article_id: str, increase_like: Optional[int]= None, decrease_like: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.RecommendedArticle
-        q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
+        article = article._mapping.Article
+        q = update(Article).where(Article.id == article_id)
         if increase_like:
             print(f"Increasing the likes")
             new_like = (article.likes or 0) + increase_like
@@ -83,42 +83,14 @@ class ArticleCrud():
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
-    async def update_views(self, article_id: str, increase_views: Optional[int]):
-        article = await self.get_article_by_id(article_id)
-        article = article._mapping.RecommendedArticle
-        q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
-        if increase_views:
-            print(f"Increasing the Views")
-            new_views = (article.views or 0) + increase_views
-            q = q.values(views=new_views)
-        q.execution_options(synchronize_session="fetch")
-        await  self.db_session.execute(q)
-
     
-    async def update_ignores(self, article_id: str, increase_ignores: Optional[int] = None, decrease_ignores: Optional[int] = None):
-        article = await self.get_article_by_id(article_id)
-        article = article._mapping.RecommendedArticle
-        q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
-        if increase_ignores:
-            print(f"Increasing the Ignores")
-            if article.ignores == None:
-                article.ignores = 0
-            new_ignores = (article.ignores or 0) + increase_ignores
-            q = q.values(ignores=new_ignores)
-        if decrease_ignores:
-            print(f"Decrease the Ignores")
-            new_ignores = (article.ignores or 0) - decrease_ignores
-            q = q.values(ignores=new_ignores)
-        q.execution_options(synchronize_session="fetch")
-        await  self.db_session.execute(q)
-
 
     async def update_comments(self,  article_id: str,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.RecommendedArticle
+        article = article._mapping.Article
         commentdb = Comments(self.db_session)
         total_comments = len(await commentdb.get_comments_by_article(article_id))
-        q = update(RecommendedArticle).where(RecommendedArticle.id == article_id)
+        q = update(Article).where(Article.id == article_id)
         q = q.values(total_comments=total_comments)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
