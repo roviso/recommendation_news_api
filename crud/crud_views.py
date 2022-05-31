@@ -43,13 +43,7 @@ class Views():
         return results.scalars().all()
 
     async def update_views(self, article_id: str, increase_views: Optional[int]):
-        article = await self.articledb.get_article_by_id(article_id)
-        article = article._mapping.Article
-        q = update(Article).where(Article.id == article_id)
-        if increase_views:
-            print(f"Increasing the Views")
-            new_views = (article.views or 0) + increase_views
-            q = q.values(views=new_views)
+        q = update(Article).where(Article.id == article_id).values(views = increase_views)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
@@ -89,32 +83,31 @@ class Views():
         else:
             article = article._mapping.Article
 
+
         already_ignored = await self.check_ignored_articles(user.id,article.id)
-        # already_viewed = await self.check_viewed_articles(user.id,article.id)
+        already_viewed = await self.check_viewed_articles(user.id,article.id)
         if already_ignored and total_time_spend >= timeconfig.IGNORE_TIME:
             await self.update_ignores(article_id= article.id, decrease_ignores = 1)
             await self.remove_ignored_articles(user.id,article.id)
 
-        
-
-        # if already_viewed:
-        #     return JSONResponse(status_code=status.HTTP_201_CREATED, content="article already viewed")
-        # else:
-        elif total_time_spend < timeconfig.IGNORE_TIME:
-            if not already_ignored:
-                await self.update_ignores(article_id= article.id, increase_ignores = 1)
-                ignore_article = user_model.UserArticleIgnored(user_id = user.id,article_id = article.id,total_time_spend= total_time_spend)
-                self.db_session.add(ignore_article)
-                await self.db_session.flush()
-                return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has been ignored")
-            else:
-                return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has already been ignored")
+        if already_viewed:
+            return JSONResponse(status_code=status.HTTP_201_CREATED, content="article already viewed")
         else:
-            await self.update_views(article_id= article.id, increase_views = 1)
-            view_article = user_model.UserArticleViewed(user_id = user.id,article_id = article.id,start_time= start_time, end_time= end_time, total_time_spend= total_time_spend)
-            self.db_session.add(view_article)
-            await self.db_session.flush()
-            return JSONResponse(status_code=status.HTTP_201_CREATED, content="article Successfully viewed")
+            if total_time_spend < timeconfig.IGNORE_TIME:
+                if not already_ignored:
+                    await self.update_ignores(article_id= article.id, increase_ignores = 1)
+                    ignore_article = user_model.UserArticleIgnored(user_id = user.id,article_id = article.id,total_time_spend= total_time_spend)
+                    self.db_session.add(ignore_article)
+                    await self.db_session.flush()
+                    return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has been ignored")
+                else:
+                    return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has already been ignored")
+            else:
+                await self.update_views(article_id= article.id, increase_views = int(article.views)+1)
+                view_article = user_model.UserArticleViewed(user_id = user.id,article_id = article.id,start_time= start_time, end_time= end_time, total_time_spend= total_time_spend)
+                self.db_session.add(view_article)
+                await self.db_session.flush()
+                return JSONResponse(status_code=status.HTTP_201_CREATED, content="article Successfully viewed")
 
 
     # async def view_article(self, article_viewed:user_schema.CreateUserArticleViewed,):
