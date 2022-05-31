@@ -156,6 +156,7 @@ def context_giver(top_20,pre,url_string_dict,user_id):
         shares = 0
 
         item_val = {
+            "id": item_df.article_id,
             "url": get_redirect_url(url_string_dict,item_df.url,user_id),
             "head_image": item_df.head_image,
             "heading": item_df.heading,

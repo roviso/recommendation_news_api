@@ -78,3 +78,4 @@ class UserCrud():
             q = q.values(email=email)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
+
