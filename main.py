@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, recommendation, redirect
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, recommendation
+import db_loader
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title='News Recommendation')
@@ -25,6 +26,7 @@ async def startup():
     # create db tables
     async with engine.begin() as conn:
         # await conn.run_sync(Base.metadata.drop_all)
+        db_loader.load_model_data()
         await conn.run_sync(Base.metadata.create_all)
 
 

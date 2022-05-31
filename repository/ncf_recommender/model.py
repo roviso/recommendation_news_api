@@ -42,8 +42,8 @@ class NMF(nn.Module):
         # print('self.predict_layer ',self.predict_layer)
 
     def get_GMF_embeddings(self,user_emb_sizes,url_emb_sizes):
-        user_embeddings = nn.ModuleList([nn.Embedding(car, siz) for car,siz in user_emb_sizes])
-        url_embeddings = nn.ModuleList([nn.Embedding(car, siz) for car,siz in url_emb_sizes])
+        user_embeddings = nn.ModuleList([nn.Embedding(car, siz, device= self.device) for car,siz in user_emb_sizes])
+        url_embeddings = nn.ModuleList([nn.Embedding(car, siz, device= self.device) for car,siz in url_emb_sizes])
         for emb in user_embeddings:
             emb.weight.data.uniform_(-1.00,1.00)
         for emb in url_embeddings:
@@ -52,8 +52,8 @@ class NMF(nn.Module):
 
 
     def get_MLP_embeddings(self,user_emb_sizes,url_emb_sizes,nlayer):
-        user_embeddings = nn.ModuleList([nn.Embedding(car, siz*(2**(nlayer-1))) for car,siz in user_emb_sizes])
-        url_embeddings = nn.ModuleList([nn.Embedding(car, siz*(2**(nlayer-1))) for car,siz in url_emb_sizes])
+        user_embeddings = nn.ModuleList([nn.Embedding(car, siz*(2**(nlayer-1)), device= self.device) for car,siz in user_emb_sizes])
+        url_embeddings = nn.ModuleList([nn.Embedding(car, siz*(2**(nlayer-1)), device= self.device) for car,siz in url_emb_sizes])
         for emb in user_embeddings:
             emb.weight.data.uniform_(-1.00,1.00)
         for emb in url_embeddings:
@@ -87,7 +87,7 @@ class NMF(nn.Module):
 
 
     def forward(self, user, item,label,Dominant_Topic):
-        user_embed_GMF = [e(user) for i,e in enumerate(self.user_GMF_embedding)]
+        user_embed_GMF = [e(user).to(device = self.device) for i,e in enumerate(self.user_GMF_embedding.to(device = self.device))]
         article_embed_GMF = self.get_article_embed_GMF(item,label,Dominant_Topic)
         batch_size = user_embed_GMF[0].shape[0]
         user_embed_GMF = user_embed_GMF[0].reshape(batch_size,-1)
