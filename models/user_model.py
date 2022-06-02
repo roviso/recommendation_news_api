@@ -5,6 +5,11 @@ from sqlalchemy.orm import relationship
 from typing import List, Optional
 from sqlalchemy_utils import EmailType
 
+class UserFollowing(Base):
+    __tablename__ = 'user_following'
+
+    follower_id =  Column(String, ForeignKey('user.id'), primary_key=True)
+    following_id = Column(String, ForeignKey('user.id'), primary_key=True)
 
 
 class User(Base):
@@ -18,11 +23,27 @@ class User(Base):
     ip_address = Column(String)
     registered = Column(Boolean)
 
-    following = relationship(
-        'User', lambda: user_following,
-        primaryjoin=lambda: User.id == user_following.c.user_id,
-        secondaryjoin=lambda: User.id == user_following.c.following_id,
+    # following = relationship(
+    #     'User', lambda: user_following,
+    #     primaryjoin=lambda: User.id == user_following.c.user_id,
+    #     secondaryjoin=lambda: User.id == user_following.c.following_id,
+    #     backref='followers'
+    # )
+
+    user_followers = relationship(
+        'User',
+        secondary='user_following',
+        primaryjoin=id==UserFollowing.follower_id,
+        secondaryjoin=id==UserFollowing.following_id,
         backref='followers'
+    )
+
+    user_followings = relationship(
+        'User',
+        secondary='user_following',
+        primaryjoin=id==UserFollowing.following_id,
+        secondaryjoin=id==UserFollowing.follower_id,
+        backref='followings'
     )
 
 
@@ -45,13 +66,25 @@ class User(Base):
         'polymorphic_identity':'user'
         }
 
+    def __repr__(self) -> str:
+        return f"<User(name={self.username})>"
+
+    # def follow(self, user):
+    #     if user not in self.following:
+    #         self.following.append(user)
+    #         user.following.append(self)
+
+    # def unfollow(self, user):
+    #     if user in self.following:
+    #         self.following.remove(user)
+    #         user.following.remove(self)
 
 
-user_following = Table(
-    'user_following', Base.metadata,
-    Column('user_id', String, ForeignKey(User.id), primary_key=True),
-    Column('following_id', String, ForeignKey(User.id), primary_key=True)
-)
+# user_following = Table(
+#     'user_following', Base.metadata,
+#     Column('user_id', String, ForeignKey(User.id), primary_key=True),
+#     Column('following_id', String, ForeignKey(User.id), primary_key=True)
+# )
 
 class RegisteredUser(User):
     # __tablename__ = "registereduser"

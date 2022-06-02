@@ -57,51 +57,16 @@ class Comments():
 
     
     async def create_comment(self, article_commented:comments_schema.CreateComments,):
-        user = await self.userdb.get_user(article_commented.id)
-        article = await self.articledb.get_article(article_commented.article.url)
-        author = await self.authordb.get_author_by_name(article_commented.article.author.author_name)
+        user = await self.userdb.get_user(article_commented.user_id)
+        article = await self.articledb.get_article_by_id(article_commented.article_id)
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
         else:
             user = user._mapping.User
 
-        if not author:
-            author_id = secrets.token_urlsafe(32)
-            new_author = author_model.Author(id = author_id,**article_commented.article.author.dict())
-            print('no author found in db... Adding the author in db.')
-            try:
-                await self.authordb.create_author(new_author)
-
-                author = new_author
-                print("Successfully added Author in db")
-            except:
-                print("Unable to add author in db")
-                # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
-        else:
-            
-            author = author._mapping.Author
-            # print(f"Author already present: {author}")
-
-        
         if not article:
-            article_id = secrets.token_urlsafe(32)
-            article_dict = article_commented.article.dict()
-            article_dict['likes'] += 0 ##Increasing like count
-            article_dict['views'] = 1 ##Increasing views count
-            del article_dict['author'] 
-            new_article = article_model.RecommendedArticle(id = article_id,**article_dict,author_id=author.id )
-            print('no article found in db... Adding the article in db.')
-            try:
-                await self.articledb.create_article(new_article)
-    
-                article = new_article
-                print("Successfully added article in db")
-
-            except Exception as e:
-                print("Unable to add article in db")
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unable to add Article in database, {e}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
         else:
             article = article._mapping.Article
 
