@@ -4,13 +4,12 @@ from typing import Optional
 from schemas import user_schema, article_schema
 
 
-class Comment(BaseModel):
-    id : str
-    
 
 
-class CreateComments(user_schema.User):
-    article: article_schema.RecommendedArticle
+
+class CreateComments(BaseModel):
+    user_id : str 
+    article_id: str 
     date_of_comment: str
     comment: str
 
@@ -18,6 +17,9 @@ class CreateComments(user_schema.User):
         orm_mode = True
 
 
+class Comment(BaseModel):
+    id : str
+    
 
 class LikeComments(user_schema.User):
     comment: Comment

@@ -41,8 +41,8 @@ async def get_trending_news():
                 author_id = article['author_id']
                 author = await authorcrud.get_author_by_id(author_id)
                 author = author._mapping.Author
-                print(author,111111111111111, author.__dict__)
-                print(author.author_name, author.author_img)
+                # print(author,111111111111111, author.__dict__)
+                # print(author.author_name, author.author_img)
                 article['author'] = author.author_name
                 article['author_img']  = author.author_img
                 trending.append(article)
