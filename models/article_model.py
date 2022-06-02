@@ -25,6 +25,11 @@ class Article(Base):
     author_id = Column(String, ForeignKey('author.id'))
     type = Column(String)
 
+    views = Column(Integer)
+    ignores = Column(Integer)
+    total_comments = Column(Integer)
+    bookmarks = Column(Integer)
+
     author = relationship("Author", back_populates="articles")
     liked_by = relationship("UserArticleLikes", back_populates="liked_article")
 
@@ -53,10 +58,7 @@ class LatestArticle(Article):
 class RecommendedArticle(Article):
     # __tablename__ = "recommended"
     __mapper_args__ = {'polymorphic_identity': 'recommended'}
-    views = Column(Integer)
-    ignores = Column(Integer)
-    total_comments = Column(Integer)
-    bookmarks = Column(Integer)
+    
 
 # class HomescreenArticle(Article):
 #     likes = Column(Integer)

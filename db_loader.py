@@ -53,6 +53,7 @@ def load_model_data():
     connection = psycopg2.connect(host=hostname, user=username, password=password, dbname=database)
 
     # LOADING AUTHOR INFORMATION
+    print("============= LOADING AUTHOR ===============================")
 
     author_df = pre.df[['author','author_img','source']]
 
@@ -64,9 +65,12 @@ def load_model_data():
 
     author_df.rename(columns={"author": "author_name"}, inplace=True)
 
+
     execute_values(connection, author_df, 'author')
 
     # LOADING ARTICLE INFORMATION
+
+    print("============= LOADING ARTICLE ===============================")
     article_df = pre.df[['article_id','url','head_image','heading','date','content','additional_images','source','label','author']]
     article_df['author_id'] = article_df.apply(lambda x: author_id_dict.get(x['author']), axis=1)
     article_df.drop('author', 1, inplace=True)
