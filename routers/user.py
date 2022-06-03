@@ -11,7 +11,7 @@ from models import user_model
 import secrets
 from database import async_session
 from helper.username_generator import username_generator
-
+from fastapi_pagination import Page, Params, paginate, LimitOffsetPage
 
 router = APIRouter(
     prefix = "/user",
@@ -94,13 +94,23 @@ async def read_user(current_user: user_schema.User = Depends(), async_session: S
             usercrud= UserCrud(session)
             return await usercrud.get_user(current_user.id)
 
-@router.get("/get_all_user")
+@router.get("/get_all_user", response_model = LimitOffsetPage[user_schema.GetAllUsers])
 async def read_all_user(async_session: Session = Depends(database.get_session)):
-    # return UserCrud.get_user(user_id=current_user.id)\
     async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
-            return await usercrud.get_all_user()
+            users_list =  await usercrud.get_all_user()
+            return paginate(users_list)
+
+
+@router.get("/get_all_registered_user", response_model = LimitOffsetPage[user_schema.GetRegisteredUsers])
+async def read_all_registered_user(async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            users_list =  await usercrud.get_all_registered_user()
+            return paginate(users_list)
+
 
         
 @router.post('/register_user', response_model=user_schema.RegisterUser)

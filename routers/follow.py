@@ -28,4 +28,30 @@ async def read_all_user(user_id: str, async_session: Session = Depends(database.
     async with async_session as session:
         async with session.begin():
             follow = Follow(session)
-            return await follow.get_followings(user_id)
+            followings =  await follow.get_followings(user_id)
+
+            followings_counts = len(followings)
+
+            followings_list = []
+            for following in followings:
+                followings_list.append(following.following_id)
+
+            return {"count": followings_counts ,
+                    "followings": followings_list}
+
+@router.get("/get_all_followers")
+async def read_all_user(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+
+            followers =  await follow.get_followers(user_id)
+            follower_counts = len(followers)
+
+            follower_list = []
+            for follower in followers:
+                follower_list.append(follower.follower_id)
+            print(followers,follower_counts)
+            return {"count": follower_counts ,
+                    "followers": follower_list}

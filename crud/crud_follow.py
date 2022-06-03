@@ -44,6 +44,12 @@ class Follow():
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
+    async def get_followers(self,user_id):
+        # user = await self.userdb.get_user(user_id)
+        query = select(user_model.UserFollowing).where(user_model.UserFollowing.following_id == user_id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
 
     # async def follow_user(self, follower_following: follow_schema.FollowUser):
     #     self.db_session.(user_following.insert(), user_id = follower_following.user_id, following_id = follower_following.following_id )

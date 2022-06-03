@@ -66,8 +66,8 @@ class User(Base):
         'polymorphic_identity':'user'
         }
 
-    def __repr__(self) -> str:
-        return f"<User(name={self.username})>"
+    # def __repr__(self) -> str:
+    #     return f"<User(name={self.username})>"
 
     # def follow(self, user):
     #     if user not in self.following:

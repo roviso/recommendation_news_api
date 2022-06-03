@@ -7,6 +7,7 @@ from typing import Optional
 class Author(BaseModel):
     author_name :str
     author_img :str
+    source: str
 
 
     

@@ -2,7 +2,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 # from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_base,sessionmaker
-
+from typing import  AsyncIterator
 from config import settings
 
 
@@ -23,3 +23,8 @@ async def get_session():
     finally:
         await session.close()
 
+
+
+async def get_db() -> AsyncIterator[AsyncSession]:
+    async with async_session() as session:
+        yield session

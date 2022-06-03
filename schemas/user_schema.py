@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 from typing import Optional
-from schemas import article_schema, author_schema
+from schemas import article_schema
 
 
 class User(BaseModel):
@@ -27,11 +27,11 @@ class RegisterUser(User):
     email: Optional[str] = None
 
 
-class CommentedUsers(User):
-    username: str 
+# class CommentedUsers(User):
+#     username: str 
 
-    class Config:
-        orm_mode = True
+#     class Config:
+#         orm_mode = True
 
 
 class CreateUserArticleLikes(User):
@@ -59,8 +59,25 @@ class CreateUserArticleViewed(User):
         orm_mode = True
 
 
+class GetAllUsers(BaseModel):
+    id: str
+    username: str 
+
+    class Config:
+        orm_mode = True
 
 
+
+
+class GetRegisteredUsers(BaseModel):
+    id: str
+    username: str 
+    email: str
+    first_name: str
+    last_name: str
+
+    class Config:
+        orm_mode = True
 
 # class User(BaseModel):
 #     user_id: str

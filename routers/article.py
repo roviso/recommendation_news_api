@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException,Query
 from crud.crud_article import ArticleCrud
 from crud.crud_author import AuthorCrud
 from crud.crud_comments import Comments
@@ -9,6 +9,8 @@ from typing import List, Optional
 import secrets
 from database import async_session
 from routers.comments import get_article_comments
+from fastapi_pagination import Page, add_pagination, paginate,LimitOffsetPage
+from sqlalchemy.future import select
 
 router = APIRouter(
     prefix = "/articles",
@@ -78,19 +80,22 @@ async def update_articles(article_id: str, url: Optional[str] = None, head_image
                 date, content, additional_img,source, author_id)
 
 
-@router.get('/get_all_articles', status_code = 200)
-async def get_articles() -> List[RecommendedArticle]:
+@router.get('/get_all_articles', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def get_all_articles() -> List[RecommendedArticle]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
             articles =  await articlecrud.get_all_article()
 
-    return await add_comments_and_replies(articles)
+            # print(articles, dir(articles), type(articles))
+
+    # final_articles = await add_comments_and_replies(articles)
+            return paginate(articles)
 
 
 
 @router.get('/get_recommended_articles', status_code = 200)
-async def get_articles() -> List[RecommendedArticle]:
+async def get_recommended_articles() -> List[RecommendedArticle]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
