@@ -34,8 +34,8 @@ class User(Base):
         'User',
         secondary='user_following',
         primaryjoin=id==UserFollowing.follower_id,
-        secondaryjoin=id==UserFollowing.following_id,
-        backref='followers'
+        secondaryjoin=id==UserFollowing.following_id
+        # backref='followers'
     )
 
     user_followings = relationship(
@@ -43,8 +43,8 @@ class User(Base):
         secondary='user_following',
         primaryjoin=id==UserFollowing.following_id,
         secondaryjoin=id==UserFollowing.follower_id,
-        lazy='selectin',
-        backref='followings'
+        # lazy='selectin',
+        # backref='followings'
     )
 
 
@@ -94,6 +94,8 @@ class RegisteredUser(User):
     password = Column(String)
     first_name = Column(String(50))
     last_name = Column(String(50))
+    profile_Image = Column(String(250))
+
     email = Column(EmailType)
     __mapper_args__ = {'polymorphic_identity': True}
     # id = Column(

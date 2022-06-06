@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, follow, bookmarks, profile
-# , recommendation
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, follow, bookmarks, profile, recommendation
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import Page, add_pagination
@@ -33,7 +32,7 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
 
 
-# app.include_router(recommendation.router)
+app.include_router(recommendation.router)
 
 app.include_router(profile.router)
 app.include_router(redirect.router)

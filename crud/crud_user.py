@@ -7,6 +7,7 @@ from sqlalchemy.future import select
 from models.user_model import User,RegisteredUser, UserArticleBookmarks
 from models.article_model import Article
 
+
 class UserCrud():
     def __init__(self, db_session: Session):
         self.db_session = db_session
@@ -57,7 +58,7 @@ class UserCrud():
         results = await self.db_session.execute(query)
         # print(results)
         # (result,) = results.one()
-        result = results.scalars().all()
+        result = results.scalars().one()
         return result
 
     async def check_user_exists(self,device_id: str,device_name:str) -> User:
@@ -102,3 +103,13 @@ class UserCrud():
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
+
+    async def upload_profile_Image(self, user_id: str, profile_Image: str):
+        q = update(RegisteredUser).where(RegisteredUser.id == user_id).values(profile_Image=profile_Image)
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
+
+
+    
+    
