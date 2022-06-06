@@ -10,7 +10,7 @@ class Author(Base):
     author_img = Column(String)
     source = Column(String)
 
-    articles = relationship("Article", back_populates="author")
+    articles = relationship("Article", back_populates="author", lazy = True)
 
     
 

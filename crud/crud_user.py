@@ -1,11 +1,11 @@
 from re import L
 from typing import List, Optional
-from sqlalchemy.orm import Session,with_polymorphic
+from sqlalchemy.orm import Session,with_polymorphic,selectinload,joinedload,subqueryload
 from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
-from models.user_model import User,RegisteredUser
-
+from models.user_model import User,RegisteredUser, UserArticleBookmarks
+from models.article_model import Article
 
 class UserCrud():
     def __init__(self, db_session: Session):
@@ -43,12 +43,21 @@ class UserCrud():
         result = results.fetchone()
         return result
 
+    async def get_user_by_email(self,email: str) -> RegisteredUser:
+        query = select(RegisteredUser).where(RegisteredUser.email == email)
+        results = await self.db_session.execute(query)
+        result = results.scalars().one()
+        return result
+
     async def get_user_profile(self,user_id: str) -> User:
         entity = with_polymorphic(User, RegisteredUser)
         query = select(entity).where(entity.id == user_id)
+        # .options(selectinload(entity.user_followings))
         # print(query,111111111111111111111111111111111)
         results = await self.db_session.execute(query)
-        (result,) = results.one()
+        # print(results)
+        # (result,) = results.one()
+        result = results.scalars().all()
         return result
 
     async def check_user_exists(self,device_id: str,device_name:str) -> User:

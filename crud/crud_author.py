@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,with_polymorphic, selectinload
 from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
@@ -19,6 +19,15 @@ class AuthorCrud():
         results = await self.db_session.execute(query)
         result = results.fetchone()
         return result
+
+    async def get_author_profile(self,author_id: str) -> Author:
+
+        query = select(Author).where(Author.id == author_id).options(selectinload(Author.articles))
+        results = await self.db_session.execute(query)
+        return results.scalars().all()[0]
+        # results = await self.db_session.execute(query)
+        # (result,) = results.one()
+        # return result
 
 
     async def get_author_by_name(self,author_name: str) -> Author:

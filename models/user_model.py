@@ -43,6 +43,7 @@ class User(Base):
         secondary='user_following',
         primaryjoin=id==UserFollowing.following_id,
         secondaryjoin=id==UserFollowing.follower_id,
+        lazy='selectin',
         backref='followings'
     )
 
@@ -53,6 +54,8 @@ class User(Base):
 
     bookmarked_articles = relationship("UserArticleBookmarks", back_populates="bookmarked_user")
 
+    # bookmarks = relationship('Article', lazy='joined')
+ 
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     ignored_articles = relationship("UserArticleIgnored", back_populates="ignored_user")
     

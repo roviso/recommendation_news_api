@@ -26,9 +26,17 @@ class Bookmarks():
 
 
     async def get_all_bookmarked_articles(self, user_id: str):
-        query = select(user_model.UserArticleBookmarks).where(user_model.UserArticleBookmarks.user_id == user_id)
+        query = select(article_model.Article).where(user_model.User.id == user_id).filter(
+            user_model.UserArticleBookmarks.article_id == article_model.Article.id, 
+            user_model.UserArticleBookmarks.user_id == user_model.User.id
+        )
         results = await self.db_session.execute(query)
-        return results.scalars().all()
+        result = results.scalars().all()
+        return result
+
+        # query = select(user_model.UserArticleBookmarks).where(user_model.UserArticleBookmarks.user_id == user_id)
+        # results = await self.db_session.execute(query)
+        # return results.scalars().all()
 
     async def remove_bookmarked_articles(self, user_id: str, article_id:str):
         query = delete(user_model.UserArticleBookmarks).where(user_model.UserArticleBookmarks.article_id == article_id,user_model.UserArticleBookmarks.user_id == user_id)

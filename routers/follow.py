@@ -8,6 +8,7 @@ from database import async_session
 from sqlalchemy.orm import Session
 import database
 
+
 router = APIRouter(
     prefix = "/follow",
     tags=['follow']
@@ -22,8 +23,8 @@ async def follow_user(follower_following: follow_schema.FollowUser, async_sessio
             return await follow.follow_user(follower_following)
 
 
-@router.get("/get_all_followings")
-async def read_all_user(user_id: str, async_session: Session = Depends(database.get_session)):
+@router.get("/get_user_followings")
+async def get_user_followings(user_id: str, async_session: Session = Depends(database.get_session)):
     # return UserCrud.get_user(user_id=current_user.id)\
     async with async_session as session:
         async with session.begin():
@@ -39,8 +40,17 @@ async def read_all_user(user_id: str, async_session: Session = Depends(database.
             return {"count": followings_counts ,
                     "followings": followings_list}
 
-@router.get("/get_all_followers")
-async def read_all_user(user_id: str, async_session: Session = Depends(database.get_session)):
+@router.get("/get_followings_counts")
+async def get_user_followings_count(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            followings_count =  await follow.get_following_count(user_id)
+            return {"count": followings_count}
+
+@router.get("/get_user_followers")
+async def get_user_followers(user_id: str, async_session: Session = Depends(database.get_session)):
     # return UserCrud.get_user(user_id=current_user.id)\
     async with async_session as session:
         async with session.begin():
@@ -55,3 +65,13 @@ async def read_all_user(user_id: str, async_session: Session = Depends(database.
             print(followers,follower_counts)
             return {"count": follower_counts ,
                     "followers": follower_list}
+
+
+@router.get("/get_followers_counts")
+async def get_user_followers_count(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            followings_count =  await follow.get_followers_count(user_id)
+            return {"count": followings_count}

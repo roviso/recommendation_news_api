@@ -12,7 +12,9 @@ class UserProfile(BaseModel):
     last_name: Optional[str] = None
     email: Optional[str] = None
 
-    bookmarked_articles = article_schema.GetAllArticle
+    # bookmarked_articles : List[article_schema.GetAllArticle]
 
     class Config:
         orm_mode = True
+
+

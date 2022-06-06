@@ -79,6 +79,14 @@ class GetRegisteredUsers(BaseModel):
     class Config:
         orm_mode = True
 
+
+class UserLogin(BaseModel):
+    email: str 
+    password: str
+
+    class Config:
+        orm_mode = True
+
 # class User(BaseModel):
 #     user_id: str
 #     email: Optional[str] = None
