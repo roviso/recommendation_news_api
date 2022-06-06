@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, follow
-# , recommendation
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, follow, recommendation
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -26,17 +25,12 @@ app.add_middleware(
 async def startup():
     # create db tables
     async with engine.begin() as conn:
-<<<<<<< HEAD
         # await conn.run_sync(Base.metadata.drop_all)
-        db_loader.load_model_data()
-=======
-        await conn.run_sync(Base.metadata.drop_all)
         # db_loader.load_model_data()
->>>>>>> bd0c2ea579e35dd31c37132428dae066b509a2d0
         await conn.run_sync(Base.metadata.create_all)
 
 
-# app.include_router(recommendation.router)
+app.include_router(recommendation.router)
 app.include_router(redirect.router)
 app.include_router(token.router)
 app.include_router(user.router)
