@@ -23,6 +23,8 @@ class Article(Base):
     label = Column(String)
     
     author_id = Column(String, ForeignKey('author.id'))
+    author = relationship("Author", back_populates="articles", lazy='selectin')
+
     type = Column(String)
 
     views = Column(Integer)
@@ -30,7 +32,7 @@ class Article(Base):
     total_comments = Column(Integer)
     bookmarks = Column(Integer)
 
-    author = relationship("Author", back_populates="articles")
+    
     liked_by = relationship("UserArticleLikes", back_populates="liked_article")
 
     bookmarked_by = relationship("UserArticleBookmarks", back_populates="bookmarked_article")
@@ -41,7 +43,7 @@ class Article(Base):
     viewed_by = relationship("UserArticleViewed", back_populates="viewed_article")
     ignored_by = relationship("UserArticleIgnored", back_populates="ignored_article")
 
-    article_comments = relationship("Comments", back_populates="commented_article")
+    article_comments = relationship("Comments", back_populates="commented_article", lazy='selectin')
     # author = Column(String)
     # author_img = Column(String)
     __mapper_args__ = {'polymorphic_on': type,

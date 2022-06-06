@@ -34,8 +34,8 @@ class User(Base):
         'User',
         secondary='user_following',
         primaryjoin=id==UserFollowing.follower_id,
-        secondaryjoin=id==UserFollowing.following_id,
-        backref='followers'
+        secondaryjoin=id==UserFollowing.following_id
+        # backref='followers'
     )
 
     user_followings = relationship(
@@ -43,7 +43,8 @@ class User(Base):
         secondary='user_following',
         primaryjoin=id==UserFollowing.following_id,
         secondaryjoin=id==UserFollowing.follower_id,
-        backref='followings'
+        # lazy='selectin',
+        # backref='followings'
     )
 
 
@@ -53,6 +54,8 @@ class User(Base):
 
     bookmarked_articles = relationship("UserArticleBookmarks", back_populates="bookmarked_user")
 
+    # bookmarks = relationship('Article', lazy='joined')
+ 
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     ignored_articles = relationship("UserArticleIgnored", back_populates="ignored_user")
     
@@ -66,8 +69,8 @@ class User(Base):
         'polymorphic_identity':'user'
         }
 
-    def __repr__(self) -> str:
-        return f"<User(name={self.username})>"
+    # def __repr__(self) -> str:
+    #     return f"<User(name={self.username})>"
 
     # def follow(self, user):
     #     if user not in self.following:
@@ -91,6 +94,8 @@ class RegisteredUser(User):
     password = Column(String)
     first_name = Column(String(50))
     last_name = Column(String(50))
+    profile_Image = Column(String(250))
+
     email = Column(EmailType)
     __mapper_args__ = {'polymorphic_identity': True}
     # id = Column(

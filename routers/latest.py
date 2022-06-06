@@ -34,19 +34,19 @@ async def get_trending_news():
             latestcrud = LatestCrud(session)
             authorcrud = AuthorCrud(session)
             trending_articles = await latestcrud.get_trending_article()
-            trending = []
+            # trending = []
 
-            for articles in trending_articles:
-                article = articles.__dict__
-                author_id = article['author_id']
-                author = await authorcrud.get_author_by_id(author_id)
-                author = author._mapping.Author
-                # print(author,111111111111111, author.__dict__)
-                # print(author.author_name, author.author_img)
-                article['author'] = author.author_name
-                article['author_img']  = author.author_img
-                trending.append(article)
-    return trending
+            # for articles in trending_articles:
+            #     article = articles.__dict__
+            #     author_id = article['author_id']
+            #     author = await authorcrud.get_author_by_id(author_id)
+            #     author = author._mapping.Author
+            #     # print(author,111111111111111, author.__dict__)
+            #     # print(author.author_name, author.author_img)
+            #     article['author'] = author.author_name
+            #     article['author_img']  = author.author_img
+            #     trending.append(article)
+    return trending_articles
 
 
 @router.get('/get_latest_articles', status_code = 200)
@@ -66,8 +66,8 @@ async def get_trending_articles_test(id:int) -> List[LatestArticle]:
 
 
 
-@router.get('/get_trending_articles', status_code = 200)
-async def get_trending_articles(background_tasks: BackgroundTasks) -> List[LatestArticle]:
+@router.get('/get_trending_articles')
+async def get_trending_articles(background_tasks: BackgroundTasks):
     # trending = await get_trending_news()
     # print(trending,dir(trending),555555555555555555555555555, )
     cache_exists = await latestcache.cache_exits()

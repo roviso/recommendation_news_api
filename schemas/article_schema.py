@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Union
 from pydantic import BaseModel
 from typing import Optional
-from schemas import author_schema
+from schemas import author_schema, comments_schema
 
 
 class Article(BaseModel):
@@ -63,3 +63,28 @@ class ArticleComments(BaseModel):
     class Config:
         orm_mode = True
 
+
+class GetAllArticle(BaseModel):
+    id: str
+    url: str
+    head_image : Optional[str]
+    heading : Optional[str]
+    date : Optional[str]
+
+    label: Optional[str]
+
+    content : List[Optional[str]]
+    additional_img : List[Optional[str]] = None
+    source : Optional[str]
+    likes: Optional[int]
+    shares: Optional[int]
+
+    type: str 
+
+    author_id: str
+
+    # author: Union[author_schema.AuthorInDB, None] = None
+    # comments: comments_schema.GetComment
+
+    class Config:
+        orm_mode = True

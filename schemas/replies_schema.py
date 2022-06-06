@@ -26,7 +26,8 @@ class LikeReplies(user_schema.User):
         orm_mode = True
 
 
-class ArticleReplies(user_schema.CommentedUsers):
+class ArticleReplies(BaseModel):
+    username: str
     date_of_comment: str
     replies: str
     likes: int
