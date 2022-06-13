@@ -56,6 +56,14 @@ async def get_latest_articles() -> List[LatestArticle]:
             latestcrud = LatestCrud(session)
             return await latestcrud.get_all_latest_article()
 
+
+@router.get('/get_latest_article/article_id', status_code = 200)
+async def get_latest_articles(article_id: str) -> List[LatestArticle]:
+    async with async_session() as session:
+        async with session.begin():
+            latestcrud = LatestCrud(session)
+            return await latestcrud.get_article(article_id)
+
 @router.get('/get_trending_articles_test', status_code = 200)
 async def get_trending_articles_test(id:int) -> List[LatestArticle]:
     trending =  await latestcache.cache_exits(id)
@@ -68,19 +76,20 @@ async def get_trending_articles_test(id:int) -> List[LatestArticle]:
 
 @router.get('/get_trending_articles')
 async def get_trending_articles(background_tasks: BackgroundTasks):
-    # trending = await get_trending_news()
-    # print(trending,dir(trending),555555555555555555555555555, )
-    cache_exists = await latestcache.cache_exits()
-    if not cache_exists:
-        print('Reading from db')
-        # trending = await get_trending_news()
-        trending_news = [news for news in await get_trending_news()]
+    trending_news = [news for news in await get_trending_news()]
 
-        background_tasks.add_task(cache_latest_news,trending_news)
-    else:
-        print('Reading from cache')
-        trending_news_ordered = await latestcache.read_cached_news()
-        trending_news = [dict(recommended_news) for recommended_news in trending_news_ordered.values()]
+
+    # cache_exists = await latestcache.cache_exits()
+    # if not cache_exists:
+    #     print('Reading from db')
+    #     # trending = await get_trending_news()
+    #     trending_news = [news for news in await get_trending_news()]
+
+    #     background_tasks.add_task(cache_latest_news,trending_news)
+    # else:
+    #     print('Reading from cache')
+    #     trending_news_ordered = await latestcache.read_cached_news()
+    #     trending_news = [dict(recommended_news) for recommended_news in trending_news_ordered.values()]
     return trending_news
 
     

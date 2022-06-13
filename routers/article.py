@@ -86,10 +86,6 @@ async def get_all_articles() -> List[RecommendedArticle]:
         async with session.begin():
             articlecrud = ArticleCrud(session)
             articles =  await articlecrud.get_all_article()
-
-            # print(articles, dir(articles), type(articles))
-
-    # final_articles = await add_comments_and_replies(articles)
             return paginate(articles)
 
 
@@ -104,8 +100,8 @@ async def get_recommended_articles() -> List[RecommendedArticle]:
 
 
 @router.get('/search_article', status_code = 200)
-async def search_article(article_url: str) -> List[Article]:
+async def search_article(article_id: str) -> List[Article]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            return await articlecrud.get_article(article_url)
+            return await articlecrud.search_article(article_id)

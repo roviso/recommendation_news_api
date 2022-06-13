@@ -15,16 +15,15 @@ class Comments(Base):
     likes = Column(Integer)
     totalreplies = Column(Integer)
 
-
     comments = Column(String)
 
 
-    commented_user = relationship("User", back_populates="commented_articles")
+    commented_user = relationship("User", back_populates="commented_articles",lazy='selectin')
     commented_article = relationship("Article", back_populates="article_comments")
 
     
     comment_liked_by = relationship("UserCommentLikes", back_populates="comment_likes")
-    comment_replies = relationship("Replies", back_populates="replied_comment")
+    comment_replies = relationship("Replies", back_populates="replied_comment",lazy='selectin')
 
 
 class UserCommentLikes(Base):

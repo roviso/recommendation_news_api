@@ -75,6 +75,13 @@ class UserCrud():
         (result,) = results.one()
         return result
 
+
+    async def search_user_by_name(self,user_name: str) -> List[User]:
+        # query = select(User).where(User.username == user_name)
+        query = select(User).filter(User.username.like(f'{user_name}%'))
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
     async def get_all_user(self) -> List[User]:
         query = select(User).order_by(User.id)
         results = await self.db_session.execute(query)

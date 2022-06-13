@@ -5,6 +5,28 @@ from sqlalchemy.orm import relationship
 
 from sqlalchemy.dialects.postgresql import ARRAY
 
+from sqlalchemy.ext.associationproxy import association_proxy
+
+
+class Keywords(Base):
+    __tablename__ = 'keywords'
+
+    id = Column(Integer, primary_key = True)
+    tag = Column(String, nullable = False)
+
+    articles = relationship("AricleKeywords", back_populates = "keyword")
+    
+class AricleKeywords(Base):
+    __tablename__ = 'article_keywords'
+    article_id = Column(ForeignKey('article.id'), primary_key=True)
+    keywords_id = Column(ForeignKey('keywords.id'), primary_key=True)
+    # blurb = Column(String, nullable=False)
+    article = relationship("Article", back_populates="keywords")
+    keyword = relationship("Keywords", back_populates="articles", lazy='selectin')
+
+    keyword_word = association_proxy(target_collection='keyword', attr='tag')
+
+
 class Article(Base):
     __tablename__ = 'article'
 
@@ -26,6 +48,8 @@ class Article(Base):
     author = relationship("Author", back_populates="articles", lazy='selectin')
 
     type = Column(String)
+
+    keywords = relationship("AricleKeywords", back_populates= "article", lazy='selectin')
 
     views = Column(Integer)
     ignores = Column(Integer)

@@ -1,9 +1,9 @@
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,joinedload,contains_eager
 from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
-from models.article_model import Article,RecommendedArticle, LatestArticle
+from models.article_model import Article,RecommendedArticle, LatestArticle,AricleKeywords
 from crud.crud_comments import Comments
 
 
@@ -29,6 +29,14 @@ class ArticleCrud():
         results = await self.db_session.execute(query)
         result = results.fetchone()
         return result
+
+    async def search_article(self,article_id: str) -> Article:
+        # query = select(Article).where(Article.id==article_id)
+        # results = await self.db_session.execute(query)
+        # result = results.scalars().one()
+        # return result
+        return await self.db_session.get(Article, article_id, populate_existing=True)
+        
 
     async def get_all_article(self) -> List[Article]:
         query = select(Article).order_by(Article.id)
