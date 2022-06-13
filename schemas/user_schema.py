@@ -59,9 +59,10 @@ class CreateUserArticleViewed(User):
         orm_mode = True
 
 
-class GetAllUsers(BaseModel):
+class SearchUsers(BaseModel):
     id: str
     username: str 
+    profile_Image: Optional[str] = None
 
     class Config:
         orm_mode = True

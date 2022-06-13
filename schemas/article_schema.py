@@ -63,6 +63,21 @@ class ArticleComments(BaseModel):
     class Config:
         orm_mode = True
 
+class SearchArticleByTag(BaseModel):
+    id: str
+    url: str
+    head_image : Optional[str]
+    heading : Optional[str]
+    date : Optional[str]
+    label: Optional[str]
+    source : Optional[str]
+    likes: Optional[int]
+    shares: Optional[int]
+
+    class Config:
+        orm_mode = True
+
+
 
 class GetAllArticle(BaseModel):
     id: str
@@ -83,7 +98,9 @@ class GetAllArticle(BaseModel):
 
     author_id: str
 
-    # author: Union[author_schema.AuthorInDB, None] = None
+    # author: Optional[List[author_schema.GetAllAuthors]]
+
+    # author: Union[author_schema.AuthorInDB, None]
     # comments: comments_schema.GetComment
 
     class Config:
