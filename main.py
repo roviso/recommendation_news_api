@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, follow, recommendation
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, redirect, follow, bookmarks, profile, recommendation
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_pagination import Page, add_pagination
+
 
 app = FastAPI(title='News Recommendation')
 
@@ -31,6 +33,8 @@ async def startup():
 
 
 app.include_router(recommendation.router)
+
+app.include_router(profile.router)
 app.include_router(redirect.router)
 app.include_router(token.router)
 app.include_router(user.router)
@@ -40,9 +44,13 @@ app.include_router(latest.router)
 app.include_router(cache.router)
 app.include_router(author.router)
 app.include_router(likes.router)
+app.include_router(bookmarks.router)
 app.include_router(views.router)
 app.include_router(comments.router)
 app.include_router(replies.router)
+
+add_pagination(app)
+
 
 if __name__ == "__main__":
     # Use this for debugging purposes only

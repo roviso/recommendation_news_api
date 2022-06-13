@@ -30,7 +30,7 @@ class ArticleCrud():
         result = results.fetchone()
         return result
 
-    async def get_all_article(self):
+    async def get_all_article(self) -> List[Article]:
         query = select(Article).order_by(Article.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
@@ -80,6 +80,22 @@ class ArticleCrud():
             print(f"Decreasing the likes")
             new_like = (article.likes or 0) - decrease_like
             q = q.values(likes=new_like)
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
+    
+    async def update_bookmarks(self, article_id: str, increase_bookmark: Optional[int]= None, decrease_bookmark: Optional[int]= None,):
+        article = await self.get_article_by_id(article_id)
+        article = article._mapping.Article
+        q = update(Article).where(Article.id == article_id)
+        if increase_bookmark:
+            print(f"Increasing the likes")
+            new_bookmark = (article.bookmarks or 0) + increase_bookmark
+            q = q.values(bookmarks=new_bookmark)
+        if decrease_bookmark:
+            print(f"Decreasing the likes")
+            new_bookmark = (article.bookmarks or 0) - decrease_bookmark
+            q = q.values(bookmarks=new_bookmark)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 

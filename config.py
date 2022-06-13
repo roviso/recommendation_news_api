@@ -26,6 +26,14 @@ class PathConfig:
 pathconfig = PathConfig()
 
 
+class ImgConfig:
+    IMG_SAVED_PATH = Path(
+        Path(__file__).parent,'repository','profileImg'
+    ).resolve()
+    IMG_SAVED_PATH = str(IMG_SAVED_PATH) + '/'
+
+imgconfig = ImgConfig()
+
 class TimeConfig:
     IGNORE_TIME = 5 #5 second ignore time
 

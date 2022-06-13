@@ -3,13 +3,14 @@ from typing import List, Optional
 from fastapi import status, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import update, delete
+from sqlalchemy import update, delete, func
 from sqlalchemy.future import select
 from schemas import follow_schema
 from crud import crud_article, crud_author, crud_user
 import secrets
 from models  import author_model,article_model,user_model
 from database import async_session
+
 
 
 class Follow():
@@ -21,11 +22,9 @@ class Follow():
 
     async def follow_user(self, follower_following: follow_schema.FollowUser):
         follower = await self.userdb.get_user(follower_following.follower_id)
-        temp_follower = user_model.User()
-        temp_follower = follower
         following = await self.userdb.get_user(follower_following.following_id)
-        temp_following = user_model.User()
-        temp_following = following
+
+
         if not follower:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
         if not following:
@@ -43,6 +42,23 @@ class Follow():
         query = select(user_model.UserFollowing).where(user_model.UserFollowing.follower_id == user_id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
+
+    async def get_following_count(self, user_id):
+        query = select(func.count()).select_from(select(user_model.UserFollowing).where(user_model.UserFollowing.follower_id == user_id))
+        count = await self.db_session.execute(query)
+        return count.scalar_one()
+
+    async def get_followers(self,user_id):
+        # user = await self.userdb.get_user(user_id)
+        query = select(user_model.UserFollowing).where(user_model.UserFollowing.following_id == user_id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
+    async def get_followers_count(self, user_id):
+        query = select(func.count()).select_from(select(user_model.UserFollowing).where(user_model.UserFollowing.following_id == user_id))
+        count = await self.db_session.execute(query)
+        return count.scalar_one()
 
 
     # async def follow_user(self, follower_following: follow_schema.FollowUser):
