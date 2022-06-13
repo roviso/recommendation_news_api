@@ -29,6 +29,12 @@ class AuthorCrud():
         # (result,) = results.one()
         # return result
 
+    async def search_author_by_name(self,author_name: str) -> List[Author]:
+        query = select(Author).filter(Author.author_name.like(f'{author_name}%'))
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
 
     async def get_author_by_name(self,author_name: str) -> Author:
         query = select(Author).where(Author.author_name == author_name)
