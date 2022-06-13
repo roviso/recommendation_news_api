@@ -14,7 +14,6 @@ class UserFollowing(Base):
 
 class User(Base):
     __tablename__ = 'user'
-    # id = Column(Integer, primary_key =True, index=True)
     
     id = Column(String, primary_key =True, index=True)
     username = Column(String)
@@ -22,13 +21,6 @@ class User(Base):
     device_id = Column(String)
     ip_address = Column(String)
     registered = Column(Boolean)
-
-    # following = relationship(
-    #     'User', lambda: user_following,
-    #     primaryjoin=lambda: User.id == user_following.c.user_id,
-    #     secondaryjoin=lambda: User.id == user_following.c.following_id,
-    #     backref='followers'
-    # )
 
     user_followers = relationship(
         'User',
@@ -54,8 +46,7 @@ class User(Base):
 
     bookmarked_articles = relationship("UserArticleBookmarks", back_populates="bookmarked_user")
 
-    # bookmarks = relationship('Article', lazy='joined')
- 
+
     viewed_articles = relationship("UserArticleViewed", back_populates="viewed_user")
     ignored_articles = relationship("UserArticleIgnored", back_populates="ignored_user")
     
@@ -72,22 +63,6 @@ class User(Base):
     # def __repr__(self) -> str:
     #     return f"<User(name={self.username})>"
 
-    # def follow(self, user):
-    #     if user not in self.following:
-    #         self.following.append(user)
-    #         user.following.append(self)
-
-    # def unfollow(self, user):
-    #     if user in self.following:
-    #         self.following.remove(user)
-    #         user.following.remove(self)
-
-
-# user_following = Table(
-#     'user_following', Base.metadata,
-#     Column('user_id', String, ForeignKey(User.id), primary_key=True),
-#     Column('following_id', String, ForeignKey(User.id), primary_key=True)
-# )
 
 class RegisteredUser(User):
     # __tablename__ = "registereduser"

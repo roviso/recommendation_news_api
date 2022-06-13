@@ -13,6 +13,7 @@ def str_to_list(list_string):
 
 def load_pkl(pkl_file):
     with open(pkl_file, 'rb') as inp:
+        print(f"loading pickle file: {pkl_file}")
         pickled_obj = pickle.load(inp)
     return pickled_obj
 
@@ -37,13 +38,16 @@ def execute_values(conn, df, table):
 
 
 def load_model_data():    
+    print('Loading data into database...')
     # LOADING PRE PICKLE FILE
     if pathconfig.PRE_PKL_PATH.is_file():
+        print('Loading PKL file...')
         pre = load_pkl(pathconfig.PRE_PKL_PATH)
         print('Successfully Loaded Pickle file')
     else:
         print("NO PICKLE FILE FOUND SAD :(")
 
+    print('ESTABLISHING CONNECTION TO DATABASE')
     # ESTABLISHING CONNECTION TO DATABASE
     hostname = 'localhost'
     username = 'postgres'

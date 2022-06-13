@@ -56,6 +56,14 @@ async def get_latest_articles() -> List[LatestArticle]:
             latestcrud = LatestCrud(session)
             return await latestcrud.get_all_latest_article()
 
+
+@router.get('/get_latest_article/article_id', status_code = 200)
+async def get_latest_articles(article_id: str) -> List[LatestArticle]:
+    async with async_session() as session:
+        async with session.begin():
+            latestcrud = LatestCrud(session)
+            return await latestcrud.get_article(article_id)
+
 @router.get('/get_trending_articles_test', status_code = 200)
 async def get_trending_articles_test(id:int) -> List[LatestArticle]:
     trending =  await latestcache.cache_exits(id)

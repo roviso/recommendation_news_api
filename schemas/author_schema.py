@@ -14,4 +14,16 @@ class Author(BaseModel):
 class AuthorInDB(Author):
     id :str
     class Config:
-            orm_mode :str
+        orm_mode :True
+
+
+    
+class GetAllUsers(BaseModel):
+    id: str
+    author_name :str
+    author_img :str
+    source: str
+
+
+    class Config:
+        orm_mode = True

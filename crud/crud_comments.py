@@ -83,7 +83,7 @@ class Comments():
 
 
     async def like_comment(self, comment_like: comments_schema.LikeComments,):
-        user = await self.userdb.get_user(comment_like.id)
+        user = await self.userdb.get_user(comment_like.user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
         else:

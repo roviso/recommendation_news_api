@@ -39,31 +39,31 @@ async def comment_article(comment_like: comments_schema.LikeComments, async_sess
 
 
 @router.get('/get_article_comments')
-async def get_article_comments(article_id: str) -> List[comments_schema.ArticleComments]:
+async def get_article_comments(article_id: str):
     res = []
     async with async_session() as session:
         async with session.begin():
             comments = Comments(session)
-            replies = Replies(session)
+            # replies = Replies(session)
             all_comments = await comments.get_comments_by_article(article_id)
 
-            for comment in all_comments:
-                response_dict = {}
-                user_dict = {}
-                user = await comments.userdb.get_user(comment.user_id)
-                user = user._mapping.User
-                user_dict['user_id'] = user.id
-                user_dict['username'] = user.username
+            # for comment in all_comments:
+            #     response_dict = {}
+            #     user_dict = {}
+            #     user = await comments.userdb.get_user(comment.user_id)
+            #     user = user._mapping.User
+            #     user_dict['user_id'] = user.id
+            #     user_dict['username'] = user.username
                 
-                response_dict['commented_by'] = user_dict
-                # response_dict['id'] = comment.id
-                # response_dict['date_of_comment'] = comment.date_of_comment
-                response_dict['comments'] = comment
-                # response_dict['likes'] = comment.likes
-                response_dict['replies'] = await replies.get_replies_by_comment(comment.id)
+            #     response_dict['commented_by'] = user_dict
+            #     # response_dict['id'] = comment.id
+            #     # response_dict['date_of_comment'] = comment.date_of_comment
+            #     response_dict['comments'] = comment
+            #     # response_dict['likes'] = comment.likes
+            #     response_dict['replies'] = await replies.get_replies_by_comment(comment.id)
 
-                res.append(response_dict)
+            #     res.append(response_dict)
 
-    return res
+    return all_comments
 
     
