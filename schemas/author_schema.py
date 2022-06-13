@@ -18,10 +18,12 @@ class AuthorInDB(Author):
 
 
     
-class Search_author(BaseModel):
-    id :str
+class GetAllUsers(BaseModel):
+    id: str
     author_name :str
     author_img :str
     source: str
+
+
     class Config:
-        orm_mode :True
+        orm_mode = True
