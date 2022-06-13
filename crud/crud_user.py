@@ -78,7 +78,9 @@ class UserCrud():
 
     async def search_user_by_name(self,user_name: str) -> List[User]:
         # query = select(User).where(User.username == user_name)
-        query = select(User).filter(User.username.like(f'{user_name}%'))
+        entity = with_polymorphic(User, RegisteredUser)
+        query = select(entity).filter(entity.username.like(f'{user_name}%'))
+        # query = select(User).filter(User.username.like(f'{user_name}%'))
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
