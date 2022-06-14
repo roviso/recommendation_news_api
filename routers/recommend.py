@@ -95,6 +95,20 @@ async def search_articles(article_id: str, async_session: Session = Depends(data
     return similar_articles
 
 
+@router.get('/user/{user_id}')
+async def user_recommendation(user_id: str, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            # article = await articlecrud.search_article(article_id)
+            keywords = ' '.join([str(keyword.keyword.tag) for keyword in pre.user_df['user_keywords']])
+            article_list =  get_similar_articles(keywords,pre)
+            similar_articles = [await articlecrud.search_article(article_id) for article_id in article_list]
+
+
+    return similar_articles
+
+
 
 async def get_article(article_url: str):
     async with async_session() as session:
