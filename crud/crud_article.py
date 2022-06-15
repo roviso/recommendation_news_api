@@ -31,7 +31,7 @@ class ArticleCrud():
         return result
 
     async def search_article(self,article_id: str) -> Article:
-        # query = select(Article).where(Article.id==article_id)
+        # query = select(Article).where(Article.id==article_id).order_by(Article.date.desc())
         # results = await self.db_session.execute(query)
         # result = results.scalars().one()
         # return result

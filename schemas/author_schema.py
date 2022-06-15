@@ -18,7 +18,7 @@ class AuthorInDB(Author):
 
 
     
-class GetAllUsers(BaseModel):
+class GetAllAuthors(BaseModel):
     id: str
     author_name :str
     author_img :str

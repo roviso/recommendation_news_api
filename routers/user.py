@@ -94,7 +94,7 @@ async def read_user(current_user: user_schema.User = Depends(), async_session: S
             usercrud= UserCrud(session)
             return await usercrud.get_user(current_user.id)
 
-@router.get("/get_all_user", response_model = LimitOffsetPage[user_schema.GetAllUsers])
+@router.get("/get_all_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
 async def read_all_user(async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
