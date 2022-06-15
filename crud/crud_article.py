@@ -30,6 +30,13 @@ class ArticleCrud():
         result = results.fetchone()
         return result
 
+    async def get_all_articles_by_id(self, article_ids: list, offset , limit) -> List[Article]:
+        query = select(Article).filter(Article.id.in_(article_ids)).offset(offset).limit(limit)
+        results = await self.db_session.execute(query)
+        
+        return results.scalars().all()
+
+
     async def search_article(self,article_id: str) -> Article:
         # query = select(Article).where(Article.id==article_id).order_by(Article.date.desc())
         # results = await self.db_session.execute(query)

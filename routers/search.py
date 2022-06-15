@@ -1,9 +1,8 @@
-from fastapi import APIRouter,status,Depends
-from crud.crud_article import ArticleCrud
+from fastapi import APIRouter,Depends
 from crud.crud_user import UserCrud
 from crud.crud_author import AuthorCrud
 from crud.crud_keywords import KeywordsCrud
-from models.article_model import Article
+
 from schemas import user_schema, author_schema, article_schema
 
 from repository.ncf_recommender.loader import load_pkl
@@ -12,17 +11,9 @@ import secrets
 from database import async_session
 from sqlalchemy.orm import Session
 import database
-from config import pathconfig
-from sklearn.feature_extraction.text import TfidfVectorizer
 
-import scipy.sparse as sparse
-from scipy.sparse.linalg import spsolve
-import random
-from sklearn.preprocessing import MinMaxScaler
+
 from fastapi_pagination import paginate,LimitOffsetPage
-
-
-from implicit.als import AlternatingLeastSquares
 
 
 
@@ -32,6 +23,7 @@ router = APIRouter(
 )
 
 
+<<<<<<< HEAD
 
 # print('----------Preprocessing(loading data)--------------------')
 # if pathconfig.PRE_PKL_PATH.is_file():
@@ -64,6 +56,8 @@ router = APIRouter(
 #     return article_list
 
 
+=======
+>>>>>>> ff8c4c4fde45a05bf11e2029bee5010364634105
 @router.get('/{tags}', response_model = LimitOffsetPage[article_schema.SearchArticleByTag])
 async def search_articles(tag: str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:

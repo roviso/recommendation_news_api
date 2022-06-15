@@ -5,6 +5,16 @@ from sqlalchemy.orm import relationship
 from typing import List, Optional
 from sqlalchemy_utils import EmailType
 
+
+class UserKeywords(Base):
+    __tablename__ = 'user_keywords'
+    user_id = Column(ForeignKey('user.id'), primary_key=True)
+    keywords_id = Column(ForeignKey('keywords.id'), primary_key=True)
+
+    user = relationship("User", back_populates="keywords")
+    keyword = relationship("Keywords", back_populates="users", lazy='selectin')
+
+
 class UserFollowing(Base):
     __tablename__ = 'user_following'
 
@@ -55,6 +65,8 @@ class User(Base):
 
     replied_comments = relationship("Replies", back_populates="replied_user")
     liked_replies = relationship("UserRepliesLikes", back_populates="liked_user")
+
+    keywords = relationship("UserKeywords", back_populates= "user", lazy='selectin')
     
     __mapper_args__ = {'polymorphic_on': registered,
         'polymorphic_identity':'user'
