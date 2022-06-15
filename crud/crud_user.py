@@ -45,9 +45,15 @@ class UserCrud():
         return result
 
     async def get_user_by_email(self,email: str) -> RegisteredUser:
-        query = select(RegisteredUser).where(RegisteredUser.email == email)
+        print(f"email give is : {email}, 555555555555555555555555555555555555555555555555555")
+        # query = select(RegisteredUser).where(RegisteredUser.email == email)
+
+        # results = await self.db_session.execute(query)
+        # print(f"results is {results ,results.scalars().all() }, 666666666666666666666666666666666666666666")
+        query = select(RegisteredUser).filter(RegisteredUser.email.ilike(email))
         results = await self.db_session.execute(query)
-        result = results.scalars().one()
+        (result,) = results.one()
+
         return result
 
     async def get_user_profile(self,user_id: str) -> User:

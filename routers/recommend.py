@@ -1,8 +1,10 @@
-from fastapi import APIRouter, status, HTTPException,Depends
+from typing import Union
+from fastapi import APIRouter, status, HTTPException,Depends,Query
 from starlette.responses import RedirectResponse
 from config import pathconfig
 import pickle
 from schemas import clicks_schema
+from schemas import article_schema
 from crud.crud_redirect_clicks import ClicksCrud
 from database import async_session
 from crud.crud_article import ArticleCrud
@@ -14,6 +16,7 @@ import secrets
 from models import article_model, author_model
 import ast
 from implicit.als import AlternatingLeastSquares
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse.linalg import spsolve
 from sklearn.preprocessing import MinMaxScaler
@@ -22,6 +25,9 @@ from database import async_session
 from sqlalchemy.orm import Session
 import numpy as np
 import pandas as pd
+from fastapi_pagination import Page, add_pagination, paginate,LimitOffsetPage
+import scipy.sparse as sparse
+
 
 router = APIRouter(
     prefix = "/recommend",
@@ -30,7 +36,7 @@ router = APIRouter(
 
 
 
-
+### _______________________________ LOADING PREPROCESSING FILES _______________________________________________
 
 print('----------Preprocessing(loading data)--------------------')
 if pathconfig.PRE_PKL_PATH.is_file():
@@ -42,12 +48,15 @@ if pathconfig.REDIRECT_DICT_PATH.is_file():
         redirect_dict = pickle.load(f)
     print('Successfully Loaded redirection url file')
 
+
+
+### _______________________________ TFIDF SIMILARITIES CALCULATOR _______________________________________________
 docs = pre.article_df.keywords_words.values
 vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(docs)
 
 def get_similar_articles(q, pre):
-    print("query:", q)
+    # print("query:", q)
     print("Articles with high cosine similarity are: ")
     q = [q]
     q_vec = vectorizer.transform(q).toarray().reshape(pre.tfidfVectors.shape[0],)
@@ -68,6 +77,56 @@ def get_similar_articles(q, pre):
     return article_list
 
 
+### _______________________________ PREPARING RECOMMENDATION ENGINE _______________________________________________
+
+print("_______________PREPARING RECOMMENDATION ENGINE_______________________________")
+user_article_df = pre.df.groupby(['user','article_id']).size().reset_index(name='counts')
+data = user_article_df.dropna()
+data = data.copy()
+data.rename(columns={"article_id": "article", "counts": "views"},inplace=True)
+
+# Create a numeric user_id and article_id column
+data['user'] = data['user'].astype("category")
+data['article'] = data['article'].astype("category")
+data['user_id'] = data['user'].cat.codes
+data['article_id'] = data['article'].cat.codes
+
+user_id_dict = pd.Series(data.user_id.values, index=data.user).to_dict()
+
+article_id_dict = pd.Series(data.article_id.values, index=data.article).to_dict()
+
+
+sparse_item_user = sparse.csr_matrix((data['views'].astype(float), (data['article_id'], data['user_id'])))
+
+
+sparse_user_item = sparse_item_user.T.tocsr()
+
+model = AlternatingLeastSquares(factors=64, regularization=0.05)
+model.fit(2 * sparse_user_item)
+
+
+
+def get_similar_cf_articles(article_list):
+    similar_article_ids = []
+    # similar_article_ids = [ids for article_id in article_list for ids,_ in model.similar_items(int(article_id_dict.get(article_id)))]
+    for article_id in article_list:
+        ids, scores= model.similar_items(int(article_id_dict.get(article_id)))
+        similar_article_ids.extend(ids)
+
+    similar_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in similar_article_ids]
+    return similar_article_ids
+
+
+def get_recommended_cf_articles(user_id):
+    # recommended_article_ids = [ids for ids, scores in model.recommend(user_id, sparse_user_item[user_id], N=10, filter_already_liked_items=False)]
+    recommended_article_ids = []
+    cf_user_id = user_id_dict.get(user_id)
+    ids, scores = model.recommend(cf_user_id, sparse_user_item[cf_user_id], N=10, filter_already_liked_items=False)
+    recommended_article_ids.extend(ids)
+    recommended_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in recommended_article_ids]
+    return recommended_article_ids
+
+
 @router.get('/tags')
 async def search_articles(tags: str, async_session: Session = Depends(database.get_session)):
     article_list =  get_similar_articles(tags,pre)
@@ -82,32 +141,45 @@ async def search_articles(tags: str, async_session: Session = Depends(database.g
     return articles
 
 @router.get('/similar/{article_id}')
-async def search_articles(article_id: str, async_session: Session = Depends(database.get_session)):
+async def search_articles(article_id: str,offset: Union[int, None] = None, limit: Union[int, None] = None, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
             article = await articlecrud.search_article(article_id)
             keywords = ' '.join([str(keyword.keyword.tag) for keyword in article.keywords])
-            article_list =  get_similar_articles(keywords,pre)
-            similar_articles = [await articlecrud.search_article(article_id) for article_id in article_list]
+            tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+
+            cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
 
-    return similar_articles
+            articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
 
 
-@router.get('/user/{user_id}')
-async def user_recommendation(user_id: str, async_session: Session = Depends(database.get_session)):
+    return {"item": articles,
+            "total": len(articles),
+            "limit": limit,
+            "offset": offset}
+
+
+@router.get('/user/{user_id}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=50), async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
             # article = await articlecrud.search_article(article_id)
-            keywords = ' '.join([str(keyword.keyword.tag) for keyword in pre.user_df['user_keywords']])
-            article_list =  get_similar_articles(keywords,pre)
-            similar_articles = [await articlecrud.search_article(article_id) for article_id in article_list]
+            user = pre.user_df.query(f'user == "{user_id}"')
+            keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
+            tfidf_similar_article_list =  get_similar_articles(keywords,pre)
 
+            cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
-    return similar_articles
+            cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
+            recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
+
+            articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
+
+            return  paginate(articles)
 
 
 async def get_article(article_url: str):

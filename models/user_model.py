@@ -12,7 +12,7 @@ class UserKeywords(Base):
     keywords_id = Column(ForeignKey('keywords.id'), primary_key=True)
 
     user = relationship("User", back_populates="keywords")
-    keyword = relationship("Keywords", back_populates="articles", lazy='selectin')
+    keyword = relationship("Keywords", back_populates="users", lazy='selectin')
 
 
 class UserFollowing(Base):

@@ -15,6 +15,7 @@ class Keywords(Base):
     tag = Column(String, nullable = False)
 
     articles = relationship("AricleKeywords", back_populates = "keyword")
+    users = relationship("UserKeywords", back_populates = "keyword")
     
 class AricleKeywords(Base):
     __tablename__ = 'article_keywords'
