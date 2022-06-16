@@ -27,7 +27,9 @@ import numpy as np
 import pandas as pd
 from fastapi_pagination import Page, add_pagination, paginate,LimitOffsetPage
 import scipy.sparse as sparse
-
+from routers import utils
+from collections import Counter
+import operator
 
 router = APIRouter(
     prefix = "/recommend",
@@ -106,6 +108,36 @@ model.fit(2 * sparse_user_item)
 
 
 
+def get_trending_keywords(recent_articles):
+    keywords = [str(keyword.keyword.tag) for articles in  recent_articles for keyword in articles.keywords]
+    keyword_count = Counter(keywords)
+
+    keyword_popularity = {}
+
+    for articles in  recent_articles:
+        
+        likes = articles.likes
+        shares = articles.shares 
+        views = articles.views 
+        comments = articles.total_comments
+
+        # print(f"article: {articles.id} has {likes} likes, {shares} shares, {views} views, {comments} comments")
+
+        popularity = int(likes) + int(shares) + int(views) + int(comments)
+        
+        keywords = [str(keyword.keyword.tag) for keyword in articles.keywords]
+
+        
+
+        article_keywords = {tag: popularity  for tag in keywords}
+
+        keyword_popularity = update_dictionary(keyword_popularity, article_keywords)
+
+    all_keywords = update_dictionary(keyword_popularity, keyword_count)
+    trending_keywords = dict( sorted(all_keywords.items(), key=operator.itemgetter(1),reverse=True))
+    return list(map(operator.itemgetter(0), trending_keywords.items()))[:20]
+
+
 def get_similar_cf_articles(article_list):
     similar_article_ids = []
     # similar_article_ids = [ids for article_id in article_list for ids,_ in model.similar_items(int(article_id_dict.get(article_id)))]
@@ -168,6 +200,43 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
             articlecrud = ArticleCrud(session)
             # article = await articlecrud.search_article(article_id)
             user = pre.user_df.query(f'user == "{user_id}"')
+            keyword_list = [str(keyword) for keyword in user['user_keywords']]
+            if not keyword_list:
+                recent_articles = await articlecrud.get_all_article(offset, limit)
+                trending_keywords = get_trending_keywords(recent_articles)
+                keywords = ' '.join([str(keyword) for keyword in trending_keywords])
+
+                tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+
+                cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+
+                recommended_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
+                return paginate(recommended_articles)
+
+            else:
+                keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
+                tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+
+                cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+                cf_recommended_article_list = get_recommended_cf_articles(user_id)
+
+                recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
+
+                recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
+
+                return  paginate(recommended_articles)
+
+
+
+
+
+@router.get('/web/{user_id}')
+async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            # article = await articlecrud.search_article(article_id)
+            user = pre.user_df.query(f'user == "{user_id}"')
             keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
             tfidf_similar_article_list =  get_similar_articles(keywords,pre)
 
@@ -178,8 +247,33 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
             recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
 
             articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
+            
+            html_content = utils.hori_html_formate(articles)
 
-            return  paginate(articles)
+    return  html_content
+
+
+
+def update_dictionary(old_dict, new_dict):
+    for key in old_dict:
+        if key in new_dict:
+            new_dict[key] = new_dict[key] + old_dict[key]
+        else:
+            new_dict.update({key: old_dict[key]})
+    
+    return new_dict
+
+
+@router.get('/trending_keywords}',)
+async def user_recommendation(offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            recent_articles = await articlecrud.get_all_article(offset, limit)
+            trending_keywords = get_trending_keywords(recent_articles)
+            
+    return trending_keywords
+
 
 
 async def get_article(article_url: str):

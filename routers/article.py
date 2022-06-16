@@ -81,11 +81,11 @@ async def update_articles(article_id: str, url: Optional[str] = None, head_image
 
 
 @router.get('/get_all_articles', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def get_all_articles() -> List[RecommendedArticle]:
+async def get_all_articles(offset: int = 0, limit: int = Query(default=20)) -> List[RecommendedArticle]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            articles =  await articlecrud.get_all_article()
+            articles =  await articlecrud.get_all_article(offset, limit)
             return paginate(articles)
 
 
