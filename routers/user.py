@@ -12,6 +12,9 @@ import secrets
 from database import async_session
 from helper.username_generator import username_generator
 from fastapi_pagination import Page, Params, paginate, LimitOffsetPage
+from collections import Counter
+import operator
+
 
 router = APIRouter(
     prefix = "/user",
@@ -131,7 +134,32 @@ async def get_registered_user(current_user: user_schema.User = Depends(), async_
         async with session.begin():
             usercrud= UserCrud(session)
             return await usercrud.get_registered_user(current_user.id)
-          
+
+
+def get_keywords(recent_articles):
+    keywords = [str(keyword.keyword.tag) for articles in  recent_articles for keyword in articles.keywords]
+    keyword_count = Counter(keywords)
+
+    print(keyword_count)
+    trending_keywords = dict( sorted(keyword_count.items(), key=operator.itemgetter(1),reverse=True))
+    return list(map(operator.itemgetter(0), trending_keywords.items()))[:20]
+
+@router.get('/user_keywords/{user_id}')
+async def get_user_keywords(user_id: str):
+    async with async_session() as session:
+        async with session.begin():
+            usercrud = UserCrud(session)
+            liked_articles = await usercrud.get_liked_articles_by_user(user_id)
+            viewed_articles = await usercrud.get_viewed_articles_by_user(user_id)
+            bookmarked_articles = await usercrud.get_bookmarked_articles_by_user(user_id)
+            commented_articles = await usercrud.get_commented_articles_by_user(user_id)
+
+    all_articles = liked_articles + viewed_articles + bookmarked_articles + commented_articles
+
+    trending_keywords = get_keywords(all_articles)
+
+    return trending_keywords
+
 
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

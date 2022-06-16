@@ -1,4 +1,5 @@
 from typing import Union
+from crud.crud_user import UserCrud
 from fastapi import APIRouter, status, HTTPException,Depends,Query
 from starlette.responses import RedirectResponse
 from config import pathconfig
@@ -16,7 +17,7 @@ import secrets
 from models import article_model, author_model
 import ast
 from implicit.als import AlternatingLeastSquares
-
+import random
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse.linalg import spsolve
 from sklearn.preprocessing import MinMaxScaler
@@ -30,6 +31,8 @@ import scipy.sparse as sparse
 from routers import utils
 from collections import Counter
 import operator
+from routers.user import get_user_keywords
+
 
 router = APIRouter(
     prefix = "/recommend",
@@ -121,21 +124,21 @@ def get_trending_keywords(recent_articles):
         views = articles.views 
         comments = articles.total_comments
 
-        # print(f"article: {articles.id} has {likes} likes, {shares} shares, {views} views, {comments} comments")
-
         popularity = int(likes) + int(shares) + int(views) + int(comments)
         
         keywords = [str(keyword.keyword.tag) for keyword in articles.keywords]
-
-        
 
         article_keywords = {tag: popularity  for tag in keywords}
 
         keyword_popularity = update_dictionary(keyword_popularity, article_keywords)
 
     all_keywords = update_dictionary(keyword_popularity, keyword_count)
+    # print(all_keywords)
     trending_keywords = dict( sorted(all_keywords.items(), key=operator.itemgetter(1),reverse=True))
     return list(map(operator.itemgetter(0), trending_keywords.items()))[:20]
+
+
+
 
 
 def get_similar_cf_articles(article_list):
@@ -199,8 +202,16 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
         async with session.begin():
             articlecrud = ArticleCrud(session)
             # article = await articlecrud.search_article(article_id)
-            user = pre.user_df.query(f'user == "{user_id}"')
-            keyword_list = [str(keyword) for keyword in user['user_keywords']]
+
+            ### ____________-- Getting user keyword from model dataframe -- ____________________
+            # user = pre.user_df.query(f'user == "{user_id}"')
+            # keyword_list = [str(keyword) for keyword in user['user_keywords']]
+
+            ### ___________ -- GETTING USER KEYWORD FROM HISTORY -- __________________
+            keyword_list = await get_user_keywords(user_id)
+
+            print(f"userkeyword is : {keyword_list}")
+
             if not keyword_list:
                 recent_articles = await articlecrud.get_all_article(offset, limit)
                 trending_keywords = get_trending_keywords(recent_articles)
@@ -214,10 +225,15 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
                 return paginate(recommended_articles)
 
             else:
-                keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
+                # keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
+                keywords = ' '.join([str(keyword) for keyword in keyword_list])
                 tfidf_similar_article_list =  get_similar_articles(keywords,pre)
 
                 cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+                
+                if user_id not in user_id_dict:
+                    user_id = random.choice(list(user_id_dict))
+
                 cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
                 recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
@@ -231,7 +247,7 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
 
 
 @router.get('/web/{user_id}')
-async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
+async def user_web_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
@@ -264,8 +280,8 @@ def update_dictionary(old_dict, new_dict):
     return new_dict
 
 
-@router.get('/trending_keywords}',)
-async def user_recommendation(offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
+@router.get('/trending_keywords',)
+async def trending_keywords(offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
@@ -273,6 +289,7 @@ async def user_recommendation(offset: int = 0, limit: int = Query(default=20), a
             trending_keywords = get_trending_keywords(recent_articles)
             
     return trending_keywords
+
 
 
 
