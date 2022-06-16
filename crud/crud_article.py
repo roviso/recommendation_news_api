@@ -31,7 +31,7 @@ class ArticleCrud():
         return result
 
     async def get_all_articles_by_id(self, article_ids: list, offset , limit) -> List[Article]:
-        query = select(Article).filter(Article.id.in_(article_ids)).order_by(LatestArticle.date).offset(offset).limit(limit)
+        query = select(Article).filter(Article.id.in_(article_ids)).order_by(Article.date.desc()).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
         
         return results.scalars().all()
@@ -46,7 +46,7 @@ class ArticleCrud():
         
 
     async def get_all_article(self, offset , limit) -> List[Article]:
-        query = select(Article).order_by(Article.date).offset(offset).limit(limit)
+        query = select(Article).order_by(Article.date.desc()).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
         return results.scalars().all()
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
