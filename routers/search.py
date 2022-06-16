@@ -23,41 +23,6 @@ router = APIRouter(
 )
 
 
-<<<<<<< HEAD
-
-# print('----------Preprocessing(loading data)--------------------')
-# if pathconfig.PRE_PKL_PATH.is_file():
-#     pre = load_pkl(pathconfig.PRE_PKL_PATH)
-#     print('Successfully Loaded Pickle file')
-
-# docs = pre.article_df.keywords_words.values
-# vectorizer = TfidfVectorizer()
-# X = vectorizer.fit_transform(docs)
-
-# def get_similar_articles(q, pre):
-#     print("query:", q)
-#     print("Articles with high cosine similarity are: ")
-#     q = [q]
-#     q_vec = vectorizer.transform(q).toarray().reshape(pre.tfidfVectors.shape[0],)
-#     sim = {}
-#     for i in range(pre.tfidfVectors.shape[1]):
-#         sim[i] = np.dot(pre.tfidfVectors.loc[:, i].values, q_vec) / np.linalg.norm(pre.tfidfVectors.loc[:, i]) * np.linalg.norm(q_vec)
-
-#     sim_sorted = sorted(sim.items(), key=lambda x: x[1], reverse=True)
-
-#     article_list = []
-
-#     for k, v in sim_sorted:
-#         if v != 0:
-#             # print("Article Similarity:", v)
-#             # print(pre.article_df.article_id.iloc[k])
-#             article_list.append(pre.article_df.article_id.iloc[k])
-
-#     return article_list
-
-
-=======
->>>>>>> ff8c4c4fde45a05bf11e2029bee5010364634105
 @router.get('/{tags}', response_model = LimitOffsetPage[article_schema.SearchArticleByTag])
 async def search_articles(tag: str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:

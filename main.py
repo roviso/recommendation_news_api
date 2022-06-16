@@ -3,7 +3,7 @@ from database import engine, Base
 from routers import article,cache, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search,recommend
 # , explore,
 # , recommendation, 
-import db_loader
+# import db_loader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import Page, add_pagination
 
@@ -30,7 +30,7 @@ async def startup():
     # create db tables
     async with engine.begin() as conn:
         # await conn.run_sync(Base.metadata.drop_all)
-        db_loader.load_model_data()
+        # db_loader.load_model_data()
         await conn.run_sync(Base.metadata.create_all)
 
 
