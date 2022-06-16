@@ -5,7 +5,7 @@ from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.user_model import User,RegisteredUser, UserArticleBookmarks
-from models.article_model import Article
+from models import article_model, user_model, comments_model
 
 
 class UserCrud():
@@ -45,7 +45,7 @@ class UserCrud():
         return result
 
     async def get_user_by_email(self,email: str) -> RegisteredUser:
-        print(f"email give is : {email}, 555555555555555555555555555555555555555555555555555")
+        # print(f"email give is : {email}, 555555555555555555555555555555555555555555555555555")
         # query = select(RegisteredUser).where(RegisteredUser.email == email)
 
         # results = await self.db_session.execute(query)
@@ -124,6 +124,41 @@ class UserCrud():
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
+
+    async def get_liked_articles_by_user(self, user_id: str) -> article_model.Article:
+        query = select(article_model.Article).join(
+            user_model.UserArticleLikes
+        ).filter(user_model.UserArticleLikes.user_id == user_id).order_by(article_model.Article.date.desc()).limit(10)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
+    
+    async def get_viewed_articles_by_user(self, user_id: str) -> article_model.Article:
+        query = select(article_model.Article).join(
+            user_model.UserArticleViewed
+        ).filter(user_model.UserArticleViewed.user_id == user_id).order_by(user_model.UserArticleViewed.end_time.desc()).limit(30)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
+
+    async def get_bookmarked_articles_by_user(self, user_id: str) -> article_model.Article:
+        query = select(article_model.Article).join(
+            user_model.UserArticleBookmarks
+        ).filter(user_model.UserArticleBookmarks.user_id == user_id).order_by(article_model.Article.date.desc()).limit(10)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
+
+    async def get_commented_articles_by_user(self, user_id: str) -> article_model.Article:
+        query = select(article_model.Article).join(
+            comments_model.Comments
+        ).filter(comments_model.Comments.user_id == user_id).order_by(article_model.Article.date.desc()).limit(10)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
 
 
     
