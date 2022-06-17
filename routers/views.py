@@ -13,7 +13,7 @@ router = APIRouter(
     tags=['views']
 )
 
-@router.put('/', status_code = status.HTTP_201_CREATED)
+@router.post('/', status_code = status.HTTP_201_CREATED)
 async def view_article(article_viewed: views_schema.CreateUserArticleViews, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
