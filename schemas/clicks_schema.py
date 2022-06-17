@@ -8,11 +8,8 @@ from schemas import article_schema, user_schema
 
 class CreateUserArticleClicks(BaseModel):
     user_id : str 
-    article_url: str 
-    author_name: str 
-
+    article_id: str 
     referrer: Optional[str]
-    # author: author_schema.Author
 
     class Config:
         orm_mode = True

@@ -1,21 +1,15 @@
 from typing import Union
 from crud.crud_user import UserCrud
 from fastapi import APIRouter, status, HTTPException,Depends,Query
-from starlette.responses import RedirectResponse
+
 from config import pathconfig
-import pickle
-from schemas import clicks_schema
 from schemas import article_schema
-from crud.crud_redirect_clicks import ClicksCrud
 from database import async_session
 from crud.crud_article import ArticleCrud
 from crud.crud_author import AuthorCrud
 from repository.ncf_recommender.loader import load_pkl
 from config import pathconfig
 from repository.ncf_recommender import utils
-import secrets
-from models import article_model, author_model
-import ast
 from implicit.als import AlternatingLeastSquares
 import random
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -26,7 +20,7 @@ from database import async_session
 from sqlalchemy.orm import Session
 import numpy as np
 import pandas as pd
-from fastapi_pagination import Page, add_pagination, paginate,LimitOffsetPage
+from fastapi_pagination import paginate,LimitOffsetPage
 import scipy.sparse as sparse
 from routers import utils
 from collections import Counter
@@ -41,33 +35,79 @@ router = APIRouter(
 
 
 
-### _______________________________ LOADING PREPROCESSING FILES _______________________________________________
+## _______________________________ LOADING PREPROCESSING FILES _______________________________________________
 
 print('----------Preprocessing(loading data)--------------------')
 if pathconfig.PRE_PKL_PATH.is_file():
     pre = load_pkl(pathconfig.PRE_PKL_PATH)
     print('Successfully Loaded Pickle file')
 
-if pathconfig.REDIRECT_DICT_PATH.is_file():
-    with open(pathconfig.REDIRECT_DICT_PATH, 'rb') as f:
-        redirect_dict = pickle.load(f)
-    print('Successfully Loaded redirection url file')
-
-
-
 ### _______________________________ TFIDF SIMILARITIES CALCULATOR _______________________________________________
-docs = pre.article_df.keywords_words.values
-vectorizer = TfidfVectorizer()
-X = vectorizer.fit_transform(docs)
 
-def get_similar_articles(q, pre):
+## Creating a tfidf object to store some objects
+class tfidf_obj():
+    def __init__(self, article_keyword_df , vectorizer, X, tfidfVectors):
+        self.article_keyword_df = article_keyword_df
+        self.vectorizer = vectorizer
+        self.X = X
+        self.tfidfVectors = tfidfVectors
+
+
+
+## function to update tfidf class object 
+async def get_tfidf_verctorizer(tfidf):
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 50)
+            keywords = [str(keyword.keyword.tag) for article in  articles for keyword in article.keywords]
+            article_keyword = {article.id : [str(keyword.keyword.tag) for keyword in article.keywords ] for article in  articles }
+            # for article in  articles:
+            #     keyword_list = []
+            #     for keyword in article.keywords:
+            #         keyword_list.append(str(keyword.keyword.tag))
+            #     article_keyword.update({article.id : keyword_list})
+            article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
+
+            article_keyword_df.keywords_words = article_keyword_df.keywords_words.apply(lambda x: ' '.join([tags for tags in x]))
+
+            keyword_values = article_keyword_df.keywords_words.values
+            vectorizer = TfidfVectorizer()
+            X = vectorizer.fit_transform(keyword_values)
+            tfidfVectors = pd.DataFrame(X.T.toarray(), index=vectorizer.get_feature_names())
+
+            tfidf.article_keyword_df = article_keyword_df
+            tfidf.vectorizer = vectorizer
+            tfidf.X = X
+            tfidf.tfidfVectors = tfidfVectors
+            # print(f"tfidff INSIDE : {tfidf.article_keyword_df}, {tfidf.vectorizer}, {tfidff.X },{tfidff.tfidfVectors} ")
+
+
+    # return article_keyword_df, vectorizer, X, tfidfVectors
+
+
+# docs = pre.article_df.keywords_words.values
+# vectorizer = TfidfVectorizer()
+# X = vectorizer.fit_transform(docs)
+
+## initialize the tfidf object
+tfidf = tfidf_obj(None,None,None,None)
+
+## updating tfidf object on router startup
+@router.on_event("startup")
+async def router_startup():
+    await get_tfidf_verctorizer(tfidf)
+
+
+## Function to get similar articles list using tfidf 
+def get_similar_articles(q):
     # print("query:", q)
     print("Articles with high cosine similarity are: ")
     q = [q]
-    q_vec = vectorizer.transform(q).toarray().reshape(pre.tfidfVectors.shape[0],)
+    q_vec = tfidf.vectorizer.transform(q).toarray().reshape(tfidf.tfidfVectors.shape[0],)
     sim = {}
-    for i in range(pre.tfidfVectors.shape[1]):
-        sim[i] = np.dot(pre.tfidfVectors.loc[:, i].values, q_vec) / np.linalg.norm(pre.tfidfVectors.loc[:, i]) * np.linalg.norm(q_vec)
+    for i in range(tfidf.tfidfVectors.shape[1]):
+        sim[i] = np.dot(tfidf.tfidfVectors.loc[:, i].values, q_vec) / np.linalg.norm(tfidf.tfidfVectors.loc[:, i]) * np.linalg.norm(q_vec)
 
     sim_sorted = sorted(sim.items(), key=lambda x: x[1], reverse=True)
 
@@ -77,7 +117,7 @@ def get_similar_articles(q, pre):
         if v >= 0.25:
             # print("Article Similarity:", v)
             # print(pre.article_df.article_id.iloc[k])
-            article_list.append(pre.article_df.article_id.iloc[k])
+            article_list.append(tfidf.article_keyword_df.article_id.iloc[k])
 
     return article_list
 
@@ -111,6 +151,9 @@ model.fit(2 * sparse_user_item)
 
 
 
+
+
+## ____Function to extract keyword from recent articles provided____
 def get_trending_keywords(recent_articles):
     keywords = [str(keyword.keyword.tag) for articles in  recent_articles for keyword in articles.keywords]
     keyword_count = Counter(keywords)
@@ -124,7 +167,7 @@ def get_trending_keywords(recent_articles):
         views = articles.views 
         comments = articles.total_comments
 
-        popularity = int(likes) + int(shares) + int(views) + int(comments)
+        popularity = int(likes or 0)  + int(shares or 0) + int(views or 0) + int(comments or 0)
         
         keywords = [str(keyword.keyword.tag) for keyword in articles.keywords]
 
@@ -133,14 +176,11 @@ def get_trending_keywords(recent_articles):
         keyword_popularity = update_dictionary(keyword_popularity, article_keywords)
 
     all_keywords = update_dictionary(keyword_popularity, keyword_count)
-    # print(all_keywords)
     trending_keywords = dict( sorted(all_keywords.items(), key=operator.itemgetter(1),reverse=True))
     return list(map(operator.itemgetter(0), trending_keywords.items()))[:20]
 
 
-
-
-
+## this function returns similar articles based on Collaborative Filtering algorithm
 def get_similar_cf_articles(article_list):
     similar_article_ids = []
     # similar_article_ids = [ids for article_id in article_list for ids,_ in model.similar_items(int(article_id_dict.get(article_id)))]
@@ -151,7 +191,7 @@ def get_similar_cf_articles(article_list):
     similar_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in similar_article_ids]
     return similar_article_ids
 
-
+## this function returns recommended articles for certain user based on Collaborative Filtering algorithm
 def get_recommended_cf_articles(user_id):
     # recommended_article_ids = [ids for ids, scores in model.recommend(user_id, sparse_user_item[user_id], N=10, filter_already_liked_items=False)]
     recommended_article_ids = []
@@ -162,9 +202,11 @@ def get_recommended_cf_articles(user_id):
     return recommended_article_ids
 
 
+
+## Router => RETURNS articles based on tags(back relationship method)
 @router.get('/tags')
 async def search_articles(tags: str, async_session: Session = Depends(database.get_session)):
-    article_list =  get_similar_articles(tags,pre)
+    article_list =  get_similar_articles(tags)
     # print(f"article_list: {article_list} 55555555555555555555555555555555555555555555555555555")
     async with async_session as session:
         async with session.begin():
@@ -175,6 +217,8 @@ async def search_articles(tags: str, async_session: Session = Depends(database.g
 
     return articles
 
+
+
 @router.get('/similar/{article_id}')
 async def search_articles(article_id: str,offset: Union[int, None] = None, limit: Union[int, None] = None, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
@@ -182,7 +226,7 @@ async def search_articles(article_id: str,offset: Union[int, None] = None, limit
             articlecrud = ArticleCrud(session)
             article = await articlecrud.search_article(article_id)
             keywords = ' '.join([str(keyword.keyword.tag) for keyword in article.keywords])
-            tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+            tfidf_similar_article_list =  get_similar_articles(keywords)
 
             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
@@ -213,21 +257,21 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
             print(f"userkeyword is : {keyword_list}")
 
             if not keyword_list:
-                recent_articles = await articlecrud.get_all_article(offset, limit)
+                recent_articles = await articlecrud.get_all_article(offset, 50)
                 trending_keywords = get_trending_keywords(recent_articles)
                 keywords = ' '.join([str(keyword) for keyword in trending_keywords])
 
-                tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+                tfidf_similar_article_list =  get_similar_articles(keywords)
 
                 cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
                 recommended_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
-                return paginate(recommended_articles)
+                # return paginate(recommended_articles)
 
             else:
                 # keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
                 keywords = ' '.join([str(keyword) for keyword in keyword_list])
-                tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+                tfidf_similar_article_list =  get_similar_articles(keywords)
 
                 cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
                 
@@ -240,7 +284,12 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
 
                 recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
 
-                return  paginate(recommended_articles)
+        ## Replacing with redirect url
+        
+        for article in recommended_articles:
+            article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+
+        return  paginate(recommended_articles)
 
 
 
@@ -254,7 +303,7 @@ async def user_web_recommendation(user_id: str,offset: int = 0, limit: int = Que
             # article = await articlecrud.search_article(article_id)
             user = pre.user_df.query(f'user == "{user_id}"')
             keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
-            tfidf_similar_article_list =  get_similar_articles(keywords,pre)
+            tfidf_similar_article_list =  get_similar_articles(keywords)
 
             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
@@ -293,82 +342,60 @@ async def trending_keywords(offset: int = 0, limit: int = Query(default=20), asy
 
 
 
-async def get_article(article_url: str):
-    async with async_session() as session:
-        async with session.begin():
-            articlecrud = ArticleCrud(session)
-            authorcrud = AuthorCrud(session)
-            article =  await articlecrud.get_article(article_url)
+# async def get_article(article_url: str):
+#     async with async_session() as session:
+#         async with session.begin():
+#             articlecrud = ArticleCrud(session)
+#             authorcrud = AuthorCrud(session)
+#             article =  await articlecrud.get_article(article_url)
     
-            if article:
-                article = article._mapping.Article
-                author = await authorcrud.get_author_by_id(article.author_id)
-                author = author._mapping.Author
-            else:
-                item_df = pre.df[pre.df.url == article_url].iloc[0]
-                author_name = item_df.author
-                author_img = item_df.author_img
-                author = await authorcrud.get_author_by_name(author_name)
-                if not author:
-                    author_id = secrets.token_urlsafe(32)
-                    new_author = author_model.Author(id = author_id,author_name = author_name, author_img = author_img)
-                    print('no author found in db... Adding the author in db.')
-                    try:
-                        await authorcrud.create_author(new_author)
+#             if article:
+#                 article = article._mapping.Article
+#                 author = await authorcrud.get_author_by_id(article.author_id)
+#                 author = author._mapping.Author
+#             else:
+#                 item_df = pre.df[pre.df.url == article_url].iloc[0]
+#                 author_name = item_df.author
+#                 author_img = item_df.author_img
+#                 author = await authorcrud.get_author_by_name(author_name)
+#                 if not author:
+#                     author_id = secrets.token_urlsafe(32)
+#                     new_author = author_model.Author(id = author_id,author_name = author_name, author_img = author_img)
+#                     print('no author found in db... Adding the author in db.')
+#                     try:
+#                         await authorcrud.create_author(new_author)
 
-                        author = new_author
-                        print("Successfully added article in db")
-                    except:
-                        print("Unable to add author in db")
-                        # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
-                        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
-                else:
-                    author = author._mapping.Author
+#                         author = new_author
+#                         print("Successfully added article in db")
+#                     except:
+#                         print("Unable to add author in db")
+#                         # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
+#                         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
+#                 else:
+#                     author = author._mapping.Author
               
                     
-                article_id = secrets.token_urlsafe(32)
-                likes = 0
-                shares = 0
-                article_dict = {
-                    "id": article_id,
-                    "url": item_df.url,
-                    "head_image": item_df.head_image,
-                    "heading": item_df.heading,
-                    "date": item_df.date.split()[0],
-                    "label": item_df.label,
-                    # "content": content_filter(ast.literal_eval(item_df.content)),
-                    "content": list(filter(None, ast.literal_eval(item_df.content))),
-                    "additional_img": ast.literal_eval(item_df.additional_images),
-                    "source": item_df.source,
-                    "likes": likes,
-                    "shares": shares,
-                    "author_id": author.id,
-                    "type": 'recommended'
-                }
+#                 article_id = secrets.token_urlsafe(32)
+#                 likes = 0
+#                 shares = 0
+#                 article_dict = {
+#                     "id": article_id,
+#                     "url": item_df.url,
+#                     "head_image": item_df.head_image,
+#                     "heading": item_df.heading,
+#                     "date": item_df.date.split()[0],
+#                     "label": item_df.label,
+#                     # "content": content_filter(ast.literal_eval(item_df.content)),
+#                     "content": list(filter(None, ast.literal_eval(item_df.content))),
+#                     "additional_img": ast.literal_eval(item_df.additional_images),
+#                     "source": item_df.source,
+#                     "likes": likes,
+#                     "shares": shares,
+#                     "author_id": author.id,
+#                     "type": 'recommended'
+#                 }
 
-                article = article_model.Article(**article_dict)
-                await articlecrud.create_article(article)
-    return article, author
-
-
-@router.get("/{redirect_str}")
-async def redirect(redirect_str:str,id:str,current_page:str):
-    # print(f"using user_id: {user_id}")
-    article_url = redirect_dict[redirect_str]
-    article,author = await get_article(article_url)
-
-    article_liked = clicks_schema.CreateUserArticleClicks(
-        user_id =  id,
-        article_url = article.url,
-        author_name = author.author_name,
-        referrer = current_page,
-    )
-    async with async_session() as session:
-            async with session.begin():
-                clickscrud = ClicksCrud(session)
-                await clickscrud.click_article(article_liked)
-
-
-    response = RedirectResponse(url=redirect_dict[redirect_str])
-    return response
+#                 article = article_model.Article(**article_dict)
+#                 await articlecrud.create_article(article)
+#     return article, author
 
