@@ -61,15 +61,11 @@ class Replies():
         user = await self.userdb.get_user(replies_comment.id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
-
+            
         comment = await self.commentsdb.get_comment_by_id(replies_comment.comment.id)
 
         if not comment:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Comment Found")
-        else:
-            comment = comment._mapping.Comments
 
 
         replies_id = secrets.token_urlsafe(32)

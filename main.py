@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from database import engine, Base
 
 from apis.keyword.main import keywordApi
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search , clicks,recommend
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search , clicks ,recommend
 # , recommendation, 
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
