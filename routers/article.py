@@ -11,6 +11,8 @@ from database import async_session
 from routers.comments import get_article_comments
 from fastapi_pagination import Page, add_pagination, paginate,LimitOffsetPage
 from sqlalchemy.future import select
+from starlette.requests import Request
+
 
 router = APIRouter(
     prefix = "/articles",
@@ -100,8 +102,11 @@ async def get_recommended_articles() -> List[RecommendedArticle]:
 
 
 @router.get('/search_article', status_code = 200)
-async def search_article(article_id: str) -> List[Article]:
+async def search_article(article_id: str,request: Request) -> List[Article]:
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            return await articlecrud.search_article(article_id)
+            article =  await articlecrud.search_article(article_id)
+
+
+    return article

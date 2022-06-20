@@ -31,7 +31,7 @@ class ArticleCrud():
         return result
 
     async def get_all_articles_by_id(self, article_ids: list, offset , limit) -> List[Article]:
-        query = select(Article).filter(Article.id.in_(article_ids)).order_by(Article.date).offset(offset).limit(limit)
+        query = select(Article).filter(Article.id.in_(article_ids)).order_by(Article.date.desc()).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
         
         return results.scalars().all()
@@ -46,13 +46,13 @@ class ArticleCrud():
         
 
     async def get_all_article(self, offset , limit) -> List[Article]:
-        query = select(Article).order_by(Article.date).offset(offset).limit(limit)
+        query = select(Article).order_by(Article.date.desc()).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
         return results.scalars().all()
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
 
-    async def get_all_recommended_article(self):
-        query = select(Article).order_by(Article.date)
+    async def get_all_recommended_article(self, offset , limit):
+        query = select(RecommendedArticle).order_by(RecommendedArticle.date).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
@@ -80,6 +80,22 @@ class ArticleCrud():
             q = q.values(author_id=author_id)
         if label:
             q = q.values(label= label)
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
+
+    async def update_views(self, article_id: str, increase_view: Optional[int]= None, decrease_view: Optional[int]= None,):
+        article = await self.get_article_by_id(article_id)
+        article = article._mapping.Article
+        q = update(Article).where(Article.id == article_id)
+        if increase_view:
+            print(f"Increasing the views")
+            new_view = (article.views or 0) + increase_view
+            q = q.values(views=new_view)
+        if decrease_view:
+            print(f"Decreasing the views")
+            new_view = (article.views or 0) - decrease_view
+            q = q.values(views=new_view)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 

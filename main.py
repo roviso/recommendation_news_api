@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from database import engine, Base
-from routers import article,cache, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search,recommend
-# , explore,
+
+from apis.keyword.main import keywordApi
+from routers import article,cache, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search , clicks,recommend
 # , recommendation, 
 # import db_loader
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,18 +11,23 @@ from fastapi_pagination import Page, add_pagination
 
 app = FastAPI(title='News Recommendation')
 
+
 origins = [
     "*"
 ]
 
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,#/default/extract_keywords_from__get
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.mount("/api/keyword", keywordApi)
+
 
 
 
@@ -36,10 +42,12 @@ async def startup():
 
 # app.include_router(recommendation.router)
 
-# app.include_router(explore.router)
+
 app.include_router(search.router)
 app.include_router(profile.router)
 app.include_router(recommend.router)
+app.include_router(clicks.router)
+
 app.include_router(token.router)
 app.include_router(user.router)
 app.include_router(follow.router)
