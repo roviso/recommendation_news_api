@@ -84,14 +84,12 @@ class Comments():
         user = await self.userdb.get_user(comment_like.user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
+
         
         comment = await self.get_comment_by_id(comment_like.comment.id)
         if not comment:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Comment not Found")
-        else:
-            comment = comment._mapping.Comments
+
 
         already_liked = await self.check_comment_likes(user.id,comment.id)
         if already_liked:
