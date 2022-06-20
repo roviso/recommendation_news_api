@@ -16,6 +16,41 @@ NewsRecommended = List[Dict[str, Union[str, List[str]]]]
 # redis = aioredis.from_url(cacheconfig.redis_url, decode_responses=True)
 UrlRecommended = List[str]
 
+UserKeywords = List[str]
+
+
+class KeywordsCache():
+    def __init__(self):
+        self.redis = aioredis.from_url(cacheconfig.redis_url, decode_responses=True)
+    
+    async def add_to_cache(self,user_id: str,userKeywords : UserKeywords):
+        await self.redis.lpush(f'UserKeywords:{user_id}',*userKeywords)
+        await self.redis.expire(f'UserKeywords:{user_id}',cacheconfig.KEYWORDS_EXPIRY_TIME)
+
+    async def read_from_cache(self,user_id: str):
+        return await self.redis.lrange(f'UserKeywords:{user_id}',0,-1)
+
+    async def delete_from_cache(self,user_id: str,keyword:str):
+        print(f'url_recommended:{user_id}',0,keyword)
+        return await self.redis.lrem(f'UserKeywords:{user_id}',0,keyword)
+
+    async def get_len(self,user_id: str):
+        return await self.redis.llen(f'UserKeywords:{user_id}')
+
+    async def clear_cache_from_list(self,user_id, userKeywords : UserKeywords):
+        article_to_remove = [self.delete_from_cache(user_id,news) for news in userKeywords]
+
+        await asyncio.gather(
+            *article_to_remove
+        )
+        
+
+keywordcache = KeywordsCache()
+
+
+
+
+
 class UrlCache():
     def __init__(self):
         self.redis = aioredis.from_url(cacheconfig.redis_url, decode_responses=True)

@@ -26,6 +26,8 @@ from routers import utils
 from collections import Counter
 import operator
 from routers.user import get_user_keywords
+from newscacher import keywordcache
+
 
 
 router = APIRouter(
@@ -60,13 +62,9 @@ async def get_tfidf_verctorizer(tfidf):
         async with session.begin():
             articlecrud = ArticleCrud(session)
             articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
-            keywords = [str(keyword.keyword.tag) for article in  articles for keyword in article.keywords]
+            # keywords = [str(keyword.keyword.tag) for article in  articles for keyword in article.keywords]
             article_keyword = {article.id : [str(keyword.keyword.tag) for keyword in article.keywords ] for article in  articles }
-            # for article in  articles:
-            #     keyword_list = []
-            #     for keyword in article.keywords:
-            #         keyword_list.append(str(keyword.keyword.tag))
-            #     article_keyword.update({article.id : keyword_list})
+            
             article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
 
             article_keyword_df.keywords_words = article_keyword_df.keywords_words.apply(lambda x: ' '.join([tags for tags in x]))
@@ -254,37 +252,50 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
             # keyword_list = [str(keyword) for keyword in user['user_keywords']]
 
             ### ___________ -- GETTING USER KEYWORD FROM HISTORY -- __________________
-            keyword_list = await get_user_keywords(user_id)
-
-            # print(f"userkeyword is : {keyword_list}")
-
-            if not keyword_list:
-                recent_articles = await articlecrud.get_all_article(offset, 50)
-                trending_keywords = get_trending_keywords(recent_articles)
-                keywords = ' '.join([str(keyword) for keyword in trending_keywords])
-
-                tfidf_similar_article_list =  get_similar_articles(keywords)
-
-                cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
-
-                recommended_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
-                # return paginate(recommended_articles)
-
+            keywords_len = await keywordcache.get_len(user_id)
+            if keywords_len == 0:
+                print("USER NOT IN CACHE")
+                keyword_list = await get_user_keywords(user_id)
+                print("keyword_list is ::: ", keyword_list)
+                if not keyword_list:
+                    keyword_list = await keywordcache.read_from_cache("trending")
+                    if not keyword_list:
+                        recent_articles = await articlecrud.get_all_article(offset, 100)
+                        keyword_list = get_trending_keywords(recent_articles)
+                await keywordcache.add_to_cache(user_id,keyword_list)
             else:
-                # keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
-                keywords = ' '.join([str(keyword) for keyword in keyword_list])
-                tfidf_similar_article_list =  get_similar_articles(keywords)
-
-                cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+                print("USER ALREADY CACHED")
+                keyword_list = await keywordcache.read_from_cache(user_id)
                 
-                if user_id not in user_id_dict:
-                    user_id = random.choice(list(user_id_dict))
+            # if not keyword_list:
+            #     trending_keywords = await keywordcache.read_from_cache("trending")
+            #     if not trending_keywords:
+            #         recent_articles = await articlecrud.get_all_article(offset, 100)
+            #         trending_keywords = get_trending_keywords(recent_articles)
+            #     keywords = ' '.join([str(keyword) for keyword in trending_keywords])
 
-                cf_recommended_article_list = get_recommended_cf_articles(user_id)
+            #     tfidf_similar_article_list =  get_similar_articles(keywords)
 
-                recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
+            #     cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
-                recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
+            #     recommended_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
+            #     # return paginate(recommended_articles)
+
+            # else:
+                # keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
+            keywords = ' '.join([str(keyword) for keyword in keyword_list])
+            tfidf_similar_article_list =  get_similar_articles(keywords)
+
+            cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+            
+            if user_id not in user_id_dict:
+                user_id = random.choice(list(user_id_dict))
+
+            cf_recommended_article_list = get_recommended_cf_articles(user_id)
+
+            recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
+
+            recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
 
         ## Replacing with redirect url
         for article in recommended_articles:
@@ -331,12 +342,22 @@ def update_dictionary(old_dict, new_dict):
 
 
 @router.get('/trending_keywords',)
-async def trending_keywords(offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
-    async with async_session as session:
-        async with session.begin():
-            articlecrud = ArticleCrud(session)
-            recent_articles = await articlecrud.get_all_article(offset, limit)
-            trending_keywords = get_trending_keywords(recent_articles)
+async def trending_keywords(offset: int = 0, limit: int = Query(default=500), async_session: Session = Depends(database.get_session)):
+    trending_len = await keywordcache.get_len("trending")
+    if trending_len == 0:
+        print("TRENDING KEYWORDS NOT IN CACHE")
+        async with async_session as session:
+            async with session.begin():
+                articlecrud = ArticleCrud(session)
+                recent_articles = await articlecrud.get_all_article(offset, limit)
+                trending_keywords = get_trending_keywords(recent_articles)
+                print("keyword is ::: ", trending_keywords)
+                await keywordcache.add_to_cache('trending',trending_keywords)
+    else:
+        print("TRENDING KEYWORDS IN CACHE")
+        trending_keywords = await keywordcache.read_from_cache("trending")
+    
+    
             
     return trending_keywords
 
