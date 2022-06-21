@@ -52,7 +52,7 @@ class ArticleCrud():
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
 
     async def get_all_recommended_article(self, offset , limit):
-        query = select(RecommendedArticle).order_by(RecommendedArticle.date).offset(offset).limit(limit)
+        query = select(RecommendedArticle).order_by(RecommendedArticle.date.desc()).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
         return results.scalars().all()
 

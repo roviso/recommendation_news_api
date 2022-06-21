@@ -11,6 +11,8 @@ from pprint import pp
 from config import cacheconfig
 from repository.ncf_recommender.utils import content_filter
 from collections import OrderedDict
+import json
+
 
 NewsRecommended = List[Dict[str, Union[str, List[str]]]]
 # redis = aioredis.from_url(cacheconfig.redis_url, decode_responses=True)
@@ -98,6 +100,58 @@ class UserCache():
         return await self.redis.lrange(f'cached_user',0,-1)
 
 usercache = UserCache()
+
+
+
+class LatestNewsCache(UserCache):
+    def __init__(self):
+        super().__init__()
+
+    async def add_to_cache(self, news_index, latestNews):
+        await self.redis.set(f'latest_news:{news_index}', json.dumps(latestNews)) ## saving nested dict as str to decode later when read
+        await self.redis.expire(f'latest_news:{news_index}',cacheconfig.LATEST_EXPIRY_TIME)
+
+    
+    async def cache_news(self, latestNewsList):
+        row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
+        news_list = []
+        for i,news in enumerate(latestNewsList):
+            news_dict = row2dict(news)
+            news_dict.update({'author': row2dict(news.author)})
+            keywords_list = []
+            for key in news.keywords:
+                keywords = row2dict(key)
+                keywords.update({"keyword": row2dict(key.keyword)})
+                keywords_list.append(keywords)
+            # keywords_list = [row2dict(key).update({"keyword": row2dict(key.keyword)})  for key in news.keywords ]
+            news_dict.update({'keywords': keywords_list})
+            news_list.append(news_dict)
+        latest_news_set = [self.add_to_cache(i,news) for i,news in enumerate(news_list)]
+
+        await asyncio.gather(
+            *latest_news_set
+        )
+
+    
+    async def read_news_from_cache(self, news_index: int):
+        latest_news_as_bytes = await self.redis.get(f'latest_news:{news_index}')
+        # print(latest_news_as_bytes, type(latest_news_as_bytes))
+        # latest_news_obj_as_str = latest_news_as_bytes.decode("utf-8")
+        latest_news_obj_as_dict = json.loads(latest_news_as_bytes)
+        latest_news_obj_as_dict.update({'content':ast.literal_eval(latest_news_obj_as_dict['content'])}) ##converting content as str to list
+        latest_news_obj_as_dict.update({'additional_img':ast.literal_eval(latest_news_obj_as_dict['additional_img'])}) ##converting additional_img as str to list
+        return latest_news_obj_as_dict
+
+    async def read_all_news_from_cache(self, offset: int, limit: int):
+        news_list = [await self.read_news_from_cache(i) for i in range(offset, offset+limit)]
+        return news_list
+
+    async def check_news_exists(self, news_index: int):
+        return await self.redis.exists(f"latest_news:{news_index}")
+
+latestnewscache = LatestNewsCache()
+
+
 class NewsCache(UserCache):
     def __init__(self):
         super().__init__()
@@ -127,6 +181,27 @@ class NewsCache(UserCache):
         )
         # await self.redis.close()
 
+
+    async def cache_latest_news(self,user_id:str,recommended_news_list):
+        # for i,news in enumerate(recommended_news_list):
+        #     # print(i,news.__dict__.items())
+        #     for k,v in news.__dict__.items():
+        #         print(k,v)
+        #     author = news.__dict__.get('author')
+        #     print('author::: ',author.__dict__.items() )
+
+        #     keywords = news.keywords
+        #     # keywords = keyword.__dict__.get('keywords')
+        #     for tag in keywords:
+
+        #         print("tag is :::: ", tag.keyword.__dict__.items())
+
+        news_set = [self.add_to_cache(user_id,i,{k: str(v) for k,v in news.items()}) for i,news in enumerate(recommended_news_list)]
+
+        await asyncio.gather(
+            self.add_user(user_id),
+            *news_set
+        )
     
     async def read_cached_news(self, user_id:str,):
         cached_news = [(i,await self.read_from_cache(user_id,i)) for i in range(0,101) if await self.read_from_cache(user_id,i) ]
