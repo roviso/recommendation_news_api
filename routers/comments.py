@@ -9,6 +9,7 @@ import database
 from crud.crud_comments import Comments
 from crud.crud_replies import Replies
 
+
 router = APIRouter(
     prefix = "/comments",
     tags=['comments']
@@ -38,7 +39,7 @@ async def comment_article(comment_like: comments_schema.LikeComments, async_sess
             return await comments.like_comment(comment_like)
 
 
-@router.get('/get_article_comments')
+@router.get('/get_article_comments', response_model=List[comments_schema.GetComments])
 async def get_article_comments(article_id: str):
     res = []
     async with async_session() as session:

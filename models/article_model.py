@@ -68,7 +68,7 @@ class Article(Base):
     viewed_by = relationship("UserArticleViewed", back_populates="viewed_article")
     ignored_by = relationship("UserArticleIgnored", back_populates="ignored_article")
 
-    article_comments = relationship("Comments", back_populates="commented_article", lazy='selectin')
+    article_comments = relationship("Comments", back_populates="commented_article")
     # author = Column(String)
     # author_img = Column(String)
     __mapper_args__ = {'polymorphic_on': type,

@@ -22,7 +22,8 @@ class Comments():
     async def get_comment_by_id(self, comment_id: str):
         query = select(comments_model.Comments).where(comments_model.Comments.id == comment_id)
         results = await self.db_session.execute(query)
-        return results.fetchone()
+        result = results.scalars().one()
+        return result
 
     async def get_comments_by_article(self, article_id: str):
         query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id)
@@ -62,13 +63,10 @@ class Comments():
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        # else:
-        #     user = user._mapping.User
 
         if not article:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
-        # else:
-        #     article = article._mapping.Article
+
 
         comment_id = secrets.token_urlsafe(32)
 
@@ -111,7 +109,7 @@ class Comments():
     
     async def update_replies(self, comment_id: str, total_replies : int):
         comment = await self.get_comment_by_id(comment_id)
-        comment = comment._mapping.Comments
+        # comment = comment._mapping.Comments
 
         q = update(comments_model.Comments).where(comments_model.Comments.id == comment.id)
         q = q.values(totalreplies=total_replies)

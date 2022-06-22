@@ -1,3 +1,4 @@
+from ast import keyword
 from typing import List, Union
 from pydantic import BaseModel
 from typing import Optional
@@ -78,6 +79,19 @@ class SearchArticleByTag(BaseModel):
         orm_mode = True
 
 
+class KeywordTags(BaseModel):
+    tag: str
+
+    class Config:
+        orm_mode = True
+
+class KeywordArticle(BaseModel):
+    keywords_id: str 
+    keyword: KeywordTags
+
+    class Config:
+        orm_mode = True
+
 
 class GetAllArticle(BaseModel):
     id: str
@@ -89,19 +103,21 @@ class GetAllArticle(BaseModel):
     label: Optional[str]
 
     content : List[Optional[str]]
-    additional_img : List[Optional[str]] = None
+    additional_img : Optional[List[Optional[str]]] = None
     source : Optional[str]
+
+    views: Optional[int]
     likes: Optional[int]
     shares: Optional[int]
-
+    total_comments: Optional[int]
+    bookmarks: Optional[int]
+    
     type: str 
 
-    author_id: str
 
-    # author: Optional[List[author_schema.GetAllAuthors]]
+    author: author_schema.GetAllAuthors
 
-    # author: Union[author_schema.AuthorInDB, None]
-    # comments: comments_schema.GetComment
+    keywords: Optional[List[KeywordArticle]] = None
 
     class Config:
         orm_mode = True

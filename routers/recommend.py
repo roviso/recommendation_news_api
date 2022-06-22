@@ -59,7 +59,7 @@ async def get_tfidf_verctorizer(tfidf):
     async with async_session() as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 50)
+            articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
             keywords = [str(keyword.keyword.tag) for article in  articles for keyword in article.keywords]
             article_keyword = {article.id : [str(keyword.keyword.tag) for keyword in article.keywords ] for article in  articles }
             # for article in  articles:
@@ -205,7 +205,7 @@ def get_recommended_cf_articles(user_id):
 
 ## Router => RETURNS articles based on tags(back relationship method)
 @router.get('/tags')
-async def search_articles(tags: str, async_session: Session = Depends(database.get_session)):
+async def recommend_by_tags(tags: str, async_session: Session = Depends(database.get_session)):
     article_list =  get_similar_articles(tags)
     # print(f"article_list: {article_list} 55555555555555555555555555555555555555555555555555555")
     async with async_session as session:
@@ -219,34 +219,36 @@ async def search_articles(tags: str, async_session: Session = Depends(database.g
 
 
 
-@router.get('/similar/{article_id}')
-async def search_articles(article_id: str,offset: Union[int, None] = None, limit: Union[int, None] = None, async_session: Session = Depends(database.get_session)):
+@router.get('/similar/{article_id}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def recommend_similar_articles(article_id: str, user_id: str,offset: Union[int, None] = None, limit: Union[int, None] = None, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
             article = await articlecrud.search_article(article_id)
             keywords = ' '.join([str(keyword.keyword.tag) for keyword in article.keywords])
+            
             tfidf_similar_article_list =  get_similar_articles(keywords)
 
             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
 
-            articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
+            similar_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
 
+    for article in similar_articles:
+        article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
-    return {"item": articles,
-            "total": len(articles),
-            "limit": limit,
-            "offset": offset}
+    return  paginate(similar_articles)
+    # return {"item": articles,
+    #         "total": len(articles),
+    #         "limit": limit,
+    #         "offset": offset}
 
 
 @router.get('/user/{user_id}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=50), async_session: Session = Depends(database.get_session)):
+async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Query(default=50), async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            # article = await articlecrud.search_article(article_id)
-
             ### ____________-- Getting user keyword from model dataframe -- ____________________
             # user = pre.user_df.query(f'user == "{user_id}"')
             # keyword_list = [str(keyword) for keyword in user['user_keywords']]
@@ -254,7 +256,7 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
             ### ___________ -- GETTING USER KEYWORD FROM HISTORY -- __________________
             keyword_list = await get_user_keywords(user_id)
 
-            print(f"userkeyword is : {keyword_list}")
+            # print(f"userkeyword is : {keyword_list}")
 
             if not keyword_list:
                 recent_articles = await articlecrud.get_all_article(offset, 50)
@@ -285,7 +287,6 @@ async def user_recommendation(user_id: str,offset: int = 0, limit: int = Query(d
                 recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
 
         ## Replacing with redirect url
-        
         for article in recommended_articles:
             article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 

@@ -27,7 +27,7 @@ class ArticleCrud():
     async def get_article_by_id(self,article_id: str) -> Article:
         query = select(Article).where(Article.id == article_id)
         results = await self.db_session.execute(query)
-        result = results.fetchone()
+        result = results.scalars().one()
         return result
 
     async def get_all_articles_by_id(self, article_ids: list, offset , limit) -> List[Article]:
@@ -86,7 +86,7 @@ class ArticleCrud():
 
     async def update_views(self, article_id: str, increase_view: Optional[int]= None, decrease_view: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_view:
             print(f"Increasing the views")
@@ -134,7 +134,7 @@ class ArticleCrud():
 
     async def update_comments(self,  article_id: str,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         commentdb = Comments(self.db_session)
         total_comments = len(await commentdb.get_comments_by_article(article_id))
         q = update(Article).where(Article.id == article_id)
