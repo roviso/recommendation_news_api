@@ -22,7 +22,9 @@ class Replies():
     async def get_replies_by_id(self, replies_id: str):
         query = select(comments_model.Replies).where(comments_model.Replies.id == replies_id)
         results = await self.db_session.execute(query)
-        return results.fetchone()
+        # return results.fetchone()
+        result = results.scalars().one()
+        return result
 
 
     async def get_replies_by_comment(self, comment_id: str):
@@ -86,14 +88,12 @@ class Replies():
         user = await self.userdb.get_user(replies_like.id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
+
         
         replies = await self.get_replies_by_id(replies_like.replies.id)
         if not replies:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reply not Found")
-        else:
-            replies = replies._mapping.Replies
+
 
         already_liked = await self.check_replies_likes(user.id,replies.id)
         if already_liked:
