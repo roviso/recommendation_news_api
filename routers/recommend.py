@@ -26,7 +26,7 @@ from routers import utils
 from collections import Counter
 import operator
 from routers.user import get_user_keywords
-from newscacher import keywordcache
+from newscacher import keywordcache, newscache, latestnewscache
 
 
 
@@ -64,7 +64,7 @@ async def get_tfidf_verctorizer(tfidf):
             articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
             # keywords = [str(keyword.keyword.tag) for article in  articles for keyword in article.keywords]
             article_keyword = {article.id : [str(keyword.keyword.tag) for keyword in article.keywords ] for article in  articles }
-            
+
             article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
 
             article_keyword_df.keywords_words = article_keyword_df.keywords_words.apply(lambda x: ' '.join([tags for tags in x]))
@@ -355,13 +355,42 @@ async def trending_keywords(offset: int = 0, limit: int = Query(default=500), as
                 await keywordcache.add_to_cache('trending',trending_keywords)
     else:
         print("TRENDING KEYWORDS IN CACHE")
-        trending_keywords = await keywordcache.read_from_cache("trending")
-    
-    
-            
+        trending_keywords = await keywordcache.read_from_cache("trending")            
     return trending_keywords
 
 
+@router.get('/latest_news',)
+async def latest_news(offset: int = 0, limit: int = Query(default=500), async_session: Session = Depends(database.get_session)):
+    first_exists = await latestnewscache.check_news_exists(offset)
+    last_exists = await latestnewscache.check_news_exists(limit)
+    if not first_exists and not last_exists:
+        print("CACHING LATEST ARTICLE")
+        async with async_session as session:
+            async with session.begin():
+                articlecrud = ArticleCrud(session)
+                all_latest_articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
+                await latestnewscache.cache_news(all_latest_articles)
+        
+    latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
+    return latest_articles
+
+
+
+# @router.get('/get_cached_news')
+# async def get_cache(offset: int = 0, limit: int = Query(default=500)):
+#     latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
+#     return latest_articles
+
+# @router.get('/check_cached_news')
+# async def check_cache(offset: int = 0, limit: int = Query(default=500),):
+#     first_exists = await latestnewscache.check_news_exists(offset)
+#     last_exists = await latestnewscache.check_news_exists(limit)
+#     # print(exists, type(exists))
+#     if first_exists and last_exists:
+#         return ("EXISTO")
+#     else:
+#         return("NOT EXISISTO")
+    # return exists
 
 
 # async def get_article(article_url: str):
