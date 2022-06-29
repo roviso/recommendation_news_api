@@ -16,10 +16,10 @@ class Article(BaseModel):
     content : List[Optional[str]]
     additional_img : List[Optional[str]] = None
     source : Optional[str]
-    likes: Optional[int]
-    shares: Optional[int]
-    # class Config:
-    #     orm_mode = True
+    likes: Optional[int] = 0
+    shares: Optional[int] = 0
+    class Config:
+        orm_mode = True
 
 # class CreateArticle(Article):
 #     author_id = str
@@ -35,13 +35,34 @@ class RecommendedArticle(Article):
         orm_mode = True
 
 
-class CreateLatestArticle(Article):
-    author : author_schema.Author
+class CreateLatestArticle(BaseModel):
+    # author : author_schema.Author
+    url: str
+    head_image : Optional[str]
+    heading : Optional[str]
+    date : Optional[str]
+
+    label: Optional[str]
+
+    content : List[Optional[str]]
+    additional_img : List[Optional[str]] = None
+    source : Optional[str]
+    likes: Optional[int] = 0
+    shares: Optional[int] = 0
+
+
+    views: Optional[int] = 0
+    ignores: Optional[int] = 0
+    total_comments: Optional[int] = 0
+    bookmarks: Optional[int] = 0
+    author_id: str
+    type : str
     class Config:
         orm_mode = True
 
 
-class LatestArticle(RecommendedArticle):
+class LatestArticle(Article):
+    # author : author_schema.Author
     type : str
     class Config:
         orm_mode = True

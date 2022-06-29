@@ -71,6 +71,11 @@ async def create_articles(article: article_schema.RecommendedArticle):
             return await articlecrud.create_article(new_article)
 
 
+
+
+
+
+
 @router.put('/update_articles/{article_id}', status_code = 200)
 async def update_articles(article_id: str, url: Optional[str] = None, head_image: Optional[str] = None, heading: Optional[str] = None,
         date: Optional[str] = None, content: Optional[str] = None, additional_img: Optional[str] = None,

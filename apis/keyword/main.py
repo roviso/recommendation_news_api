@@ -30,8 +30,12 @@ async def extract_keywords_from(texts: List[str] = Body(...),
     word_idfs: Mapping[str, float]
 
     if not TRAINED_IDFS_JSON_PATH.is_file():
+        print(f"Trained IDF: {TRAINED_IDFS_JSON_PATH} NOT FOUND")
+        print("Training From {DATASET_CSV_PATH}")
         word_idfs = train_idfs_from_csv(DATASET_CSV_PATH)
+        print(word_idfs, 666666666666666666666666666666666)
     else:
+        print(f"USING Trained IDF: {TRAINED_IDFS_JSON_PATH}")
         with open(TRAINED_IDFS_JSON_PATH, 'r', encoding='utf-8') as json_file:
             word_idfs = json.load(json_file)
 

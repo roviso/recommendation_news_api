@@ -9,7 +9,8 @@ class Author(BaseModel):
     author_img :str
     source: str
 
-
+    class Config:
+        orm_mode :True
     
 class AuthorInDB(Author):
     id :str

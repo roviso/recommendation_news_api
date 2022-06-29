@@ -22,12 +22,33 @@ async def like_article(article_liked: likes_schema.CreateUserArticleLikes, async
             return await likes.like_article(article_liked)
 
 
+@router.post('/get_likes_by_article', status_code = status.HTTP_201_CREATED)
+async def get_likes_by_article(article_id:str, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            likes = Likes(session)
+            all_liked_user =  await likes.get_articles_like(article_id=article_id)
+            return {
+                'total_likes': len(all_liked_user),
+                'liked_user': all_liked_user
+            }
+
+
 @router.post('/get_likes_by_user', status_code = status.HTTP_201_CREATED)
 async def get_likes_by_user(user_id: str, article_id:str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             likes = Likes(session)
-            return await likes.check_liked_articles(user_id=user_id, article_id=article_id)
+            liked = await likes.check_liked_articles(user_id=user_id, article_id=article_id)
+            if not liked:
+                liked = False
+            else:
+                liked = True
+            all_liked_user =  await likes.get_articles_like(article_id=article_id)
+            return {
+                'total_likes': len(all_liked_user),
+                'liked': liked
+            }
 
 
 @router.post('/get_all_likes_by_user', status_code = status.HTTP_201_CREATED)

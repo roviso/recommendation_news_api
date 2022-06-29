@@ -38,6 +38,23 @@ async def comment_article(comment_like: comments_schema.LikeComments, async_sess
             comments = Comments(session)
             return await comments.like_comment(comment_like)
 
+@router.get('/liked_or_not')
+async def get_comment_by_id(comment_id: str, user_id: str ,async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            comments = Comments(session)
+            liked = await comments.check_comment_likes(user_id, comment_id)
+            if not liked:
+                liked = False
+            else:
+                liked = True
+
+            total_likes = await comments.get_comment_likes(comment_id)
+            return {
+                "liked": liked, 
+                "total_likes": len(total_likes)
+            }
+
 
 @router.get('/get_article_comments', response_model=List[comments_schema.GetComments])
 async def get_article_comments(article_id: str):
