@@ -7,6 +7,7 @@ import pandas as pd  # type: ignore
 from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
 
 from apis.keyword.api.extract_keywords.extract import COUNT_VEC_KWARGS
+# from api.extract_keywords.extract import COUNT_VEC_KWARGS
 
 TFIDF_VEC_KWARGS: Dict = {
     **COUNT_VEC_KWARGS,
@@ -37,3 +38,5 @@ def train_idfs_from_csv(
     tfidf_vec.fit(train_texts['text'].tolist())
 
     return dict(zip(tfidf_vec.get_feature_names_out(), tfidf_vec.idf_))
+
+

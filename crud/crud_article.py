@@ -30,6 +30,13 @@ class ArticleCrud():
         result = results.scalars().one()
         return result
 
+    async def get_article_by_url(self,article_url: str) -> Article:
+        query = select(Article).where(Article.url == article_url)
+        results = await self.db_session.execute(query)
+        result = results.fetchone()
+        return result
+        
+
     async def get_all_articles_by_id(self, article_ids: list, offset , limit) -> List[Article]:
         query = select(Article).filter(Article.id.in_(article_ids)).order_by(Article.date.desc()).offset(offset).limit(limit)
         results = await self.db_session.execute(query)
@@ -86,7 +93,7 @@ class ArticleCrud():
 
     async def update_views(self, article_id: str, increase_view: Optional[int]= None, decrease_view: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_view:
             print(f"Increasing the views")
@@ -101,7 +108,7 @@ class ArticleCrud():
 
     async def update_like(self, article_id: str, increase_like: Optional[int]= None, decrease_like: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_like:
             print(f"Increasing the likes")
@@ -117,7 +124,7 @@ class ArticleCrud():
     
     async def update_bookmarks(self, article_id: str, increase_bookmark: Optional[int]= None, decrease_bookmark: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_bookmark:
             print(f"Increasing the likes")

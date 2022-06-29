@@ -1,0 +1,2 @@
+celery==4.3.0
+celery-pool-asyncio==0.2.0

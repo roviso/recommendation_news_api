@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping
 from unicodedata import category
-
+import snowballstemmer
 import numpy as np
 from nltk.corpus import stopwords  # type: ignore
 from scipy.sparse import spmatrix  # type: ignore
 from sklearn.feature_extraction.text import CountVectorizer  # type: ignore
+
 
 COUNT_VEC_KWARGS: Dict = {
     'decode_error': 'ignore',
@@ -14,8 +15,57 @@ COUNT_VEC_KWARGS: Dict = {
     'max_features': 20000,
     'stop_words': stopwords.words('nepali'),
     'tokenizer':
-    lambda text: [_strip_punctuations(word) for word in text.split()],
+    # lambda text: [_strip_punctuations(word) for word in text.split()],
+    lambda text: tokenizer(text)
 }
+
+STOP_WORD_LIST_PATH: Path = Path(
+    Path(__file__).parent, 'non-potential-topic-word-list.txt').resolve()
+
+
+stop_words = []
+with open(STOP_WORD_LIST_PATH, 'r', encoding="utf8") as reader:
+    for line in reader:
+        line = line.strip('\n')
+        stop_words.append(line)
+                
+stemmer = snowballstemmer.NepaliStemmer()
+stopwords = set(stop_words)
+
+
+# sudo kill -9 1007 1694 1954 3371 3501 3691 3951 3956 5407 5849 6649
+
+
+# sudo rmmod nvidia_drm
+# sudo rmmod nvidia_modeset
+# sudo rmmod nvidia_uvm
+
+# sudo rmmod nvidia
+
+# lsmod | grep nvidia
+
+def tokenizer(text): 
+    tokenized_word = []
+    
+
+    stem_list = stemmer.stemWords(text.split())
+
+
+    tokenized_word = list(filter(word_filter, stem_list))
+    # final_tokenized_word = [word for word in tokenized_word if len(word)>3]
+
+    return tokenized_word
+
+def word_filter(stem_word):
+    nepali_word = True
+    # print('stem_word: ',stem_word)
+    if len(stem_word) > 3:
+        for letter in stem_word:
+            if not 0x0090 <= ord(letter) <= 0x97F:
+                nepali_word = False
+            return nepali_word 
+    else:
+        return False 
 
 
 def extract_keywords(corpus: Iterable[str], word_idf: Mapping[str, float],
@@ -77,4 +127,5 @@ def extract_keywords(corpus: Iterable[str], word_idf: Mapping[str, float],
 
 
 def _strip_punctuations(word):
-    return ''.join(ch for ch in word if not category(ch).startswith('P'))
+    wrd = ''.join(ch for ch in word if not category(ch).startswith('P'))
+    return tokenizer(wrd)

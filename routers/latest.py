@@ -10,7 +10,7 @@ import secrets
 from database import async_session
 from cacher.latest_cache import latestcache
 from fastapi import BackgroundTasks
-
+from crud.crud_article import ArticleCrud
 
 router = APIRouter(
     prefix = "/latest",
@@ -32,7 +32,7 @@ async def get_trending_news():
     async with async_session() as session:
         async with session.begin():
             latestcrud = LatestCrud(session)
-            authorcrud = AuthorCrud(session)
+            # authorcrud = AuthorCrud(session)
             trending_articles = await latestcrud.get_trending_article()
             # trending = []
 
@@ -47,6 +47,35 @@ async def get_trending_news():
             #     article['author_img']  = author.author_img
             #     trending.append(article)
     return trending_articles
+
+
+@router.post('/create_latest_article/', status_code = 200)
+async def create_latest_article(article: article_schema.CreateLatestArticle):
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            
+            article_exists = await articlecrud.get_article_by_url(article.url)
+            if article_exists:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Article aleady exists")
+            else:
+                article_id = secrets.token_urlsafe(32)
+                article_dict = article.dict()
+                print(f"creating article: {article_dict}")
+                new_article = Article(id = article_id,**article_dict)
+                return await articlecrud.create_article(new_article)
+
+
+
+@router.get('/get_article_by_url/{article_url}', status_code = 200)
+# , response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def get_article_by_url(article_url:str):
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = ArticleCrud(session)
+            article =  await articlecrud.get_article_by_url(article_url)
+            return article
+
 
 
 @router.get('/get_latest_articles', status_code = 200)
