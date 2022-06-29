@@ -39,13 +39,11 @@ class Likes():
         article = await self.articledb.get_article_by_id(article_liked.article_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
+
 
         if not article:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
-        else:
-            article = article._mapping.Article
+
 
         already_liked = await self.check_liked_articles(user.id,article.id)
         if already_liked:

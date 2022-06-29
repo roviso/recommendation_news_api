@@ -144,7 +144,7 @@ sparse_item_user = sparse.csr_matrix((data['views'].astype(float), (data['articl
 
 sparse_user_item = sparse_item_user.T.tocsr()
 
-model = AlternatingLeastSquares(factors=64, regularization=0.05)
+model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations = 5)
 model.fit(2 * sparse_user_item)
 
 

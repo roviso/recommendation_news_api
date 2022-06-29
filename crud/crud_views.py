@@ -75,13 +75,9 @@ class Views():
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
 
         if not article:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
-        else:
-            article = article._mapping.Article
 
 
         already_ignored = await self.check_ignored_articles(user.id,article.id)

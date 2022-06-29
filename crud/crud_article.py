@@ -101,7 +101,7 @@ class ArticleCrud():
 
     async def update_like(self, article_id: str, increase_like: Optional[int]= None, decrease_like: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_like:
             print(f"Increasing the likes")
@@ -117,7 +117,7 @@ class ArticleCrud():
     
     async def update_bookmarks(self, article_id: str, increase_bookmark: Optional[int]= None, decrease_bookmark: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_bookmark:
             print(f"Increasing the likes")
