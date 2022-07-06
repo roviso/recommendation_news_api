@@ -22,8 +22,17 @@ class LatestCrud(ArticleCrud):
             contains_eager(AricleKeywords.keyword)
         ).where(LatestArticle.id == article_id)
         results = await self.db_session.execute(query)
+        # result = results.scalars().one()
+        # return result
+        result = results.fetchone()
+        return result
+
+    async def get_article_by_id(self,article_id: str) -> LatestArticle:
+        query = select(LatestArticle).where(LatestArticle.id == article_id)
+        results = await self.db_session.execute(query)
         result = results.scalars().one()
         return result
+
 
     async def get_all_latest_article(self) -> List[LatestArticle]:
         query = select(LatestArticle).order_by(LatestArticle.date)

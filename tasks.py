@@ -402,6 +402,7 @@ async def scrape_news(pk, source, link, prefix, content_selector, image_selector
             'content': final_content,
             'date': str(pubDate),
             'additional_img': addtional_img,
+            # 'label': 'test_label',
             'source': source,
             'like': 0,
             'shares': 0,
@@ -499,3 +500,28 @@ def is_empty_soup(soup):
 #         default_image = None, 
 #         pubDate = None, 
 #         debug = False)
+
+
+# {
+#     "domain": "farakdhar.com",
+#     "author_selector": ".news-info",
+#     "id": 1,
+#     "link": "https://farakdhar.com/hamro-rss",
+#     "default_image": "",
+#     "created_at": null,
+#     "link_prefix": "",
+#     "analytics_id": "UA-125866437-1",
+#     "updated_at": null,
+#     "link_type": "normal_rss",
+#     "category_id": 0,
+#     "deleted_at": null,
+#     "selector": "div.news-detail-content",
+#     "pubDate": "",
+#     "name": "farakdar",
+#     "exception_selector": "string",
+#     "debug": false,
+#     "image": "sources/Snowberry_Dots.png",
+#     "priority": 0,
+#     "disable": false,
+#     "image_selector": "meta[property='og:image']|content"
+# }
