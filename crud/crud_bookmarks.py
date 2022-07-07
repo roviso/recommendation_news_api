@@ -47,13 +47,13 @@ class Bookmarks():
         article = await self.articledb.get_article_by_id(article_bookmarked.article_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
+        # else:
+        #     user = user._mapping.User
 
         if not article:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
-        else:
-            article = article._mapping.Article
+        # else:
+        #     article = article._mapping.Article
 
         already_bookmarked = await self.check_bookmarked_articles(user.id,article.id)
         if already_bookmarked:

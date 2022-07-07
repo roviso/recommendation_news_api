@@ -1,0 +1,14 @@
+celery==4.3.0
+celery-pool-asyncio==0.2.0
+beautifulsoup4
+python-dateutil
+sqlalchemy
+python-dotenv
+pydantic
+asyncpg
+fastapi
+numpy==1.22.2
+SQLAlchemy-Utils
+timefhuman
+aioredis
+redis

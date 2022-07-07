@@ -27,7 +27,7 @@ from collections import Counter
 import operator
 from routers.user import get_user_keywords
 from newscacher import keywordcache, newscache, latestnewscache
-
+import time
 
 
 router = APIRouter(
@@ -58,26 +58,37 @@ class tfidf_obj():
 
 ## function to update tfidf class object 
 async def get_tfidf_verctorizer(tfidf):
-    async with async_session() as session:
-        async with session.begin():
-            articlecrud = ArticleCrud(session)
-            articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
-            # keywords = [str(keyword.keyword.tag) for article in  articles for keyword in article.keywords]
-            article_keyword = {article.id : [str(keyword.keyword.tag) for keyword in article.keywords ] for article in  articles }
 
-            article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
+    first_exists = await latestnewscache.check_news_exists(0)
+    last_exists = await latestnewscache.check_news_exists(499)
+    if not first_exists and not last_exists:
+        print("CACHING LATEST ARTICLE")
+        async with async_session() as session:
+            async with session.begin():
+                articlecrud = ArticleCrud(session)
+                all_latest_articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
+                await latestnewscache.cache_news(all_latest_articles)
+        
+    articles = await latestnewscache.read_all_news_from_cache(0, 499)
+    # async with async_session() as session:
+    #     async with session.begin():
+    #         articlecrud = ArticleCrud(session)
+    #         articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
+    article_keyword = {article['id'] : [str(keyword['keyword']['tag']) for keyword in article['keywords'] ] for article in  articles }
 
-            article_keyword_df.keywords_words = article_keyword_df.keywords_words.apply(lambda x: ' '.join([tags for tags in x]))
+    article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
 
-            keyword_values = article_keyword_df.keywords_words.values
-            vectorizer = TfidfVectorizer()
-            X = vectorizer.fit_transform(keyword_values)
-            tfidfVectors = pd.DataFrame(X.T.toarray(), index=vectorizer.get_feature_names())
+    article_keyword_df.keywords_words = article_keyword_df.keywords_words.apply(lambda x: ' '.join([tags for tags in x]))
 
-            tfidf.article_keyword_df = article_keyword_df
-            tfidf.vectorizer = vectorizer
-            tfidf.X = X
-            tfidf.tfidfVectors = tfidfVectors
+    keyword_values = article_keyword_df.keywords_words.values
+    vectorizer = TfidfVectorizer()
+    X = vectorizer.fit_transform(keyword_values)
+    tfidfVectors = pd.DataFrame(X.T.toarray(), index=vectorizer.get_feature_names())
+
+    tfidf.article_keyword_df = article_keyword_df
+    tfidf.vectorizer = vectorizer
+    tfidf.X = X
+    tfidf.tfidfVectors = tfidfVectors
             # print(f"tfidff INSIDE : {tfidf.article_keyword_df}, {tfidf.vectorizer}, {tfidff.X },{tfidff.tfidfVectors} ")
 
 
@@ -143,9 +154,12 @@ sparse_item_user = sparse.csr_matrix((data['views'].astype(float), (data['articl
 
 
 sparse_user_item = sparse_item_user.T.tocsr()
+start = time.time()  
 
-model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations = 5)
+model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=1, use_gpu = False)
 model.fit(2 * sparse_user_item)
+end = time.time()
+print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")
 
 
 
@@ -195,8 +209,10 @@ def get_recommended_cf_articles(user_id):
     recommended_article_ids = []
     cf_user_id = user_id_dict.get(user_id)
     ids, scores = model.recommend(cf_user_id, sparse_user_item[cf_user_id], N=10, filter_already_liked_items=False)
+
     recommended_article_ids.extend(ids)
     recommended_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in recommended_article_ids]
+
     return recommended_article_ids
 
 
@@ -267,22 +283,6 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
                 print("USER ALREADY CACHED")
                 keyword_list = await keywordcache.read_from_cache(user_id)
                 
-            # if not keyword_list:
-            #     trending_keywords = await keywordcache.read_from_cache("trending")
-            #     if not trending_keywords:
-            #         recent_articles = await articlecrud.get_all_article(offset, 100)
-            #         trending_keywords = get_trending_keywords(recent_articles)
-            #     keywords = ' '.join([str(keyword) for keyword in trending_keywords])
-
-            #     tfidf_similar_article_list =  get_similar_articles(keywords)
-
-            #     cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
-
-            #     recommended_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
-            #     # return paginate(recommended_articles)
-
-            # else:
-                # keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
             keywords = ' '.join([str(keyword) for keyword in keyword_list])
             tfidf_similar_article_list =  get_similar_articles(keywords)
 
@@ -359,7 +359,7 @@ async def trending_keywords(offset: int = 0, limit: int = Query(default=500), as
     return trending_keywords
 
 
-@router.get('/latest_news',)
+@router.get('/latest_news', response_model=LimitOffsetPage[article_schema.GetAllArticle])
 async def latest_news(offset: int = 0, limit: int = Query(default=500), async_session: Session = Depends(database.get_session)):
     first_exists = await latestnewscache.check_news_exists(offset)
     last_exists = await latestnewscache.check_news_exists(limit)
@@ -372,7 +372,12 @@ async def latest_news(offset: int = 0, limit: int = Query(default=500), async_se
                 await latestnewscache.cache_news(all_latest_articles)
         
     latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
-    return latest_articles
+    
+    # for article in latest_articles:
+    #     article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+
+    
+    return paginate(latest_articles)
 
 
 

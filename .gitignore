@@ -4,3 +4,5 @@ __pycache__
 *.csv
 *.pth.tar
 *.pkl
+classification
+scrapper

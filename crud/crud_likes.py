@@ -25,6 +25,17 @@ class Likes():
         return results.fetchone()
 
 
+    async def get_articles_like(self, article_id: str):
+        query = select(user_model.User).join(
+            user_model.UserArticleLikes
+        ).join(
+            article_model.Article
+        ).filter(article_model.Article.id == article_id)
+        # .where(user_model.UserArticleLikes.user_id == user_id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
     async def get_all_liked_articles(self, user_id: str):
         query = select(user_model.UserArticleLikes).where(user_model.UserArticleLikes.user_id == user_id)
         results = await self.db_session.execute(query)
@@ -39,7 +50,6 @@ class Likes():
         article = await self.articledb.get_article_by_id(article_liked.article_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-
 
         if not article:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")

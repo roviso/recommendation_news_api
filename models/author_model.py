@@ -10,6 +10,9 @@ class Author(Base):
     author_img = Column(String)
     source = Column(String)
 
+    # source_id = Column(Integer, ForeignKey('source.id'))
+    # from_source = relationship("Source", back_populates="authors")
+
     articles = relationship("Article", back_populates="author", lazy = True)
 
     
