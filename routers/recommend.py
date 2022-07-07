@@ -60,16 +60,16 @@ class tfidf_obj():
 async def get_tfidf_verctorizer(tfidf):
 
     first_exists = await latestnewscache.check_news_exists(0)
-    last_exists = await latestnewscache.check_news_exists(555)
+    last_exists = await latestnewscache.check_news_exists(99)
     if not first_exists and not last_exists:
         print("CACHING LATEST ARTICLE")
         async with async_session() as session:
             async with session.begin():
                 articlecrud = ArticleCrud(session)
-                all_latest_articles = await articlecrud.get_all_article(0,555)
+                all_latest_articles = await articlecrud.get_all_article(0,99)
                 await latestnewscache.cache_news(all_latest_articles)
         
-    articles = await latestnewscache.read_all_news_from_cache(0, 555)
+    articles = await latestnewscache.read_all_news_from_cache(0, 99)
     # async with async_session() as session:
     #     async with session.begin():
     #         articlecrud = ArticleCrud(session)
@@ -156,7 +156,7 @@ sparse_item_user = sparse.csr_matrix((data['views'].astype(float), (data['articl
 sparse_user_item = sparse_item_user.T.tocsr()
 start = time.time()  
 
-model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=10, use_gpu = True)
+model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=1, use_gpu = False)
 model.fit(2 * sparse_user_item)
 end = time.time()
 print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")

@@ -16,8 +16,7 @@ class PathConfig:
     ).resolve()
 
     MODEL_PATH: Path = Path(
-        Path(__file__).parent,'repository','trained_models','NCF_checkpoint_cuda.pth.tar'
-        # Path(__file__).parent,'repository','trained_models','NCF_checkpoint_cpu.pth.tar'
+        Path(__file__).parent,'repository','trained_models','NCF_checkpoint_cpu.pth.tar'
     ).resolve()
 
     REDIRECT_DICT_PATH: Path = Path(
@@ -44,7 +43,7 @@ class Settings:
     PROJECT_NAME:str = "news_recommendation_dev"
     PROJECT_VERSION: str = "1.0.0"
 
-    POSTGRES_USER : str = os.getenv("POSTGRES_USER","ravi")
+    POSTGRES_USER : str = os.getenv("POSTGRES_USER","postgres")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD","techprixa1234")
     POSTGRES_SERVER : str = os.getenv("POSTGRES_SERVER","127.0.0.1")
     POSTGRES_PORT : str = os.getenv("POSTGRES_PORT",5432) # default postgres port is 5432

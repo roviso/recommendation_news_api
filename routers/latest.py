@@ -1,6 +1,6 @@
 from numpy import int16
 import pandas as pd
-from fastapi import APIRouter, status, HTTPException,Depends
+from fastapi import APIRouter, status, HTTPException,Depends,Query
 from crud.crud_latest import LatestCrud
 from crud.crud_author import AuthorCrud
 from models.article_model import Article,LatestArticle, RecommendedArticle
@@ -17,7 +17,7 @@ from helper import tfidf_generator
 from operator import add
 from functools import reduce
 from routers.keywords import add_article_keywords
-
+from fastapi_pagination import paginate,LimitOffsetPage
 
 
 
@@ -117,12 +117,14 @@ async def get_article_by_url(article_url:str):
 
 
 
-@router.get('/get_latest_articles', status_code = 200)
-async def get_latest_articles() -> List[LatestArticle]:
+@router.get('/get_latest_articles', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def get_latest_articles(offset: int = 0, limit: int = Query(default=50)) -> List[LatestArticle]:
     async with async_session() as session:
         async with session.begin():
             latestcrud = LatestCrud(session)
-            return await latestcrud.get_all_latest_article()
+            latest_articles = await latestcrud.get_latest_articles(offset,limit)
+
+            return  paginate(latest_articles)
 
 
 @router.get('/get_latest_article/article_id', status_code = 200)
@@ -145,7 +147,6 @@ async def get_trending_articles_test(id:int) -> List[LatestArticle]:
 @router.get('/get_trending_articles')
 async def get_trending_articles(background_tasks: BackgroundTasks):
     trending_news = [news for news in await get_trending_news()]
-
 
     # cache_exists = await latestcache.cache_exits()
     # if not cache_exists:

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from database import engine, Base
 # from fastapi.logger import logger
 # from apis.keyword.main import keywordApi
-from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search , clicks , scrap, keywords ,recommend
+from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords ,recommend
 # , recommendation, 
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
@@ -87,4 +87,4 @@ if __name__ == "__main__":
     import uvicorn
     
 
-    uvicorn.run(app, host="0.0.0.0", port=8848, log_level="debug")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="debug")

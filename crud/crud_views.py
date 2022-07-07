@@ -75,13 +75,9 @@ class Views():
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
-        else:
-            user = user._mapping.User
 
         if not article:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
-        else:
-            article = article._mapping.Article
 
 
         already_ignored = await self.check_ignored_articles(user.id,article.id)
@@ -103,7 +99,7 @@ class Views():
                 else:
                     return JSONResponse(status_code=status.HTTP_201_CREATED, content="article has already been ignored")
             else:
-                await self.update_views(article_id= article.id, increase_views = int(article.views)+1)
+                await self.update_views(article_id= article.id, increase_views = int(article.views or 0)+1)
                 view_article = user_model.UserArticleViewed(user_id = user.id,article_id = article.id,start_time= start_time, end_time= end_time, total_time_spend= total_time_spend)
                 self.db_session.add(view_article)
                 await self.db_session.flush()

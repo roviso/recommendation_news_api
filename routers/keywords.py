@@ -102,6 +102,7 @@ async def update_keywords(article_id: str) -> List[article_model.LatestArticle]:
                 tfidf_dict = await tfidfcache.read_from_cache()
             else:
                 articles = await latestcrud.get_all_latest_article()
+                print(articles)
                 
 
 

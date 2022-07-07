@@ -23,7 +23,7 @@ router = APIRouter(
 )
 
 
-@router.get('/{tags}', response_model = LimitOffsetPage[article_schema.SearchArticleByTag])
+@router.get('/{tags}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
 async def search_articles(tag: str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
@@ -31,7 +31,7 @@ async def search_articles(tag: str, async_session: Session = Depends(database.ge
             # print(f"searching the tag: {tag}")
             tagged_articles = await keywordcrud.search_articles_by_keywords(tag)
             # print(f"Searched Articles with tag: {tag} are : {tagged_articles}")
-    print(tagged_articles[0].__dict__)
+    # print(tagged_articles[0].__dict__)
     return paginate(tagged_articles)
 
 @router.get('/author/{author_name}' , response_model = LimitOffsetPage[author_schema.GetAllAuthors])

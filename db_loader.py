@@ -50,7 +50,7 @@ def load_model_data():
     print('ESTABLISHING CONNECTION TO DATABASE')
     # ESTABLISHING CONNECTION TO DATABASE
     hostname = 'localhost'
-    username = 'ravi'
+    username = 'postgres'
     password = 'techprixa1234' # your password
     database = 'news_recommendation_dev'
 
