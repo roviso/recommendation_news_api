@@ -39,6 +39,12 @@ class LatestCrud(ArticleCrud):
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
+    async def get_latest_articles(self,offset,limit) ->  List[LatestArticle]:
+        query = select(LatestArticle).join(LatestArticle.keywords).order_by(LatestArticle.date.desc()).offset(offset).limit(limit)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
 
     async def get_trending_article(self) -> List[LatestArticle]:
         query = select(LatestArticle).join(LatestArticle.keywords).order_by(desc(LatestArticle.likes),desc(LatestArticle.shares)).limit(50)

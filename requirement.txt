@@ -28,3 +28,5 @@ matplotlib
 python-multipart
 implicit
 psycopg2-binary 
+lxml
+html5lib

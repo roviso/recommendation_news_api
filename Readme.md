@@ -15,3 +15,5 @@ celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
 
 ## Required Files:
  - 
+
+<!-- delete from "article" where type="latest" -->
