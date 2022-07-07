@@ -11,7 +11,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 class Keywords(Base):
     __tablename__ = 'keywords'
 
-    id = Column(Integer, primary_key = True)
+    id = Column(Integer, primary_key = True, autoincrement=True)
     tag = Column(String, nullable = False)
 
     articles = relationship("AricleKeywords", back_populates = "keyword")
@@ -19,8 +19,8 @@ class Keywords(Base):
     
 class AricleKeywords(Base):
     __tablename__ = 'article_keywords'
-    article_id = Column(ForeignKey('article.id'), primary_key=True)
-    keywords_id = Column(ForeignKey('keywords.id'), primary_key=True)
+    article_id = Column(String, ForeignKey('article.id'), primary_key=True)
+    keywords_id = Column(Integer, ForeignKey('keywords.id'), primary_key=True)
     # blurb = Column(String, nullable=False)
     article = relationship("Article", back_populates="keywords")
     keyword = relationship("Keywords", back_populates="articles", lazy='selectin')

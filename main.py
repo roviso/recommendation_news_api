@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from database import engine, Base
-from fastapi.logger import logger
-from apis.keyword.main import keywordApi
-from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search , clicks , scrap,recommend
+# from fastapi.logger import logger
+# from apis.keyword.main import keywordApi
+from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, search , clicks , scrap, keywords ,recommend
 # , recommendation, 
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import Page, add_pagination
 
 
-from pydantic import BaseSettings
+# from pydantic import BaseSettings
 
 
 
@@ -31,7 +31,7 @@ app.add_middleware(
 )
 
 
-app.mount("/api/keyword", keywordApi)
+# app.mount("/api/keyword", keywordApi)
 
 
 
@@ -46,7 +46,7 @@ async def startup():
 
 
 # app.include_router(recommendation.router)
-
+app.include_router(keywords.router)
 
 app.include_router(search.router)
 app.include_router(recommend.router)
