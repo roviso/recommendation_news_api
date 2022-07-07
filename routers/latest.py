@@ -17,10 +17,9 @@ from helper import tfidf_generator
 from operator import add
 from functools import reduce
 from routers.keywords import add_article_keywords
-from database import async_session
-from sqlalchemy.orm import Session
-import database
-import re
+
+
+
 
 router = APIRouter(
     prefix = "/latest",
@@ -28,33 +27,33 @@ router = APIRouter(
 )
 
 
-@router.get('/get_keywords', status_code = 200)
-async def get_keywords(article_id: str, async_session: Session = Depends(database.get_session)) -> List[LatestArticle]:
-    CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
-    async with async_session as session:
-        async with session.begin():
-            latestcrud = LatestCrud(session)
-            if await tfidfcache.cache_exits():
-                tfidf_dict = await tfidfcache.read_from_cache()
-            else:
-                articles = await latestcrud.get_all_latest_article()
+# @router.get('/get_keywords', status_code = 200)
+# async def get_keywords(article_id: str, async_session: Session = Depends(database.get_session)) -> List[LatestArticle]:
+#     CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
+#     async with async_session as session:
+#         async with session.begin():
+#             latestcrud = LatestCrud(session)
+#             if await tfidfcache.cache_exits():
+#                 tfidf_dict = await tfidfcache.read_from_cache()
+#             else:
+#                 articles = await latestcrud.get_all_latest_article()
                 
 
 
-                article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in articles]
+#                 article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in articles]
 
-                train_df = pd.DataFrame(article_text, columns= ['text'])
-                tfidf_dict = tfidf_generator.train_idfs(train_df)
+#                 train_df = pd.DataFrame(article_text, columns= ['text'])
+#                 tfidf_dict = tfidf_generator.train_idfs(train_df)
 
-                await tfidfcache.cache_latest_tfidf(tfidf_dict) ##Caching tfidf values in dictrionary 
+#                 await tfidfcache.cache_latest_tfidf(tfidf_dict) ##Caching tfidf values in dictrionary 
 
-            article = await latestcrud.get_article_by_id(article_id)
-            content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
-            keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
+#             article = await latestcrud.get_article_by_id(article_id)
+#             content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
+#             keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
 
-            final_keywords = reduce(add ,keywords)
+#             final_keywords = reduce(add ,keywords)
 
-    return await add_article_keywords(final_keywords,article_id,async_session)
+#     return await add_article_keywords(final_keywords,article_id,async_session)
 
     # return await tfidfcache.read_from_cache()
 

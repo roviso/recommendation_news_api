@@ -39,7 +39,8 @@ class KeywordsCrud():
 
 
     async def check_article_keyword(self, tag_id:int, article_id: str) -> article_model.AricleKeywords :
-        query = select(article_model.AricleKeywords).where(article_model.AricleKeywords.keywords_id == tag_id, article_model.AricleKeywords.article_id == article_id)
+        query = select(article_model.AricleKeywords).filter((article_model.AricleKeywords.article_id == article_id) & (article_model.AricleKeywords.keywords_id == tag_id))
+        # .where(article_model.AricleKeywords.keywords_id == tag_id and article_model.AricleKeywords.article_id == article_id)
         results = await self.db_session.execute(query)
         result = results.fetchone()
         return result
@@ -64,11 +65,19 @@ class KeywordsCrud():
         if not keyword:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Keyword not found")
         
-        aleady_exists = self.check_article_keyword(article_keyword.keywords_id, article_keyword.article_id)
+        aleady_exists = await self.check_article_keyword(keyword.id, article.id)
 
         if not aleady_exists:
+            print(f"Adding keywords to article: {article.id}")
             self.db_session.add(article_keyword)
             await self.db_session.flush()
         
         else:
             print(f"keyword: {article_keyword.keywords_id} already exists in the article: {article_keyword.article_id}")
+
+
+    async def get_article_no_keyword(self):
+        query = select(article_model.Article).filter(~article_model.Article.keywords.any())
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
