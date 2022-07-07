@@ -65,6 +65,7 @@ authconfig = AuthConfig()
 class CacheConfig(BaseSettings):
     redis_url: str = 'redis://localhost'
     URL_EXPIRY_TIME = 60*60*3 ##3 hours
+    TFIDF_EXPIRY_TIME = 60*2 ## 2min
     KEYWORDS_EXPIRY_TIME = 60*5 ##5 min
     EXPIRY_TIME = 60 * 20 # 20 min
     LATEST_EXPIRY_TIME = 60*20
