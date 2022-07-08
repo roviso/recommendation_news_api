@@ -6,7 +6,7 @@ from config import pathconfig
 from schemas import article_schema
 from database import async_session
 from crud.crud_article import ArticleCrud
-from crud.crud_author import AuthorCrud
+from crud.crud_recommendation import RecommendationCrud
 from repository.ncf_recommender.loader import load_pkl
 from config import pathconfig
 from repository.ncf_recommender import utils
@@ -36,13 +36,103 @@ router = APIRouter(
 )
 
 
+### _______________________________ PREPARING RECOMMENDATION ENGINE _______________________________________________
+async def train_implicit_model():
+    global user_id_dict,article_id_dict,sparse_user_item,model, data
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = RecommendationCrud(session)
 
-## _______________________________ LOADING PREPROCESSING FILES _______________________________________________
+            user_articles_score_df = await articlecrud.get_user_article() 
+            data = user_articles_score_df.dropna()
+            data.rename(columns={"user_id":"user","article_id": "article"},inplace=True)
 
-print('----------Preprocessing(loading data)--------------------')
-if pathconfig.PRE_PKL_PATH.is_file():
-    pre = load_pkl(pathconfig.PRE_PKL_PATH)
-    print('Successfully Loaded Pickle file')
+            # Create a numeric user_id and article_id column
+            data['user'] = data['user'].astype("category")
+            data['article'] = data['article'].astype("category")
+            data['user_id'] = data['user'].cat.codes
+            data['article_id'] = data['article'].cat.codes
+
+            user_id_dict = pd.Series(data.user_id.values, index=data.user).to_dict()
+
+            article_id_dict = pd.Series(data.article_id.values, index=data.article).to_dict()
+
+
+            sparse_item_user = sparse.csr_matrix((data['score'].astype(float), (data['article_id'], data['user_id'])))
+
+
+            sparse_user_item = sparse_item_user.T.tocsr()
+            start = time.time()  
+
+            model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=10, use_gpu = True)
+            model.fit(2 * sparse_user_item)
+            end = time.time()   
+            print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")
+
+            # return user_id_dict,article_id_dict,sparse_user_item,model
+
+
+@router.get('/train_model')
+async def train_model():
+    return await train_implicit_model()
+
+
+@router.get('/test_model')
+# , response_model = List[recommendation_schema.RecommendationSchema])
+async def recommend_user_articles():
+    global user_id_dict,article_id_dict,sparse_user_item,model, data
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = RecommendationCrud(session)
+
+            user_articles_score_df = await articlecrud.get_user_article() 
+            data = user_articles_score_df.dropna()
+            data.rename(columns={"user_id":"user","article_id": "article"},inplace=True)
+
+            # Create a numeric user_id and article_id column
+            data['user'] = data['user'].astype("category")
+            data['article'] = data['article'].astype("category")
+            data['user_id'] = data['user'].cat.codes
+            data['article_id'] = data['article'].cat.codes
+
+            user_id_dict = pd.Series(data.user_id.values, index=data.user).to_dict()
+
+            article_id_dict = pd.Series(data.article_id.values, index=data.article).to_dict()
+
+
+            # sparse_item_user = sparse.csr_matrix((data['score'].astype(float), (data['article_id'], data['user_id'])))
+
+
+            # sparse_user_item = sparse_item_user.T.tocsr()  4-8yd
+            # start = time.time()  
+
+            # model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=10, use_gpu = True)
+            # model.fit(2 * sparse_user_item)
+            # end = time.time()   
+            # print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")
+
+            # recommended_article_ids= []
+            # cf_user_id = user_id_dict.get(uid)
+            # ids, scores = model.recommend(cf_user_id, sparse_user_item[cf_user_id], N=3, filter_already_liked_items=False)
+
+            # recommended_article_ids.extend(ids)
+            # recommended_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in recommended_article_ids]
+            if "3dca4b8c3cc3ed654bf9e3719ed70ceaaa" in user_id_dict:
+                print("usedsgf")
+            else:
+                print("NOOOOOOOO")
+
+
+    
+        return user_id_dict,article_id_dict
+
+
+# ## _______________________________ LOADING PREPROCESSING FILES _______________________________________________
+
+# print('----------Preprocessing(loading data)--------------------')
+# if pathconfig.PRE_PKL_PATH.is_file():
+#     pre = load_pkl(pathconfig.PRE_PKL_PATH)
+#     print('Successfully Loaded Pickle file')
 
 ### _______________________________ TFIDF SIMILARITIES CALCULATOR _______________________________________________
 
@@ -60,16 +150,16 @@ class tfidf_obj():
 async def get_tfidf_verctorizer(tfidf):
 
     first_exists = await latestnewscache.check_news_exists(0)
-    last_exists = await latestnewscache.check_news_exists(99)
+    last_exists = await latestnewscache.check_news_exists(15)
     if not first_exists and not last_exists:
         print("CACHING LATEST ARTICLE")
         async with async_session() as session:
             async with session.begin():
                 articlecrud = ArticleCrud(session)
-                all_latest_articles = await articlecrud.get_all_article(0,99)
+                all_latest_articles = await articlecrud.get_all_latest_article()
                 await latestnewscache.cache_news(all_latest_articles)
         
-    articles = await latestnewscache.read_all_news_from_cache(0, 99)
+    articles = await latestnewscache.read_all_news_from_cache(0, 15)
     # async with async_session() as session:
     #     async with session.begin():
     #         articlecrud = ArticleCrud(session)
@@ -89,7 +179,6 @@ async def get_tfidf_verctorizer(tfidf):
     tfidf.vectorizer = vectorizer
     tfidf.X = X
     tfidf.tfidfVectors = tfidfVectors
-            # print(f"tfidff INSIDE : {tfidf.article_keyword_df}, {tfidf.vectorizer}, {tfidff.X },{tfidff.tfidfVectors} ")
 
 
     # return article_keyword_df, vectorizer, X, tfidfVectors
@@ -101,11 +190,12 @@ async def get_tfidf_verctorizer(tfidf):
 
 ## initialize the tfidf object
 tfidf = tfidf_obj(None,None,None,None)
-
+user_id_dict,article_id_dict,sparse_user_item,model,data = None,None,None,None,None
 ## updating tfidf object on router startup
 @router.on_event("startup")
 async def router_startup():
     await get_tfidf_verctorizer(tfidf)
+    await train_implicit_model()
 
 
 ## Function to get similar articles list using tfidf 
@@ -131,35 +221,35 @@ def get_similar_articles(q):
     return article_list
 
 
-### _______________________________ PREPARING RECOMMENDATION ENGINE _______________________________________________
+# ### _______________________________ PREPARING RECOMMENDATION ENGINE _______________________________________________
 
-print("_______________PREPARING RECOMMENDATION ENGINE_______________________________")
-user_article_df = pre.df.groupby(['user','article_id']).size().reset_index(name='counts')
-data = user_article_df.dropna()
-data = data.copy()
-data.rename(columns={"article_id": "article", "counts": "views"},inplace=True)
+# print("_______________PREPARING RECOMMENDATION ENGINE_______________________________")
+# user_article_df = pre.df.groupby(['user','article_id']).size().reset_index(name='counts')
+# data = user_article_df.dropna()
+# data = data.copy()
+# data.rename(columns={"article_id": "article", "counts": "views"},inplace=True)
 
-# Create a numeric user_id and article_id column
-data['user'] = data['user'].astype("category")
-data['article'] = data['article'].astype("category")
-data['user_id'] = data['user'].cat.codes
-data['article_id'] = data['article'].cat.codes
+# # Create a numeric user_id and article_id column
+# data['user'] = data['user'].astype("category")
+# data['article'] = data['article'].astype("category")
+# data['user_id'] = data['user'].cat.codes
+# data['article_id'] = data['article'].cat.codes
 
-user_id_dict = pd.Series(data.user_id.values, index=data.user).to_dict()
+# user_id_dict = pd.Series(data.user_id.values, index=data.user).to_dict()
 
-article_id_dict = pd.Series(data.article_id.values, index=data.article).to_dict()
-
-
-sparse_item_user = sparse.csr_matrix((data['views'].astype(float), (data['article_id'], data['user_id'])))
+# article_id_dict = pd.Series(data.article_id.values, index=data.article).to_dict()
 
 
-sparse_user_item = sparse_item_user.T.tocsr()
-start = time.time()  
+# sparse_item_user = sparse.csr_matrix((data['views'].astype(float), (data['article_id'], data['user_id'])))
 
-model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=1, use_gpu = False)
-model.fit(2 * sparse_user_item)
-end = time.time()
-print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")
+
+# sparse_user_item = sparse_item_user.T.tocsr()
+# start = time.time()  
+
+# model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=10, use_gpu = True)
+# model.fit(2 * sparse_user_item)
+# end = time.time()
+# print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")
 
 
 
@@ -200,7 +290,9 @@ def get_similar_cf_articles(article_list):
         ids, scores= model.similar_items(int(article_id_dict.get(article_id)))
         similar_article_ids.extend(ids)
 
-    similar_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in similar_article_ids]
+    # print(similar_article_ids,77777777777777777777777)
+
+    similar_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in similar_article_ids if id in user_id_dict]
     return similar_article_ids
 
 ## this function returns recommended articles for certain user based on Collaborative Filtering algorithm
@@ -208,7 +300,7 @@ def get_recommended_cf_articles(user_id):
     # recommended_article_ids = [ids for ids, scores in model.recommend(user_id, sparse_user_item[user_id], N=10, filter_already_liked_items=False)]
     recommended_article_ids = []
     cf_user_id = user_id_dict.get(user_id)
-    ids, scores = model.recommend(cf_user_id, sparse_user_item[cf_user_id], N=10, filter_already_liked_items=False)
+    ids, scores = model.recommend(cf_user_id, sparse_user_item[cf_user_id], N=len(article_id_dict), filter_already_liked_items=False)
 
     recommended_article_ids.extend(ids)
     recommended_article_ids = [data.article.loc[data.article_id == id].iloc[0] for id in recommended_article_ids]
@@ -293,7 +385,8 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
 
             cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
-            recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
+            recommended_article_list = list(set(cf_recommended_article_list ))
+            # + cf_similar_article_list))
 
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
 
@@ -307,27 +400,27 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
 
 
 
-@router.get('/web/{user_id}')
-async def user_web_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
-    async with async_session as session:
-        async with session.begin():
-            articlecrud = ArticleCrud(session)
-            # article = await articlecrud.search_article(article_id)
-            user = pre.user_df.query(f'user == "{user_id}"')
-            keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
-            tfidf_similar_article_list =  get_similar_articles(keywords)
+# @router.get('/web/{user_id}')
+# async def user_web_recommendation(user_id: str,offset: int = 0, limit: int = Query(default=20), async_session: Session = Depends(database.get_session)):
+#     async with async_session as session:
+#         async with session.begin():
+#             articlecrud = ArticleCrud(session)
+#             # article = await articlecrud.search_article(article_id)
+#             user = pre.user_df.query(f'user == "{user_id}"')
+#             keywords = ' '.join([str(keyword) for keyword in user['user_keywords']])
+#             tfidf_similar_article_list =  get_similar_articles(keywords)
 
-            cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+#             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
-            cf_recommended_article_list = get_recommended_cf_articles(user_id)
+#             cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
-            recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
+#             recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list))
 
-            articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
+#             articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
             
-            html_content = utils.hori_html_formate(articles)
+#             html_content = utils.hori_html_formate(articles)
 
-    return  html_content
+#     return  html_content
 
 
 

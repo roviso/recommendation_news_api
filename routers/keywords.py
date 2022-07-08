@@ -1,15 +1,17 @@
 from fastapi import APIRouter,Depends
+from typing import List
 
 from crud.crud_keywords import KeywordsCrud
 from crud.crud_latest import LatestCrud
+from crud.crud_recommendation import RecommendationCrud
 
-from schemas import article_schema, keywords_schema
+from schemas import article_schema, keywords_schema, recommendation_schema
 from models import article_model
 from repository.ncf_recommender.loader import load_pkl
 from sqlalchemy.orm import Session
 import database
 from cacher.tfidf_cache import tfidfcache
-from typing import List
+
 from fastapi_pagination import paginate,LimitOffsetPage
 import re
 from helper import tfidf_generator
@@ -17,11 +19,20 @@ from operator import add
 from functools import reduce
 import pandas as pd
 from database import async_session
+import time
+
+import scipy.sparse as sparse
+from sklearn.feature_extraction.text import TfidfVectorizer
+from implicit.als import AlternatingLeastSquares
+
 
 router = APIRouter(
     prefix = "/keywords",
     tags=['keywords']
 )
+
+
+
 
 
 @router.get('/search_articles/{tags}', response_model = LimitOffsetPage[article_schema.SearchArticleByTag])
