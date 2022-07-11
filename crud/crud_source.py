@@ -4,7 +4,8 @@ from sqlalchemy.future import select
 # from schemas import article_schema
 from models.source_model import Source
 from datetime import datetime
-
+from typing import List, Optional
+from sqlalchemy import update
 
 
 class SourceCrud():
@@ -29,8 +30,47 @@ class SourceCrud():
     async def get_source_by_name(self, source_name) ->Source:
         query = select(Source).where(Source.name == source_name)
         results = await self.db_session.execute(query)
-        result = results.fetchone()
+        (result,) = results.fetchone()
         return result
+
+    async def update_source(self, source_id: int,
+                            name: Optional[str], 
+                            image: Optional[str],
+                            content_selector: Optional[str],
+                            image_selector: Optional[str],
+                            author_selector: Optional[str],
+                            label_selector: Optional[str],
+                            disable: Optional[str],
+                            analytics_id: Optional[str],
+                            debug: Optional[str],
+                            debug_link: Optional[str]
+                            ):
+        
+        """ Update the source info"""
+        q = update(Source).where(Source.id == source_id)
+        if name:
+            q = q.values(name=name)
+        if image:
+            q = q.values(image=image)
+        if content_selector:
+            q = q.values(content_selector=content_selector)
+        if image_selector:
+            q = q.values(image_selector=image_selector)
+        if author_selector:
+            q = q.values(author_selector=author_selector)
+        if label_selector:
+            q = q.values(label_selector=label_selector)
+        if disable:
+            q = q.values(disable=disable)
+        if analytics_id:
+            q = q.values(analytics_id=analytics_id)
+        if debug:
+            q = q.values(debug=debug)
+        if debug_link:
+            q = q.values(debug_link=debug_link)
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
 
 
     # async def get_source_by_name(self):

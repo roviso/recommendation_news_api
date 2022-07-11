@@ -21,15 +21,15 @@ class Source(Base):
 
     link_type = Column(String)
 
-    selector = Column(String)
+    content_selector = Column(String)
 
     exception_selector = Column(String) 
 
     priority = Column(Integer)
 
     image_selector = Column(String)
-
     author_selector = Column(String)
+    label_selector = Column(String)
 
     default_image = Column(String)
 
@@ -42,6 +42,8 @@ class Source(Base):
     pubDate = Column(String)
 
     debug = Column(Boolean)
+
+    debug_link = Column(Boolean)
 
     disable = Column(Boolean)
     

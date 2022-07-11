@@ -15,13 +15,18 @@ class Source(BaseModel):
     link: str 
     link_prefix: Optional[str] = None
     link_type: str
-    selector: str
     priority: int
+
+    content_selector: str
     image_selector: str
+    author_selector: str
+    label_selector: str 
+
     exception_selector:str
+
     default_image: Optional[str] = None
     pubDate:  Optional[str] = None
     debug: bool
     disable: bool
     analytics_id: str
-    author_selector: str
+

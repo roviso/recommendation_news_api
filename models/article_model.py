@@ -9,6 +9,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 
 class Keywords(Base):
+    """Base Class for Keyword Model"""
     __tablename__ = 'keywords'
 
     id = Column(Integer, primary_key = True, autoincrement=True)
@@ -18,6 +19,7 @@ class Keywords(Base):
     users = relationship("UserKeywords", back_populates = "keyword")
     
 class AricleKeywords(Base):
+    """Base Class for Aricle Keyword relationship"""
     __tablename__ = 'article_keywords'
     article_id = Column(String, ForeignKey('article.id'), primary_key=True)
     keywords_id = Column(Integer, ForeignKey('keywords.id'), primary_key=True)
@@ -29,6 +31,7 @@ class AricleKeywords(Base):
 
 
 class Article(Base):
+    """Base Class for Article Model"""
     __tablename__ = 'article'
 
     id = Column(String, primary_key =True, index=True)
@@ -43,6 +46,8 @@ class Article(Base):
     likes = Column(Integer)
     shares = Column(Integer)
 
+    # label_id = Column(String, ForeignKey('author.id'))
+    # label = relationship("Label", back_populates="articles", lazy='selectin')
     label = Column(String)
     
     author_id = Column(String, ForeignKey('author.id'))
@@ -69,8 +74,7 @@ class Article(Base):
     ignored_by = relationship("UserArticleIgnored", back_populates="ignored_article")
 
     article_comments = relationship("Comments", back_populates="commented_article")
-    # author = Column(String)
-    # author_img = Column(String)
+
     __mapper_args__ = {'polymorphic_on': type,
         'polymorphic_identity':'article'
         }
@@ -86,30 +90,3 @@ class RecommendedArticle(Article):
     # __tablename__ = "recommended"
     __mapper_args__ = {'polymorphic_identity': 'recommended'}
     
-
-# class HomescreenArticle(Article):
-#     likes = Column(Integer)
-#     shares = Column(Integer)
-
-
-# class LatestArticle(Base):
-#     __tablename__ = 'latest'
-#     id = Column(String, primary_key =True, index=True)
-#     url = Column(String)
-#     heading = Column(String)
-#     content = Column(String)
-    
-    
-#     date = Column(String)
-#     head_image = Column(String)
-    
-#     additional_img = Column(String)
-#     label = Column(String)
-
-#     author = Column(String)
-
-#     author_img = Column(String)
-
-#     source = Column(String)
-#     likes = Column(Integer)
-#     shares = Column(Integer)
