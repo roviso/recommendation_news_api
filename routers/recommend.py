@@ -313,7 +313,6 @@ def get_recommended_cf_articles(user_id):
 @router.get('/tags')
 async def recommend_by_tags(tags: str, async_session: Session = Depends(database.get_session)):
     article_list =  get_similar_articles(tags)
-    # print(f"article_list: {article_list} 55555555555555555555555555555555555555555555555555555")
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
@@ -332,13 +331,15 @@ async def recommend_similar_articles(article_id: str, user_id: str,offset: Union
             articlecrud = ArticleCrud(session)
             article = await articlecrud.search_article(article_id)
             keywords = ' '.join([str(keyword.keyword.tag) for keyword in article.keywords])
-            
+
             tfidf_similar_article_list =  get_similar_articles(keywords)
 
             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
 
-            similar_articles = await articlecrud.get_all_articles_by_id(cf_similar_article_list,offset,limit)
+            all_article_list = list(set([article.id] +tfidf_similar_article_list + cf_similar_article_list))
+
+            similar_articles = await articlecrud.get_all_articles_by_id(all_article_list,offset,limit)
 
     for article in similar_articles:
         article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
@@ -385,7 +386,7 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
 
             cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
-            recommended_article_list = list(set(cf_recommended_article_list ))
+            recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list + tfidf_similar_article_list))
             # + cf_similar_article_list))
 
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
