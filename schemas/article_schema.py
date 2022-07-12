@@ -2,7 +2,7 @@ from ast import keyword
 from typing import List, Union
 from pydantic import BaseModel
 from typing import Optional
-from schemas import author_schema, comments_schema
+from schemas import author_schema, label_schema, source_schema
 
 
 class Article(BaseModel):
@@ -120,12 +120,13 @@ class GetAllArticle(BaseModel):
     head_image : Optional[str]
     heading : Optional[str]
     date : Optional[str]
-
-    label: Optional[str]
+    
+    source : source_schema.GetAllScource
+    label: label_schema.GetAllLabel
 
     content : List[Optional[str]]
     additional_img : Optional[List[Optional[str]]] = None
-    source : Optional[str]
+    
 
     views: Optional[int]
     likes: Optional[int]

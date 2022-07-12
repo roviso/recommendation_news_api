@@ -102,7 +102,8 @@ async def create_latest_article(article: article_schema.CreateLatestArticle):
                 article_dict = article.dict()
                 print(f"creating article: {article_dict}")
                 new_article = Article(id = article_id,**article_dict)
-                return await articlecrud.create_article(new_article)
+                await articlecrud.create_article(new_article)
+                return new_article
 
 
 
@@ -125,6 +126,18 @@ async def get_latest_articles(offset: int = 0, limit: int = Query(default=50)) -
             latest_articles = await latestcrud.get_latest_articles(offset,limit)
 
             return  paginate(latest_articles)
+
+
+# @router.get('/get_latest_articles', status_code = 200)
+# async def get_latest_articles(offset: int = 0, limit: int = Query(default=50)) -> List[LatestArticle]:
+#     async with async_session() as session:
+#         async with session.begin():
+#             latestcrud = LatestCrud(session)
+#             latest_articles = await latestcrud.get_latest_articles(offset,limit)
+
+#             return  latest_articles
+
+
 
 
 @router.get('/get_latest_article/article_id', status_code = 200)

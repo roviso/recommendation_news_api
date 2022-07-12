@@ -20,10 +20,8 @@ class SourceCrud():
 
 
     async def get_all_source(self) -> List[Source]:
-        print("__________ALOMOST THERE___________")
         query = select(Source)
         results = await self.db_session.execute(query)
-        print("_____________RTESULT FOUND______________-")
         return results.scalars().all()
 
 

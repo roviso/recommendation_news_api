@@ -3,7 +3,7 @@ from database import Base
 from sqlalchemy.orm import relationship
 
 class Label(Base):
-    __tablename__ = 'author'
+    __tablename__ = 'label'
 
     id = Column(Integer, primary_key=True, index=True)
     label_name = Column(String)

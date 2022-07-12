@@ -47,7 +47,7 @@ class Settings:
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD","techprixa1234")
     POSTGRES_SERVER : str = os.getenv("POSTGRES_SERVER","127.0.0.1")
     POSTGRES_PORT : str = os.getenv("POSTGRES_PORT",5432) # default postgres port is 5432
-    POSTGRES_DB : str = os.getenv("POSTGRES_DB","news_recommendation_dev")
+    POSTGRES_DB : str = os.getenv("POSTGRES_DB","news_recommendation")
     DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
     SYNC_DB_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
 

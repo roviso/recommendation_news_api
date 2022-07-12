@@ -26,6 +26,8 @@ from schemas import  author_schema
 
 from models import source_model
 from routers.source import getAllSource
+from routers.label import get_label_by_name,addlabel
+
 from routers.latest import create_latest_article, get_article_by_url
 from routers.author import create_author, search_author
 from routers import clicks ## clicks had to be imported for some reason unknown
@@ -49,11 +51,11 @@ class CreateLatestArticle(BaseModel):
     heading : Optional[str]
     date : Optional[str]
 
-    label: Optional[str]
+    label_id: Optional[int]
 
     content : List[Optional[str]]
     additional_img : List[Optional[str]] = None
-    source : Optional[str]
+    source_id : Optional[int]
     likes: Optional[int] = 0
     shares: Optional[int] = 0
 
@@ -64,8 +66,9 @@ class CreateLatestArticle(BaseModel):
     bookmarks: Optional[int] = 0
     author_id: str
     type : str
-    class Config:
-        orm_mode = True
+
+
+
 # @periodic_task(
 #     run_every=(timedelta(minutes=0.1)),
 #     name="run_similar",
@@ -354,15 +357,14 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
         """ Checking if the author exists in the db"""
         if not author_exists:
             print(f"Author: {author_name} not found in db... adding the author..")
-            created_author = await create_author(new_author)
+            authorInDB = await create_author(new_author)
             """ Creating new author in DB"""
-            if not created_author:
-                raise Exception(f'Could not add author')
-            else:
-                author_id = created_author.id 
+            if not authorInDB:
+                raise Exception(f'Could not add author, PLEASE CHECK AUTHOR SELECTOR....')
         else:
-            print(f"Author: {author_name} found in DB...")
-            author_id = author_exists.id
+            authorInDB = author_exists
+            print(f"Author: {author_exists} found in DB...")
+        author_id = authorInDB.id
         
 
         print(f"author_id : {author_id}")
@@ -425,7 +427,14 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
         label = label[0].find_all('a')[-1].text
 
         print(f"label: {label}")
-
+        if label:
+            print("LABEL FOUND")
+            labelInDb = await get_label_by_name(label)
+            if not labelInDb:
+                print("NO LABEL IN DB")
+                labelInDb = await addlabel(label)
+        else:
+            raise Exception(f'No Label found... Please Debug the label selector')
 
         del link_soup
 
@@ -438,8 +447,8 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
             'content': final_content,
             'date': str(pubDate),
             'additional_img': addtional_img,
-            'label': label,
-            'source': source.name,
+            'label_id': labelInDb.id,
+            'source_id': source.id,
             'like': 0,
             'shares': 0,
             'views': 0,
@@ -450,10 +459,14 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
             'author_id': author_id
         }
 
-        # print(f"adding article {article} to the database")
+        print(f"adding article {article} to the database ...")
 
         new_article = CreateLatestArticle(**article)
-        await create_latest_article(new_article)
+        article_created = await create_latest_article(new_article)
+        if article_created:
+            print("ARTICLE SUCCESFULLY ADDED")
+        else:
+            raise Exception(f'UNABLE TO ADD ARTICLE TO DB')
 
     except RequestException as e:
         print('Request error. Unable to connect url : '+link)

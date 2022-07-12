@@ -42,13 +42,16 @@ class Article(Base):
 
     content = Column(ARRAY(String))
     additional_img = Column(ARRAY(String))
-    source = Column(String)
+    # source = Column(String)
     likes = Column(Integer)
     shares = Column(Integer)
 
-    # label_id = Column(String, ForeignKey('author.id'))
-    # label = relationship("Label", back_populates="articles", lazy='selectin')
-    label = Column(String)
+    source_id = Column(Integer, ForeignKey('source.id'))
+    source = relationship("Source", back_populates="articles", lazy='selectin')
+
+    label_id = Column(Integer, ForeignKey('label.id'))
+    label = relationship("Label", back_populates="articles", lazy='selectin')
+    # label = Column(String)
     
     author_id = Column(String, ForeignKey('author.id'))
     author = relationship("Author", back_populates="articles", lazy='selectin')

@@ -6,7 +6,7 @@ from typing import Optional
 
 
 class Source(BaseModel):
-    id: int
+
     name: str
 
     image: str
@@ -30,3 +30,13 @@ class Source(BaseModel):
     disable: bool
     analytics_id: str
 
+    class Config:
+        orm_mode = True
+
+class GetAllScource(BaseModel):
+    id: int
+    name: str
+    image: str
+
+    class Config:
+        orm_mode = True
