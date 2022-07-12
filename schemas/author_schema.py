@@ -23,7 +23,7 @@ class GetAllAuthors(BaseModel):
     id: str
     author_name :str
     author_img :str
-    source: str
+    source: Optional[str] = None
 
 
     class Config:

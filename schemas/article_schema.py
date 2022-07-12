@@ -125,7 +125,7 @@ class GetAllArticle(BaseModel):
 
     content : List[Optional[str]]
     additional_img : Optional[List[Optional[str]]] = None
-    source : Optional[str]
+    source : Optional[str] = None
 
     views: Optional[int]
     likes: Optional[int]
