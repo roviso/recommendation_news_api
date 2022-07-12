@@ -30,3 +30,7 @@ implicit
 psycopg2-binary 
 lxml
 html5lib
+nepali
+
+
+

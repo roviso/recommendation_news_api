@@ -17,3 +17,45 @@ celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
  - 
 
 <!-- delete from "article" where type="latest" -->
+
+{
+    "updated_at": null,
+    "content_selector": ".news-detail-content",
+    "analytics_id": "UA-125866437-1",
+    "deleted_at": null,
+    "exception_selector": "",
+    "category_id": 0,
+    "name": "farakdar",
+    "priority": 0,
+    "pubDate": "",
+    "image": "https://fdcdn.prixa.net/media/albums/logo_for_website_Y6ZGNlriAS_adKxUhM1cf.png",
+    "image_selector": "meta[property='og:image']|content",
+    "debug": false,
+    "domain": "farakdhar.com",
+    "author_selector": ".news-info",
+    "debug_link": null,
+    "id": 1,
+    "link": "https://farakdhar.com/hamro-rss",
+    "label_selector": ".breadcrumb",
+    "disable": false,
+    "created_at": null,
+    "link_prefix": "",
+    "default_image": "",
+    "link_type": "normal_rss"
+}
+
+
+
+4skp-2Zem2gA-o_RSzKM25RLyAFmFTEXo--ClihGFNQ : {
+        ip--Mn-Np0wnV124iWYhESxGSM2QbU327tKnDJk4b9E,
+        uu5eNiuFIzPSt3P7PiYBnatu9PTxuqm4UBrQucn-d2Y,
+        e7sWoH2yUJQBbItQ5IubuE_nPF3AIzj_irTKsCHVKVI,
+        HH7-GSG_YYjP1CV3cf_ICf5RGWanA_lxrhYBf9JDx5k
+
+}
+
+
+ibpKHKHi54s3atX_GDmQoL5wxyMyxqTsH4Qrw_kAVeA: { 
+    HH7-GSG_YYjP1CV3cf_ICf5RGWanA_lxrhYBf9JDx5k,
+    ip--Mn-Np0wnV124iWYhESxGSM2QbU327tKnDJk4b9E
+}

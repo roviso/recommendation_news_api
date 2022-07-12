@@ -39,7 +39,7 @@ class AuthorCrud():
     async def get_author_by_name(self,author_name: str) -> Author:
         query = select(Author).where(Author.author_name == author_name)
         results = await self.db_session.execute(query)
-        result = results.fetchone()
+        result = results.first()
         return result
 
     async def get_all_author(self) -> List[Author]:

@@ -59,4 +59,7 @@ async def search_author(author_name: str) -> Author:
     async with async_session() as session:
         async with session.begin():
             authorcrud = AuthorCrud(session)
-            return await authorcrud.get_author_by_name(author_name)
+            author = await authorcrud.get_author_by_name(author_name)
+            if author:
+                (author,)= author
+            return author

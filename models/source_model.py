@@ -9,11 +9,8 @@ class Source(Base):
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     deleted_at = Column(DateTime)
-
     name = Column(String)
-
     image = Column(String)
-
     domain = Column(String)
     link = Column(String)
 
@@ -21,15 +18,15 @@ class Source(Base):
 
     link_type = Column(String)
 
-    selector = Column(String)
+    content_selector = Column(String)
 
     exception_selector = Column(String) 
 
     priority = Column(Integer)
 
     image_selector = Column(String)
-
     author_selector = Column(String)
+    label_selector = Column(String)
 
     default_image = Column(String)
 
@@ -43,8 +40,12 @@ class Source(Base):
 
     debug = Column(Boolean)
 
+    debug_link = Column(Boolean)
+
     disable = Column(Boolean)
     
+
+    articles = relationship("Article", back_populates="source", lazy = True)
 
     # authors = relationship("Author", back_populates="from_source", lazy = True)
 
