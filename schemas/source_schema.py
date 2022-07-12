@@ -40,3 +40,5 @@ class GetAllScource(BaseModel):
 
     class Config:
         orm_mode = True
+
+
