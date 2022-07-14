@@ -25,6 +25,13 @@ class SourceCrud():
         return results.scalars().all()
 
 
+    async def get_source_by_id(self, source_id) ->Source:
+        query = select(Source).where(Source.id == source_id)
+        results = await self.db_session.execute(query)
+        result = results.first()
+        return result
+
+
     async def get_source_by_name(self, source_name) ->Source:
         query = select(Source).where(Source.name == source_name)
         results = await self.db_session.execute(query)
@@ -33,6 +40,7 @@ class SourceCrud():
 
     async def update_source(self, source_id: int,
                             name: Optional[str], 
+                            link: Optional[str], 
                             image: Optional[str],
                             content_selector: Optional[str],
                             image_selector: Optional[str],
@@ -48,6 +56,8 @@ class SourceCrud():
         q = update(Source).where(Source.id == source_id)
         if name:
             q = q.values(name=name)
+        if link:
+            q = q.values(link=link)
         if image:
             q = q.values(image=image)
         if content_selector:
