@@ -50,12 +50,24 @@ celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
         ip--Mn-Np0wnV124iWYhESxGSM2QbU327tKnDJk4b9E,
         uu5eNiuFIzPSt3P7PiYBnatu9PTxuqm4UBrQucn-d2Y,
         e7sWoH2yUJQBbItQ5IubuE_nPF3AIzj_irTKsCHVKVI,
-        HH7-GSG_YYjP1CV3cf_ICf5RGWanA_lxrhYBf9JDx5k
+        HH7-GSG_YYjP1CV3cf_ICf5RGWanA_lxrhYBf9JDx5k,
+
 
 }
 
 
 ibpKHKHi54s3atX_GDmQoL5wxyMyxqTsH4Qrw_kAVeA: { 
     HH7-GSG_YYjP1CV3cf_ICf5RGWanA_lxrhYBf9JDx5k,
-    ip--Mn-Np0wnV124iWYhESxGSM2QbU327tKnDJk4b9E
+    ip--Mn-Np0wnV124iWYhESxGSM2QbU327tKnDJk4b9E,
+
+}
+
+
+3FrWlo9gX9DtV9LaLdpeTGt8BuWs-Jy05RRwxk4QjmY: {
+    HH7-GSG_YYjP1CV3cf_ICf5RGWanA_lxrhYBf9JDx5k,
+    UY4nPHr3GnlaC9bgdqRZNZCS6uLFTozqnY3QFe900hc,
+    FEOZXs4ma802LO5EiJpavOhWjht55cYfmt9EFIhnGsQ,
+    zFTdnWdF6M-ZujlWxzMMOr7kuD2b4-hr7_mmLMfzcDA,
+    5aNvdjEv_h26yc4wW7hRYMOVFZEhlGLSsXXRmktT5jo
+
 }
