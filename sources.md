@@ -48,28 +48,25 @@ Step4:
 
 
 {
-    "id": 1,
-    "name": "farakdar",
-    "domain": "farakdhar.com",
-    "link": "https://farakdhar.com/hamro-rss",
-    "link_type": "normal_rss",
-    "image": "https://fdcdn.prixa.net/media/albums/logo_for_website_Y6ZGNlriAS_adKxUhM1cf.png",
-    "author_selector": ".news-info",
-    "image_selector": "meta[property='og:image']|content",
-    "label_selector": ".breadcrumb",
-    "content_selector": ".news-detail-content",
-    "analytics_id": "UA-125866437-1",
-
-
-    "exception_selector": "",
-    "debug": false,
-    "debug_link": null,
-    "disable": false,
-    "link_prefix": "",
-    "default_image": "",
-    "category_id": 0,
-    "pubDate": "",
-    "priority": 0
+  "name": "farakdar",
+  "domain": "farakdhar.com",
+  "link": "https://farakdhar.com/hamro-rss",
+  "link_type": "normal_rss",
+  "image": "https://fdcdn.prixa.net/media/albums/logo_for_website_Y6ZGNlriAS_adKxUhM1cf.png",
+  "author_selector": ".news-info",
+  "image_selector": "meta[property='og:image']|content",
+  "label_selector": ".breadcrumb",
+  "content_selector": ".news-detail-content",
+  "analytics_id": "UA-125866437-1",
+  "exception_selector": "",
+  "debug": false,
+  "debug_link": null,
+  "disable": false,
+  "link_prefix": "",
+  "default_image": "",
+  "category_id": 0,
+  "pubDate": "",
+  "priority": 0
 }
 
 

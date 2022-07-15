@@ -4,7 +4,7 @@ from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.author_model import Author
-
+from models import article_model
 
 class AuthorCrud():
     def __init__(self, db_session: Session):
@@ -47,6 +47,15 @@ class AuthorCrud():
         results = await self.db_session.execute(query)
         return results.scalars().all()
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
+
+
+    async def get_author_articles(self, author_id: str) ->List[article_model.Article]:
+        query = select(article_model.Article).filter(article_model.Article.author_id == author_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
+
 
     async def update_author(self, author_id: str, author_name: Optional[str], author_img: Optional[str]):
         q = update(Author).where(Author.id == author_id)

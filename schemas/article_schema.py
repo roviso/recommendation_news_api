@@ -42,11 +42,11 @@ class CreateLatestArticle(BaseModel):
     heading : Optional[str]
     date : Optional[str]
 
-    label: Optional[str]
+    label_id: Optional[int]
 
     content : List[Optional[str]]
     additional_img : List[Optional[str]] = None
-    source : Optional[str]
+    source_id : Optional[int]
     likes: Optional[int] = 0
     shares: Optional[int] = 0
 
@@ -57,8 +57,6 @@ class CreateLatestArticle(BaseModel):
     bookmarks: Optional[int] = 0
     author_id: str
     type : str
-    class Config:
-        orm_mode = True
 
 
 class LatestArticle(Article):
@@ -91,8 +89,8 @@ class SearchArticleByTag(BaseModel):
     head_image : Optional[str]
     heading : Optional[str]
     date : Optional[str]
-    label: Optional[str]
-    source : Optional[str]
+    label: label_schema.GetAllLabel
+    source : source_schema.GetAllScource
     likes: Optional[int]
     shares: Optional[int]
 

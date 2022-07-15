@@ -350,7 +350,7 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
         new_author = author_schema.Author(
             author_name = author_name,
             author_img= author_img,
-            source = source.name
+            source_id = source.id
         )
 
         author_exists = await search_author(author_name)

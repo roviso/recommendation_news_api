@@ -47,6 +47,6 @@ class Source(Base):
 
     articles = relationship("Article", back_populates="source", lazy = True)
 
-    # authors = relationship("Author", back_populates="from_source", lazy = True)
+    authors = relationship("Author", back_populates="source", lazy = True)
 
     

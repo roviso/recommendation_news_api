@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.source_model import Source
+from models import author_model, article_model
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import update
+from sqlalchemy import update,delete
 
 
 class SourceCrud():
@@ -25,7 +26,7 @@ class SourceCrud():
         return results.scalars().all()
 
 
-    async def get_source_by_id(self, source_id) ->Source:
+    async def get_source_by_id(self, source_id: int) ->Source:
         query = select(Source).where(Source.id == source_id)
         results = await self.db_session.execute(query)
         result = results.first()
@@ -36,6 +37,18 @@ class SourceCrud():
         query = select(Source).where(Source.name == source_name)
         results = await self.db_session.execute(query)
         (result,) = results.fetchone()
+        return result
+
+    async def get_source_authors(self, source_id: int) ->List[author_model.Author]:
+        query = select(author_model.Author).filter(author_model.Author.source_id == source_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
+    async def get_source_articles(self, source_id: int) ->List[article_model.Article]:
+        query = select(article_model.Article).filter(article_model.Article.source_id == source_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
         return result
 
     async def update_source(self, source_id: int,
@@ -79,6 +92,9 @@ class SourceCrud():
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
+    async def remove_source(self, source_id: int):
+        query = delete(Source).where(Source.id == source_id)
+        await self.db_session.execute(query)
 
 
     # async def get_source_by_name(self):
