@@ -126,9 +126,11 @@ async def update_keywords(article_id: str) -> List[article_model.LatestArticle]:
 
             article = await latestcrud.get_article_by_id(article_id)
             content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
-            print(content,1111111111111111111)
-            keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
-
+            # print(content,1111111111111111111)
+            try:
+                keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
+            except:
+                keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
             final_keywords = reduce(add ,keywords)
 
     return await add_article_keywords(final_keywords,article_id)

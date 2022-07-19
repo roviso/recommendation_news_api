@@ -71,14 +71,15 @@ async def test_source_scrape(source_id: int):
     if not Newslinks:
         raise HTTPException(status_code=404, detail=f"Source RSS Link Error with RSS={sourceInDb.link}")
 
-    
-    testLink = next(iter(Newslinks)) 
+    # print(Newslinks)
+    # testLink = next(iter(Newslinks)) 
+    testLink = list(Newslinks)[22]
     
     print(f"Scrape Testing on Link: {testLink}")
-    news_scrapper = crud_scrap.ScrapeLink(testLink)
+    news_scrapper = crud_scrap.ScrapeLinkX(sourceInDb,testLink)
     title = news_scrapper.scrape_title()
     head_image = news_scrapper.scrape_img(sourceInDb.image_selector)
-    author = news_scrapper.scrape_author(sourceInDb.author_selector)
+    author = news_scrapper.scrape_author(author_name_selector =sourceInDb.author_name_selector,author_img_selector =sourceInDb.author_img_selector)
     content, additional_img = news_scrapper.scrape_content(sourceInDb.content_selector, None)
     label = news_scrapper.scrape_label(sourceInDb.label_selector)
 

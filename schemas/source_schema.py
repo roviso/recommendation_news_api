@@ -11,22 +11,16 @@ class Source(BaseModel):
 
     image: str
     domain: str
-    category_id: int
     link: str 
-    link_prefix: Optional[str] = None
-    link_type: str
-    priority: int
+
 
     content_selector: str
     image_selector: str
-    author_selector: str
+    author_img_selector: str
+    author_name_selector: str
+
     label_selector: str 
 
-    exception_selector:str
-
-    default_image: Optional[str] = None
-    pubDate:  Optional[str] = None
-    debug: bool
     disable: bool
     analytics_id: str
 

@@ -45,7 +45,7 @@ async def get_label_by_name(label_name: str):
 
 
 @router.get("/get_label_by_id/{label_id}")
-async def get_label_by_name(label_id: int):
+async def get_label_by_id(label_id: int):
     async with async_session() as session:
         async with session.begin():
             labelcrud = crud_label.LabelCrud(session)

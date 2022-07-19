@@ -18,8 +18,10 @@ async def addSource(source: source_schema.Source,):
         async with session.begin():
             sourcecrud = crud_source.SourceCrud(session)
             new_source = Source(**source.dict())
-            return await sourcecrud.create_source(new_source)
+            await sourcecrud.create_source(new_source)
 
+            sourceInDb = await sourcecrud.get_source_by_name(new_source.name)
+            return sourceInDb
 
 
 @router.get("/get_source")
@@ -64,7 +66,8 @@ async def update_author(source_id: int,
                         image: Optional[str]= None,
                         content_selector: Optional[str]= None,
                         image_selector: Optional[str]= None,
-                        author_selector: Optional[str]= None,
+                        author_img_selector: Optional[str]= None,
+                        author_name_selector: Optional[str]= None,
                         label_selector: Optional[str]= None,
                         disable: Optional[str]= None,
                         analytics_id: Optional[str]= None,
@@ -79,7 +82,8 @@ async def update_author(source_id: int,
                                     image,
                                     content_selector,
                                     image_selector,
-                                    author_selector,
+                                    author_img_selector,
+                                    author_name_selector,
                                     label_selector,
                                     disable,
                                     analytics_id,

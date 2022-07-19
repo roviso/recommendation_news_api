@@ -287,8 +287,9 @@ def get_similar_cf_articles(article_list):
     similar_article_ids = []
     # similar_article_ids = [ids for article_id in article_list for ids,_ in model.similar_items(int(article_id_dict.get(article_id)))]
     for article_id in article_list:
-        ids, scores= model.similar_items(int(article_id_dict.get(article_id)))
-        similar_article_ids.extend(ids)
+        if article_id in article_id_dict:
+            ids, scores= model.similar_items(int(article_id_dict.get(article_id)))
+            similar_article_ids.extend(ids)
 
     # print(similar_article_ids,77777777777777777777777)
 
@@ -379,8 +380,10 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
             keywords = ' '.join([str(keyword) for keyword in keyword_list])
             tfidf_similar_article_list =  get_similar_articles(keywords)
 
+
+
             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
-            
+
             if user_id not in user_id_dict:
                 user_id = random.choice(list(user_id_dict))
 

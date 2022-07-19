@@ -34,6 +34,11 @@ from routers import clicks ## clicks had to be imported for some reason unknown
 from routers.keywords import update_articles_keywords
 
 
+from crud import crud_scrap
+
+
+
+
 
 CONNECTION_TIMEOUT = 10
 DEFAULT_IMAGE = '/media/system/prixa_image.png'
@@ -75,24 +80,6 @@ class CreateLatestArticle(BaseModel):
 #     ignore_result=True
 # )
 
-def run_similar():
-	"""
-	Executed similarity task periodically
-	"""
-	print('---------------------------')
-	print('Executing news similarity')
-	try:
-		execute_similar('a','b')
-	except Exception as e:
-		print("Error while executing similarity.")
-		print(str(type(e)) + ' : ' + str(e))
-	print('News similarity complete')
-	print('---------------------------')
-
-# @celery.task
-def execute_similar(x,y):
-    print(f"__________{x}__________EXECUTING SIMILAT>>> GWAIII >>>> GWAIIII ____________{y}______________")
-
 
 @celery.task(name='hello.task', bind=True)
 def hello_world(self, name):
@@ -132,18 +119,13 @@ async def refresh_sources():
         print(f"Using RSS LINK: {source.link} from source: {source.name}")
     try:
         for source in sources:
-            if source.link_type == 'instant_rss':
-                # t = Thread(target=scrape_instant_rss, args=[source.pk, source.category_id, source.link, source.link_prefix])
-                # threads.append(t)
-                # t.start()
-                print("____________INSTANT RSS FOUND__________________________")
-        #scrape_instant_rss(source.pk, source.category_id, source.link, source.link_prefix)
-            elif source.link_type == 'normal_rss':
-                print("_________________STARTING NORMAL RSS SCRAPPING________________________")
-                # if not source.default_image:
-                #     source.default_image = DEFAULT_IMAGE
-                # else:
-                #     default_image = DEFAULT_IMAGE
+            
+            # if not source.default_image:
+            #     source.default_image = DEFAULT_IMAGE
+            # else:
+            #     default_image = DEFAULT_IMAGE
+            if source.id == 5:
+                print(f"_________________STARTING NORMAL RSS SCRAPPING: {source.name}________________________")
                 await scrape_normal_rss(source)
                 # await scrape_normal_rss(source.id, source.name , source.link, source.link_prefix, source.selector, source.image_selector, source.author_selector ,source.exception_selector, default_image)
         #         t = Thread(target=scrape_normal_rss, args=[source.id, source.link, source.link_prefix, source.selector, source.image_selector, source.exception_selector, default_image])
@@ -180,30 +162,25 @@ async def scrape_normal_rss(source: source_model.Source ):
     # checking if selector are empty
     if len(str(source.content_selector).strip()) < 1 or len(str(source.image_selector).strip()) < 1:
         print('Selector cannot be empty. '+source.link)
-        if source.debug:	# Debugging mode
-            return {'error': 'Selector cannot be empty'}
-        return
+        # if source.debug:	# Debugging mode
+        return {'error': 'Selector cannot be empty'}
+        
 
     try:
         # sending request to the rss link
         r = requests.get(source.link, timeout=CONNECTION_TIMEOUT)
         soup = BeautifulSoup(r.text, "xml")
 
-        if source.debug:	# Debugging mode
-            soup_temp = BeautifulSoup(r.text, 'html.parser')
     except Exception as e:
         print('Error connecting rss url. '+source.link)
-        if source.debug:	# Debugging mode
-            return {'error' : 'Error connecting url'}
-        return
+
+        return {'error' : 'Error connecting url'}
+
 
     # getting all items from rss feed
     items = soup.find_all('item')
     if len(items) == 0:
         print('No items available in rss feed. '+source.link)
-        if source.debug:	# Debugging mode
-            return {'error' : 'No items available in rss feed. Please check the rss link.', 'rss': str(soup_temp)}
-
     # looping all items
 
     for item in reversed(items):
@@ -213,48 +190,32 @@ async def scrape_normal_rss(source: source_model.Source ):
             pubDate = nepalidatetime.from_datetime(parse(str(pubDate)))
 
         except:
-            if not source.debug:
-                pubDate = datetime.now()
-                # print(f"using pubDate {pubDate}")
-            else:
-                pubDate = nepalidatetime.now()
+            pubDate = nepalidatetime.now()
 
-        # getting link from item
-        link = item.find('link')
-        if not link:
-            # if the item has no link
-            print('Unable to find link in rss item. '+link)
-            if source.debug:	# Debugging mode
-                return {'error' : 'Unable to find link in rss item.', 'rss': str(soup_temp)}
-        link = link.text.strip()
+        try:
+            # getting link from item
+            link = item.find('link')
+            if not link:
+                # if the item has no link
+                print('Unable to find link in rss item. '+link)
 
-        print(f"Scrapping from link: {link}")
+            link = link.text.strip()
+
+            print(f"Scrapping from link: {link}")
 
 
-        articleInDb = await get_article_by_url(link)
-        """ Checking if the article is in database and ignoreing the scraping process if so."""
+            articleInDb = await get_article_by_url(link)
+            """ Checking if the article is in database and ignoreing the scraping process if so."""
 
-        if not articleInDb: 
-            print(f"article not foind in database... continuing scrapping...")
+            if not articleInDb: 
+                print(f"article not foind in database... continuing scrapping...")
 
-            if source.debug:
-                # sending output for debugging mode.
-                if source.debug_link != None and source.debug_link != '':
+                # scraping news link
+                
+                await scrape_news(source, link,pubDate )
+        except:
+            continue
 
-                    link = source.debug_link
-                output = scrape_news(source, pubDate)
-                output['rss'] = str(soup_temp)
-                return output
-
-            # scraping news link
-            await scrape_news(source, link,pubDate )
-
-    
-    
-
-    # if there are no image available in every link, alerting debugger	( only if more than 3 news )
-    if(scraped_news[source.id] == image_error[source.id] and scraped_news[source.id] > 3):
-        print('Unable locate images. Please debug this source. Make sure the image selector is correct. '+link)
 
 
 
@@ -266,98 +227,20 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
 
     global image_error, scraped_news
     try:
-        # link = "https://www.thahakhabar.com/news/78710"
-
-        # Checking news if exists
-        # print(checkNews(link, prefix))
-        # if checkNews(link, prefix) and not debug:
-        #     return
-
         print('Scraping news from link: '+link)
-
-        # Requesting news link
-        response = requests.get(link, timeout=CONNECTION_TIMEOUT)
-        response.encoding = 'utf-8'
-        link_soup = BeautifulSoup(response.text, 'html5lib')
-
-        # getting title
-        title_soup = link_soup.find("meta", {"property": "og:title"})
-        # print(title_soup)
-        if title_soup:
-            title = str(title_soup['content'])
-            print('title: ', title)
-        else:
-            # if meta tag is not available
-            title_soup  = link_soup.find("title")
-            if title_soup:
-                title = title_soup.text
-                print('title: ', title)
-            else:
-                raise Exception('Unbale to locate title. '+link)
-        del title_soup
-
-        # extracting image
-        image = source.default_image 	# using default image ( from argument )
-
-        attribute = 'src'
-        # getting custom attribute if exists
-        if source.image_selector.find('|') >= 0:
-            custom_selector = source.image_selector
-            image_selector = custom_selector.split('|')[0]
-            attribute = custom_selector.split('|')[1]
-            del custom_selector
+        news_scrapper = crud_scrap.ScrapeLinkX(source,link)
+        title = news_scrapper.scrape_title()
+        head_image = news_scrapper.scrape_img(source.image_selector)
+        author = news_scrapper.scrape_author(author_name_selector =source.author_name_selector,author_img_selector =source.author_img_selector)
+        content, additional_img = news_scrapper.scrape_content(source.content_selector, None)
+        label = news_scrapper.scrape_label(source.label_selector)
 
 
-        # getting image link from content
-        image_soup = link_soup.select(image_selector, limit=1)
-        if len(image_soup) > 0:
-            # image tag is available
-            if image_soup[0].has_attr(attribute):
-                image = str(image_soup[0][attribute]).strip()
-                if checkImageUrl(image):
-                    image = generate_absolute_url(link, image)
-                    # print(f"image is {image}")
-                else:
-                    # image attribute is empty
-                    image = source.default_image
-
-        print(f"using headimage: {image}")
-
-        # alerting if there is no image in all link
-        if source.id in scraped_news:
-            scraped_news[source.id] += 1
-            if image == source.default_image:
-                image_error[source.id] += 1
-                #logger.warn('Unable to locate image. Saving default image. '+link)
-
-
-
-        # authorselector = author_selector
-        author = link_soup.select(source.author_selector, limit=1)
-        
-        author_img = author[0].find_all('img')
-        author_img = author_img[0]['src'].strip()
-
-        author_name = author[0].find_all('a')
-        author_name = author_name[0].text.strip()
-        """ author Name index in thahakhabar is 0"""
-
-        if not author_name:
-            """ author Name index in thahakhabar is 1"""
-            author_name = author[0].find_all('a')
-            author_name = author_name[1].text.strip()
-
-        new_author = author_schema.Author(
-            author_name = author_name,
-            author_img= author_img,
-            source_id = source.id
-        )
-
-        author_exists = await search_author(author_name)
+        author_exists = await search_author(author.author_name)
         """ Checking if the author exists in the db"""
         if not author_exists:
-            print(f"Author: {author_name} not found in db... adding the author..")
-            authorInDB = await create_author(new_author)
+            print(f"Author: {author.author_name} not found in db... adding the author..")
+            authorInDB = await create_author(author)
             """ Creating new author in DB"""
             if not authorInDB:
                 raise Exception(f'Could not add author, PLEASE CHECK AUTHOR SELECTOR....')
@@ -365,88 +248,25 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
             authorInDB = author_exists
             print(f"Author: {author_exists} found in DB...")
         author_id = authorInDB.id
+
+
+        if not label:
+            label = 'समाचार'
+
+        labelInDb = await get_label_by_name(label)
+        if not labelInDb:
+            print("NO LABEL IN DB")
+            labelInDb = await addlabel(label)
         
-
-        print(f"author_id : {author_id}")
-        # extracting content
-        content = link_soup.select(source.content_selector, limit=1)
-        if len(content) < 1:
-            raise Exception(f'Content not available or invalid content selector.')
-        
-
-        # getting all content and removing exception from exception_selector
-        content = content[0]
-
-        addtional_img = [img['src'] for img in content.find_all('img') if img['src'][-4:] != '.gif']
-        if addtional_img:
-            print(f"addtional_imges: {addtional_img}")
-
-
-        # for _selector in exception_selector.split(','):
-        #     _selector = _selector.strip()
-        #     if _selector != '':
-        #         exception_soups = content.select(_selector)
-        #         [exception_soup.extract() for exception_soup in exception_soups]
-
-        # # Removing content images
-        # images = content[0].find_all('img')
-        # [image.extract() for image in images]
-
-        # # Removing content videos
-        # videos = content[0].find_all('iframe')
-        # [video.extract() for video in videos]
-
-        """
-        -- Extract only p, ul, ol from content
-        """
-
-        # collecting all paragraphs as content
-        paragraphs = content.find_all(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'])
-        # paragraphs = content.findChildren(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'], recursive=False)
-
-        content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs]
-        content = [i for i in content if i] ## removing empty paragraph
-        final_content = [''.join(content)]
-        
-        # content_list = []
-        # for c in content:   
-        #     new_content = html2text.html2text(c)
-        #     content_list.append(new_content)  
-
-
-        if len(content) < 1:
-            raise Exception('Empty Content.')
-
-        # Downloading and saving image
-        if not source.debug:
-            # image = saveImage(image)
-            print(f"saving image {image}")
-
-        # labelselector = ".breadcrumb"
-        label = link_soup.select(source.label_selector, limit=1)
-        label = label[0].find_all('a')[-1].text
-
-        print(f"label: {label}")
-        if label:
-            print("LABEL FOUND")
-            labelInDb = await get_label_by_name(label)
-            if not labelInDb:
-                print("NO LABEL IN DB")
-                labelInDb = await addlabel(label)
-        else:
-            raise Exception(f'No Label found... Please Debug the label selector')
-
-        del link_soup
-
 
         article =  {
             # 'id': pk,
             'url': link,
             'heading': title,
-            'head_image': image,
-            'content': final_content,
+            'head_image': head_image,
+            'content': content,
             'date': str(pubDate),
-            'additional_img': addtional_img,
+            'additional_img': additional_img,
             'label_id': labelInDb.id,
             'source_id': source.id,
             'like': 0,
@@ -470,109 +290,296 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
 
     except RequestException as e:
         print('Request error. Unable to connect url : '+link)
-        if source.debug:	# Debugging mode
-            return {'error' : 'Request error. Unable to connect url.', 'link': link}
+        # if source.debug:	# Debugging mode
+        return {'error' : 'Request error. Unable to connect url.', 'link': link}
 
     except Exception as e:
         print(str(type(e)) + ' : ' + str(e) +" : "+link)
-        if source.debug:	# Debugging mode
-            return {'error' : str(type(e)) + ' : ' + str(e), 'link': link}
+        # if source.debug:	# Debugging mode
+        return {'error' : str(type(e)) + ' : ' + str(e), 'link': link}
+
+
+
+# async def scrape_news(source: source_model.Source, link: str, pubDate):
+#     """
+#     Scrapes and saves news from news link
+#     Content selector, image selector, label selector is strictly required
+#     """
+
+#     global image_error, scraped_news
+#     try:
+#         # link = "https://www.thahakhabar.com/news/78710"
+
+#         # Checking news if exists
+#         # print(checkNews(link, prefix))
+#         # if checkNews(link, prefix) and not debug:
+#         #     return
+
+#         print('Scraping news from link: '+link)
+
+#         # Requesting news link
+#         response = requests.get(link, timeout=CONNECTION_TIMEOUT)
+#         response.encoding = 'utf-8'
+#         link_soup = BeautifulSoup(response.text, 'html5lib')
+
+#         # getting title
+#         title_soup = link_soup.find("meta", {"property": "og:title"})
+#         # print(title_soup)
+#         if title_soup:
+#             title = str(title_soup['content'])
+#             print('title: ', title)
+#         else:
+#             # if meta tag is not available
+#             title_soup  = link_soup.find("title")
+#             if title_soup:
+#                 title = title_soup.text
+#                 print('title: ', title)
+#             else:
+#                 raise Exception('Unbale to locate title. '+link)
+#         del title_soup
+
+#         # extracting image
+#         image = source.default_image 	# using default image ( from argument )
+
+#         attribute = 'src'
+#         # getting custom attribute if exists
+#         if source.image_selector.find('|') >= 0:
+#             custom_selector = source.image_selector
+#             image_selector = custom_selector.split('|')[0]
+#             attribute = custom_selector.split('|')[1]
+#             del custom_selector
+
+
+#         # getting image link from content
+#         image_soup = link_soup.select(image_selector, limit=1)
+#         if len(image_soup) > 0:
+#             # image tag is available
+#             if image_soup[0].has_attr(attribute):
+#                 image = str(image_soup[0][attribute]).strip()
+#                 if checkImageUrl(image):
+#                     image = generate_absolute_url(link, image)
+#                     # print(f"image is {image}")
+#                 else:
+#                     # image attribute is empty
+#                     image = source.default_image
+
+#         print(f"using headimage: {image}")
+
+#         # alerting if there is no image in all link
+#         if source.id in scraped_news:
+#             scraped_news[source.id] += 1
+#             if image == source.default_image:
+#                 image_error[source.id] += 1
+#                 #logger.warn('Unable to locate image. Saving default image. '+link)
+
+
+
+#         # authorselector = author_selector
+#         author = link_soup.select(source.author_selector, limit=1)
+        
+#         author_img = author[0].find_all('img')
+#         author_img = author_img[0]['src'].strip()
+
+#         author_name = author[0].find_all('a')
+#         author_name = author_name[0].text.strip()
+#         """ author Name index in thahakhabar is 0"""
+
+#         if not author_name:
+#             """ author Name index in thahakhabar is 1"""
+#             author_name = author[0].find_all('a')
+#             author_name = author_name[1].text.strip()
+
+#         new_author = author_schema.Author(
+#             author_name = author_name,
+#             author_img= author_img,
+#             source_id = source.id
+#         )
+
+#         author_exists = await search_author(author_name)
+#         """ Checking if the author exists in the db"""
+#         if not author_exists:
+#             print(f"Author: {author_name} not found in db... adding the author..")
+#             authorInDB = await create_author(new_author)
+#             """ Creating new author in DB"""
+#             if not authorInDB:
+#                 raise Exception(f'Could not add author, PLEASE CHECK AUTHOR SELECTOR....')
+#         else:
+#             authorInDB = author_exists
+#             print(f"Author: {author_exists} found in DB...")
+#         author_id = authorInDB.id
+        
+
+#         print(f"author_id : {author_id}")
+#         # extracting content
+#         content = link_soup.select(source.content_selector, limit=1)
+#         if len(content) < 1:
+#             raise Exception(f'Content not available or invalid content selector.')
+        
+
+#         # getting all content and removing exception from exception_selector
+#         content = content[0]
+
+#         addtional_img = [img['src'] for img in content.find_all('img') if img['src'][-4:] != '.gif']
+#         if addtional_img:
+#             print(f"addtional_imges: {addtional_img}")
+
+
+#         # for _selector in exception_selector.split(','):
+#         #     _selector = _selector.strip()
+#         #     if _selector != '':
+#         #         exception_soups = content.select(_selector)
+#         #         [exception_soup.extract() for exception_soup in exception_soups]
+
+#         # # Removing content images
+#         # images = content[0].find_all('img')
+#         # [image.extract() for image in images]
+
+#         # # Removing content videos
+#         # videos = content[0].find_all('iframe')
+#         # [video.extract() for video in videos]
+
+#         """
+#         -- Extract only p, ul, ol from content
+#         """
+
+#         # collecting all paragraphs as content
+#         paragraphs = content.find_all(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'])
+#         # paragraphs = content.findChildren(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'], recursive=False)
+
+#         content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs]
+#         content = [i for i in content if i] ## removing empty paragraph
+#         final_content = [''.join(content)]
+        
+#         # content_list = []
+#         # for c in content:   
+#         #     new_content = html2text.html2text(c)
+#         #     content_list.append(new_content)  
+
+
+#         if len(content) < 1:
+#             raise Exception('Empty Content.')
+
+#         # Downloading and saving image
+#         if not source.debug:
+#             # image = saveImage(image)
+#             print(f"saving image {image}")
+
+#         # labelselector = ".breadcrumb"
+#         label = link_soup.select(source.label_selector, limit=1)
+#         label = label[0].find_all('a')[-1].text
+
+#         print(f"label: {label}")
+#         if label:
+#             print("LABEL FOUND")
+#             labelInDb = await get_label_by_name(label)
+#             if not labelInDb:
+#                 print("NO LABEL IN DB")
+#                 labelInDb = await addlabel(label)
+#         else:
+#             raise Exception(f'No Label found... Please Debug the label selector')
+
+#         del link_soup
+
+
+#         article =  {
+#             # 'id': pk,
+#             'url': link,
+#             'heading': title,
+#             'head_image': image,
+#             'content': final_content,
+#             'date': str(pubDate),
+#             'additional_img': addtional_img,
+#             'label_id': labelInDb.id,
+#             'source_id': source.id,
+#             'like': 0,
+#             'shares': 0,
+#             'views': 0,
+#             'ignores': 0,
+#             'total_comments':0,
+#             'bookmarks':0,
+#             'type': 'latest',
+#             'author_id': author_id
+#         }
+
+#         print(f"adding article {article} to the database ...")
+
+#         new_article = CreateLatestArticle(**article)
+#         article_created = await create_latest_article(new_article)
+#         if article_created:
+#             print("ARTICLE SUCCESFULLY ADDED")
+#         else:
+#             raise Exception(f'UNABLE TO ADD ARTICLE TO DB')
+
+#     except RequestException as e:
+#         print('Request error. Unable to connect url : '+link)
+#         if source.debug:	# Debugging mode
+#             return {'error' : 'Request error. Unable to connect url.', 'link': link}
+
+#     except Exception as e:
+#         print(str(type(e)) + ' : ' + str(e) +" : "+link)
+#         if source.debug:	# Debugging mode
+#             return {'error' : str(type(e)) + ' : ' + str(e), 'link': link}
 
 
 
 
-def checkImageUrl(image_url):
-	""" 
-	checks if image_url is valid or not 
-	"""
+# def checkImageUrl(image_url):
+# 	""" 
+# 	checks if image_url is valid or not 
+# 	"""
 
-	if(len(image_url) == 0):
-		# image url is empty
-		return False
+# 	if(len(image_url) == 0):
+# 		# image url is empty
+# 		return False
 
-	image_parsed = urlparse(image_url)
-	if not image_parsed.path:
-		# image_url doesn't contain any path
-		return False
-	return True
+# 	image_parsed = urlparse(image_url)
+# 	if not image_parsed.path:
+# 		# image_url doesn't contain any path
+# 		return False
+# 	return True
 
-def checkNews(url, prefix):
-	"""
-	checking if news with url exists or not
-	"""
-	url = url.strip()
-	if prefix:
-		pattern = re.compile(prefix)
-		if not pattern.match(url):
-			return True
+# def checkNews(url, prefix):
+# 	"""
+# 	checking if news with url exists or not
+# 	"""
+# 	url = url.strip()
+# 	if prefix:
+# 		pattern = re.compile(prefix)
+# 		if not pattern.match(url):
+# 			return True
     
-	# news = News.objects.filter(url=url)
+# 	# news = News.objects.filter(url=url)
 
-	if len(url):
-		return True
-	return False
+# 	if len(url):
+# 		return True
+# 	return False
 
 
 
-def generate_absolute_url(link, relative_link):
-	"""
-	generating absolute url from relative url
+# def generate_absolute_url(link, relative_link):
+# 	"""
+# 	generating absolute url from relative url
 	
-	Example:
-	link: http://thakhabar.com/news/18998
-	relative_link: /images/1039.jpg
-	return: http://thakhabar.com//images/1039.jpg
+# 	Example:
+# 	link: http://thakhabar.com/news/18998
+# 	relative_link: /images/1039.jpg
+# 	return: http://thakhabar.com//images/1039.jpg
 
-	"""
+# 	"""
 
-	root_link = urlparse(link)[0]+'://'+urlparse(link)[1]
-	if not bool(urlparse(relative_link).netloc) :
-		if len(relative_link) < 1:
-			return root_link
-		if relative_link[0] == '/':
-			return root_link+relative_link
-		return root_link+'/'+relative_link
-	return relative_link
-
-
-def is_empty_soup(soup):
-	return len(soup.contents) <= 0
-	return len(soup.text.strip()) == 0
+# 	root_link = urlparse(link)[0]+'://'+urlparse(link)[1]
+# 	if not bool(urlparse(relative_link).netloc) :
+# 		if len(relative_link) < 1:
+# 			return root_link
+# 		if relative_link[0] == '/':
+# 			return root_link+relative_link
+# 		return root_link+'/'+relative_link
+# 	return relative_link
 
 
-
-# scrape_news(pk = 1, 
-#         category_id = 1, 
-#         link = "https://www.thahakhabar.com/news/78710", 
-#         prefix = None, 
-#         selector = ".detail-news-details-paragh", 
-#         image_selector="meta[property='og:image']|content", 
-#         exception_selector = "", 
-#         default_image = None, 
-#         pubDate = None, 
-#         debug = False)
+# def is_empty_soup(soup):
+# 	return len(soup.contents) <= 0
+# 	return len(soup.text.strip()) == 0
 
 
-# {
-#     "domain": "farakdhar.com",
-#     "author_selector": ".news-info",
-#     "id": 1,
-#     "link": "https://farakdhar.com/hamro-rss",
-#     "default_image": "",
-#     "created_at": null,
-#     "link_prefix": "",
-#     "analytics_id": "UA-125866437-1",
-#     "updated_at": null,
-#     "link_type": "normal_rss",
-#     "category_id": 0,
-#     "deleted_at": null,
-#     "selector": "div.news-detail-content",
-#     "pubDate": "",
-#     "name": "farakdar",
-#     "exception_selector": "string",
-#     "debug": false,
-#     "image": "sources/Snowberry_Dots.png",
-#     "priority": 0,
-#     "disable": false,
-#     "image_selector": "meta[property='og:image']|content"
-# }
+

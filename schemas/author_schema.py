@@ -6,7 +6,7 @@ from typing import Optional
 
 class Author(BaseModel):
     author_name :str
-    author_img :str
+    author_img : Optional[str]
     source_id: int
 
     class Config:

@@ -14,33 +14,35 @@ class Source(Base):
     domain = Column(String)
     link = Column(String)
 
-    link_prefix = Column(String)
+    # link_prefix = Column(String)
 
-    link_type = Column(String)
+    # link_type = Column(String)
 
     content_selector = Column(String)
 
-    exception_selector = Column(String) 
+    # exception_selector = Column(String) 
 
-    priority = Column(Integer)
+    # priority = Column(Integer)
 
     image_selector = Column(String)
-    author_selector = Column(String)
+    author_img_selector = Column(String)
+    author_name_selector = Column(String)
     label_selector = Column(String)
+    # label_selector_tag = Column(String)
 
-    default_image = Column(String)
+    # default_image = Column(String)
 
-    disable = Column(Boolean)
+    # disable = Column(Boolean)
 
     analytics_id = Column(String)
 
-    category_id = Column(Integer)
+    # category_id = Column(Integer)
 
-    pubDate = Column(String)
+    # pubDate = Column(String)
 
-    debug = Column(Boolean)
+    # debug = Column(Boolean)
 
-    debug_link = Column(Boolean)
+    # debug_link = Column(Boolean)
 
     disable = Column(Boolean)
     

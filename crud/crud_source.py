@@ -57,7 +57,8 @@ class SourceCrud():
                             image: Optional[str],
                             content_selector: Optional[str],
                             image_selector: Optional[str],
-                            author_selector: Optional[str],
+                            author_img_selector: Optional[str],
+                            author_name_selector: Optional[str],
                             label_selector: Optional[str],
                             disable: Optional[str],
                             analytics_id: Optional[str],
@@ -77,8 +78,10 @@ class SourceCrud():
             q = q.values(content_selector=content_selector)
         if image_selector:
             q = q.values(image_selector=image_selector)
-        if author_selector:
-            q = q.values(author_selector=author_selector)
+        if author_img_selector:
+            q = q.values(author_img_selector=author_img_selector)
+        if author_name_selector:
+            q = q.values(author_name_selector=author_name_selector)
         if label_selector:
             q = q.values(label_selector=label_selector)
         if disable:
