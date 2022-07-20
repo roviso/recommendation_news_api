@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from database import engine, Base
 # from fastapi.logger import logger
 # from apis.keyword.main import keywordApi
-from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label ,recommend
+from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label  ,recommend
 # , recommendation, 
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +44,8 @@ async def startup():
         # db_loader.load_model_data()
         await conn.run_sync(Base.metadata.create_all)
 
+app.include_router(scrap.router)
+app.include_router(source.router)
 
 # app.include_router(recommendation.router)
 app.include_router(keywords.router)
@@ -57,11 +59,11 @@ app.include_router(profile.router)
 app.include_router(user.router)
 app.include_router(follow.router)
 
-app.include_router(source.router)
 
 
 
-app.include_router(scrap.router)
+
+
 
 app.include_router(article.router)
 app.include_router(latest.router)

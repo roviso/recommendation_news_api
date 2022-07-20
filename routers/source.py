@@ -30,6 +30,12 @@ async def getAllSource():
             return sources
 
 
+@router.get("/get_source_by_name/{source_name}")
+async def getSourceById(source_id: int):
+    async with async_session() as session:
+        async with session.begin():
+            sourcecrud = crud_source.SourceCrud(session)
+            return await sourcecrud.get_source_by_id(source_id)
 
 
 @router.get("/get_source_by_name/{source_name}")
@@ -41,8 +47,9 @@ async def getSource(source_name: str):
 
 
 @router.put('/update_source/{source_id}', status_code = 200)
-async def update_author(source_id: int, author_name: Optional[str] = None, author_img: Optional[str] = None,
+async def update_author(source_id: int,
                         name: Optional[str]= None, 
+                        link: Optional[str]= None, 
                         image: Optional[str]= None,
                         content_selector: Optional[str]= None,
                         image_selector: Optional[str]= None,
@@ -57,6 +64,7 @@ async def update_author(source_id: int, author_name: Optional[str] = None, autho
             sourcecrud = crud_source.SourceCrud(session)
             return await sourcecrud.update_source(source_id,
                                     name,
+                                    link,
                                     image,
                                     content_selector,
                                     image_selector,
