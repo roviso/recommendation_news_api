@@ -6,6 +6,139 @@ from urllib.parse import urlparse
 from fastapi import HTTPException
 from typing import Optional
 from schemas import author_schema
+from lxml import etree
+from models import source_model
+
+
+class ScrapeLinkX():
+    def __init__(self,source: source_model.Source ,link: str):
+        self.link = link
+        self.source = source
+        CONNECTION_TIMEOUT = 10
+
+        print('Scraping news from link: '+link)
+
+        # Requesting news link
+        response = requests.get(link, timeout=CONNECTION_TIMEOUT)
+        response.encoding = 'utf-8'
+        self.link_soup = BeautifulSoup(response.text, 'html5lib')
+        myparser = etree.HTMLParser(encoding="utf-8")
+        self.tree = etree.HTML(response.content, parser=myparser)
+
+
+    def scrape_title(self):
+        # getting title
+        title_soup = self.link_soup.find("meta", {"property": "og:title"})
+        # print(title_soup)
+        if title_soup:
+            title = str(title_soup['content'])
+        else:
+            # if meta tag is not available
+            title_soup  = self.link_soup.find("title")
+            if title_soup:
+                title = title_soup.text
+            else:
+                raise Exception('Unbale to locate title. '+ self.link)
+        del title_soup
+
+        return title
+      
+        
+
+    def scrape_img(self, image_selector:str):
+        # print(f'image_selector:{image_selector},999999999999999999')
+        img = self.tree.xpath(image_selector)[0].strip()
+        if img:
+            return img
+        else:
+            raise Exception('Unbale to locate Head Image. '+ self.link)
+
+    def scrape_author(self,author_name_selector:str, author_img_selector:Optional[str] = None):
+
+        # author = self.link_soup.select(author_selector, limit=1)
+        # if not author:
+        #     return None
+        if author_img_selector :
+
+            author_img = self.tree.xpath(author_img_selector)[0].strip()
+
+            if not author_img:
+                Exception('Unbale to locate Author Image. '+ self.link)
+
+        else:
+            author_img = self.source.image
+
+        try:
+            author_name = self.tree.xpath(author_name_selector)[1].strip()
+        except:
+            try:
+                author_name = self.tree.xpath(author_name_selector)[0].strip()
+            except:
+                print(f"_________UNABLE TO FIND AUTHOR___________{self.link}___________________")
+                author_name = self.source.name
+
+        if not author_name:
+            Exception('Unbale to locate Author Name. '+ self.link)
+
+
+        new_author = author_schema.Author(
+            author_name = author_name,
+            author_img= author_img,
+            source_id = self.source.id
+        )
+
+        return new_author
+
+    def scrape_label(self, label_selector: Optional[str] = None):
+        if label_selector:
+            label = self.tree.xpath(label_selector)[0].strip()
+
+            if not label:
+                Exception('Unbale to locate Label :'+ self.link)
+
+            return label
+        else:
+            return None
+
+
+
+    def scrape_content(self, content_selector:str, content_unwanted_selector: str):
+        content = self.link_soup.select(content_selector, limit=1)
+        if len(content) < 1:
+            return None, None
+        
+
+        # getting all content and removing exception from exception_selector
+        content = content[0]
+
+        addtional_img = [img['src'] for img in content.find_all('img') if img['src'][-4:] != '.gif']
+        if addtional_img:
+            print(f"addtional_imges: {addtional_img}")
+
+        """
+        -- Extract only p, ul, ol from content
+        """
+        # print(content,11111111111111111111)
+        # if content.find(content_unwanted_selector) != None:
+        #     content.find(content_unwanted_selector).decompose()
+        # print(content,5555555555555555)
+        # collecting all paragraphs as content
+        paragraphs = content.find_all(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'])
+        # paragraphs = content.findChildren(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'], recursive=False)
+        
+
+        
+        content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs]
+        content = [i for i in content if i] ## removing empty paragraph
+        final_content = [''.join(content)]
+
+        return final_content,addtional_img
+ 
+
+
+    def is_empty_soup(soup):
+	    return len(soup.contents) <= 0
+
 
 
 class ScrapeLink():
@@ -82,19 +215,23 @@ class ScrapeLink():
         new_author = author_schema.Author(
             author_name = author_name,
             author_img= author_img,
-            source = "source_name"
+            source_id = 555
         )
 
         return new_author
 
     def scrape_label(self, label_selector:str):
         label = self.link_soup.select(label_selector, limit=1)
-        # print(label,8888888888888888888888888)
+
         if not label:
             return None
-        
-        print( label[0].find_all('li')[-1],555555555555555555555)
+        # //div/nav/ol/li[2]/a
+
         label = label[0].find_all('li')[-1].text
+
+
+
+        # label = label[0].find_all('a')[-1].text
 
         return label
 
@@ -342,6 +479,8 @@ def scrape_author(link: str, author_selector:str):
     link_soup = BeautifulSoup(response.text, 'html5lib')
 
     author = link_soup.select(author_selector, limit=1)
+
+    print(author,55555555555555555555)
         
     author_img = author[0].find_all('img')
     author_img = author_img[0]['src'].strip()

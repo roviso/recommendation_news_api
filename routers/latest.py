@@ -123,7 +123,7 @@ async def get_latest_articles(offset: int = 0, limit: int = Query(default=50)) -
     async with async_session() as session:
         async with session.begin():
             latestcrud = LatestCrud(session)
-            latest_articles = await latestcrud.get_latest_articles(offset,limit)
+            latest_articles = await latestcrud.get_latest_articles()
 
             return  paginate(latest_articles)
 

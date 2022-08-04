@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.source_model import Source
+from models import author_model, article_model
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import update
+from sqlalchemy import update,delete
 
 
 class SourceCrud():
@@ -25,7 +26,7 @@ class SourceCrud():
         return results.scalars().all()
 
 
-    async def get_source_by_id(self, source_id) ->Source:
+    async def get_source_by_id(self, source_id: int) ->Source:
         query = select(Source).where(Source.id == source_id)
         results = await self.db_session.execute(query)
         result = results.first()
@@ -38,13 +39,26 @@ class SourceCrud():
         (result,) = results.fetchone()
         return result
 
+    async def get_source_authors(self, source_id: int) ->List[author_model.Author]:
+        query = select(author_model.Author).filter(author_model.Author.source_id == source_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
+    async def get_source_articles(self, source_id: int) ->List[article_model.Article]:
+        query = select(article_model.Article).filter(article_model.Article.source_id == source_id).order_by(article_model.Article.date.desc())
+        results = await self.db_session.execute(query)
+        result = results.scalars().all()
+        return result
+
     async def update_source(self, source_id: int,
                             name: Optional[str], 
                             link: Optional[str], 
                             image: Optional[str],
                             content_selector: Optional[str],
                             image_selector: Optional[str],
-                            author_selector: Optional[str],
+                            author_img_selector: Optional[str],
+                            author_name_selector: Optional[str],
                             label_selector: Optional[str],
                             disable: Optional[str],
                             analytics_id: Optional[str],
@@ -64,8 +78,10 @@ class SourceCrud():
             q = q.values(content_selector=content_selector)
         if image_selector:
             q = q.values(image_selector=image_selector)
-        if author_selector:
-            q = q.values(author_selector=author_selector)
+        if author_img_selector:
+            q = q.values(author_img_selector=author_img_selector)
+        if author_name_selector:
+            q = q.values(author_name_selector=author_name_selector)
         if label_selector:
             q = q.values(label_selector=label_selector)
         if disable:
@@ -79,6 +95,9 @@ class SourceCrud():
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
+    async def remove_source(self, source_id: int):
+        query = delete(Source).where(Source.id == source_id)
+        await self.db_session.execute(query)
 
 
     # async def get_source_by_name(self):

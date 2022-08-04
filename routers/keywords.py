@@ -43,7 +43,7 @@ async def search_articles(tag: str, async_session: Session = Depends(database.ge
             # print(f"searching the tag: {tag}")
             tagged_articles = await keywordcrud.search_articles_by_keywords(tag)
             # print(f"Searched Articles with tag: {tag} are : {tagged_articles}")
-    print(tagged_articles[0].__dict__)
+    # print(tagged_articles[0].__dict__)
     return paginate(tagged_articles)
 
 
@@ -126,8 +126,11 @@ async def update_keywords(article_id: str) -> List[article_model.LatestArticle]:
 
             article = await latestcrud.get_article_by_id(article_id)
             content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
-            keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
-
+            # print(content,1111111111111111111)
+            try:
+                keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
+            except:
+                keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
             final_keywords = reduce(add ,keywords)
 
     return await add_article_keywords(final_keywords,article_id)

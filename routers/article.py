@@ -38,37 +38,50 @@ async def add_comments_and_replies(articles: List[Article]):
     return articles
 
 @router.post('/create_articles/', status_code = 200)
-async def create_articles(article: article_schema.RecommendedArticle):
-    article_id = secrets.token_urlsafe(32)
-
-    article_dict = article.dict()
-    del article_dict['author'] 
-
-    author_name = article.author.author_name
-    
+async def create_articles(article: article_schema.CreateLatestArticle):
     async with async_session() as session:
         async with session.begin():
-            authorcrud = AuthorCrud(session)
-            author = await authorcrud.get_author_by_name(author_name)
-            if not author:
-                author_id = secrets.token_urlsafe(32)
-                new_author = author_model.Author(id = author_id,**article.author.dict())
-                print('no author found in db... Adding the author in db.')
-                try:
-                    await authorcrud.create_author(new_author)
-
-                    author = new_author
-                    print("Successfully added article in db")
-                except:
-                    print("Unable to add author in db")
-                    # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
-                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
-            else:
-                author = author._mapping.Author
-            new_article = Article(id = article_id,**article_dict, author_id = author.id)
-            
+            article_id = secrets.token_urlsafe(32)
             articlecrud = ArticleCrud(session)
-            return await articlecrud.create_article(new_article)
+                    
+            article_exists = await articlecrud.get_article_by_url(article.url)
+            if article_exists:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Article aleady exists")
+            else:
+                article_id = secrets.token_urlsafe(32)
+                article_dict = article.dict()
+                print(f"creating article: {article_dict}")
+                new_article = Article(id = article_id,**article_dict)
+                await articlecrud.create_article(new_article)
+                return new_article
+    # article_dict = article.dict()
+    # del article_dict['author'] 
+
+    # author_name = article.author.author_name
+    
+    # async with async_session() as session:
+    #     async with session.begin():
+    #         authorcrud = AuthorCrud(session)
+    #         author = await authorcrud.get_author_by_name(author_name)
+    #         if not author:
+    #             author_id = secrets.token_urlsafe(32)
+    #             new_author = author_model.Author(id = author_id,**article.author.dict())
+    #             print('no author found in db... Adding the author in db.')
+    #             try:
+    #                 await authorcrud.create_author(new_author)
+
+    #                 author = new_author
+    #                 print("Successfully added article in db")
+    #             except:
+    #                 print("Unable to add author in db")
+    #                 # return JSONResponse(status_code=status.HTTP_201_CREATED, content=item)
+    #                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author not added in database")
+    #         else:
+    #             author = author._mapping.Author
+    #         new_article = Article(id = article_id,**article_dict, author_id = author.id)
+            
+    #         articlecrud = ArticleCrud(session)
+    #         return await articlecrud.create_article(new_article)
 
 
 

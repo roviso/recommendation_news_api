@@ -2,10 +2,11 @@ from fastapi import APIRouter
 from crud.crud_author import AuthorCrud
 from crud.crud_source import SourceCrud
 from models.author_model import Author
-from schemas import author_schema
+from schemas import author_schema,article_schema
 from typing import List, Optional
 import secrets
 from database import async_session
+from fastapi_pagination import paginate,LimitOffsetPage
 
 router = APIRouter(
     prefix = "/author",
@@ -26,7 +27,7 @@ async def create_author(author: author_schema.Author):
                 # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Author aleady exists")
                 return author
             else:
-                sourcecrud = SourceCrud(session)
+                # sourcecrud = SourceCrud(session)
                 author_id = secrets.token_urlsafe(32)
                 # (source,) = await sourcecrud.get_source_by_name(author.source)
                 # print(source,'found')
@@ -63,3 +64,12 @@ async def search_author(author_name: str) -> Author:
             if author:
                 (author,)= author
             return author
+
+@router.get("/get_author_articles/{author_id}", status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def get_label_articles(author_id: str):
+    async with async_session() as session:
+        async with session.begin():
+            authorcrud = AuthorCrud(session)
+            articles =  await authorcrud.get_author_articles(author_id)
+            return paginate(articles)
+            
