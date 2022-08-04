@@ -370,14 +370,14 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
                 if not keyword_list:
                     keyword_list = await keywordcache.read_from_cache("trending")
                     if not keyword_list:
-                        recent_articles = await articlecrud.get_all_article(offset, 100)
+                        recent_articles = await articlecrud.get_all_article(0, 100)
                         keyword_list = get_trending_keywords(recent_articles)
                 await keywordcache.add_to_cache(user_id,keyword_list)
             else:
                 print("USER ALREADY CACHED")
                 keyword_list = await keywordcache.read_from_cache(user_id)
                 
-            keywords = ' '.join([str(keyword) for keyword in keyword_list])
+            keywords = ' '.join([str(keyword) for keyword in keyword_list]) 
             tfidf_similar_article_list =  get_similar_articles(keywords)
 
 

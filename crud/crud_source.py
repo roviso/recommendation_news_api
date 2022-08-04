@@ -46,7 +46,7 @@ class SourceCrud():
         return result
 
     async def get_source_articles(self, source_id: int) ->List[article_model.Article]:
-        query = select(article_model.Article).filter(article_model.Article.source_id == source_id)
+        query = select(article_model.Article).filter(article_model.Article.source_id == source_id).order_by(article_model.Article.date.desc())
         results = await self.db_session.execute(query)
         result = results.scalars().all()
         return result
