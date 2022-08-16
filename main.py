@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from database import engine, Base
 # from fastapi.logger import logger
 # from apis.keyword.main import keywordApi
+from apis.tts.main import ttsApi
 from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label   ,recommend
 # , recommendation, 
 import db_loader
@@ -34,7 +35,7 @@ app.add_middleware(
 # app.mount("/api/keyword", keywordApi)
 
 
-
+app.mount("/api/tts", ttsApi)
 
 @app.on_event("startup")
 async def startup():

@@ -35,7 +35,7 @@ class LatestCrud(ArticleCrud):
 
 
     async def get_all_latest_article(self) -> List[LatestArticle]:
-        query = select(LatestArticle).order_by(LatestArticle.date)
+        query = select(LatestArticle).order_by(LatestArticle.date.desc())
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
