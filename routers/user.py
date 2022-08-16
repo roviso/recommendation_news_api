@@ -1,4 +1,5 @@
-from fastapi import  Depends,APIRouter, HTTPException, status
+from fastapi import  Depends,APIRouter, HTTPException, status,File, UploadFile
+from fastapi.responses import FileResponse
 from typing import List
 from sqlalchemy.orm import Session
 from schemas import token_schema, user_schema
@@ -125,6 +126,28 @@ async def register_user(user_info: user_schema.RegisterUser, async_session: Sess
                 first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
     
     return user_info
+
+@router.post('/upload_profile_pic')
+async def upload_profile_pic(user_id : str, uploaded_file: UploadFile = File(...)):
+    file_location = f"repository/profileImg/{uploaded_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(uploaded_file.file.read())
+    
+    async with async_session() as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            await usercrud.update_profile_pic(user_id,file_location)
+
+    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}' for user {user_id}"}
+
+
+@router.post('/get_profile_pic')
+async def get_profile_pic(user_id : str):
+    async with async_session() as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            registered_user = await usercrud.get_registered_user(user_id)
+    return FileResponse(registered_user.profile_Image)
 
 
 @router.get("/get_registered_user")

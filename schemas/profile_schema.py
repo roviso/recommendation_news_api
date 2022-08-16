@@ -14,6 +14,8 @@ class UserProfile(BaseModel):
     registered: bool
     followers: int 
     following: int
+    profile_Image: Optional[str] = None
+
 
     
 

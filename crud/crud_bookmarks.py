@@ -26,10 +26,11 @@ class Bookmarks():
 
 
     async def get_all_bookmarked_articles(self, user_id: str):
-        query = select(article_model.Article).where(user_model.User.id == user_id).filter(
-            user_model.UserArticleBookmarks.article_id == article_model.Article.id, 
-            user_model.UserArticleBookmarks.user_id == user_model.User.id
-        )
+        # query = select(article_model.Article).where(user_model.User.id == user_id).filter(
+        #     user_model.UserArticleBookmarks.user_id == user_model.User.id
+        # )
+        query = select(article_model.Article).join(
+            user_model.UserArticleBookmarks).filter(user_model.UserArticleBookmarks.user_id == user_id)
         results = await self.db_session.execute(query)
         result = results.scalars().all()
         return result
