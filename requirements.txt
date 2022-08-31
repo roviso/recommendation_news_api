@@ -367,34 +367,6 @@ notebook==6.4.11
 numba @ file:///tmp/build/80754af9/numba_1616774046117/work
 numexpr @ file:///tmp/build/80754af9/numexpr_1618856167419/work
 numpy==1.22.2
-<<<<<<< HEAD
-SQLAlchemy-Utils
-timefhuman
-aioredis
-redis
-snowballstemmer
-uvicorn[standard]
-fastapi_pagination
-pandas
-torchvision 
-tqdm
-sharedcount
-python-jose>=3.0.0
-passlib
-nltk
-scipy
-scikit-learn 
-matplotlib
-python-multipart
-implicit
-psycopg2-binary 
-lxml
-html5lib
-nepali
-
-
-
-=======
 numpydoc @ file:///tmp/build/80754af9/numpydoc_1605117425582/work
 nvidia-ml-py3==7.352.0
 oauthlib==3.1.1
@@ -734,4 +706,3 @@ zipp @ file:///tmp/build/80754af9/zipp_1615904174917/work
 zope.event==4.5.0
 zope.interface @ file:///tmp/build/80754af9/zope.interface_1616357211867/work
 zopfli==0.2.1
->>>>>>> 3effd7b8843760f512c47ab2326a18ee473f7262

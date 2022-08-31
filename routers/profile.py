@@ -34,7 +34,8 @@ def resize_image(filename: str):
 
 
 
-@router.get("/get_user_profile",response_model=profile_schema.UserProfile)
+@router.get("/get_user_profile")
+# ,response_model=profile_schema.UserProfile)
 async def user_profile(current_user: user_schema.User = Depends(), async_session: Session = Depends(database.get_session)):
     # return UserCrud.get_user(user_id=current_user.id)\
     async with async_session as session:

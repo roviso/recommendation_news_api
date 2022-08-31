@@ -16,6 +16,8 @@ celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
 ## Required Files:
  - 
 
+git@Qz55y1wty868vFfp5e7d:raviprajapati/recommendation_news_api.git
+https://Qz55y1wty868vFfp5e7d/raviprajapati/recommendation_news_api.git
 <!-- delete from "article" where type="latest" -->
 
 {

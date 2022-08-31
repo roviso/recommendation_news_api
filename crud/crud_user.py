@@ -37,6 +37,14 @@ class UserCrud():
         q.execution_options(synchronize_session="fetch")
         await self.db_session.execute(q)
 
+    
+    async def update_profile_pic(self, user_id: str, profile_Image_path: str):
+        q = update(RegisteredUser).where(RegisteredUser.id == user_id)
+        q = q.values(profile_Image=profile_Image_path)
+        q.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(q)
+
+
 
     async def get_user(self,user_id: str) -> User:
         query = select(User).where(User.id == user_id)
@@ -60,9 +68,11 @@ class UserCrud():
 
     async def get_user_profile(self,user_id: str) -> User:
         entity = with_polymorphic(User, RegisteredUser)
+
         query = select(entity).where(entity.id == user_id)
         # .options(selectinload(entity.user_followings))
         # print(query,111111111111111111111111111111111)
+        # query = select(User).where(User.id == user_id)
         results = await self.db_session.execute(query)
         # print(results)
         # (result,) = results.one()

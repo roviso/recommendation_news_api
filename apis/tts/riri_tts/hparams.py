@@ -1,4 +1,4 @@
-from apis.tts.riri.text import symbols
+from apis.tts.riri_tts.text import symbols
 
 
 class hparams:
@@ -7,25 +7,20 @@ class hparams:
     ################################
     # Data Parameters              #
     ################################
-    # text_cleaners=['english_cleaners']
     text_cleaners=['transliteration_cleaners']
-    
 
     ################################
     # Audio                        #
     ################################
     num_mels = 80
     num_freq = 513
-    # num_freq = 555
     sample_rate = 22050 ## for LJSpeech dataset
     # sample_rate = 48000
     frame_shift = 256
-    # frame_length = 1024
-    frame_length = 512
+    frame_length = 1024
     fmin = 0
     fmax = 8000
-    # power = 1.5
-    power = 1.0
+    power = 1.1
     gl_iters = 30
 
     ################################
@@ -47,14 +42,15 @@ class hparams:
     sch = True
     sch_step = 4000
     max_iter = 200e3
-
-
-    batch_size = 112
-
-
+    
+    # batch_size = 128
+    batch_size = 64
+    
+    
+    
     iters_per_log = 10
     iters_per_sample = 500
-    iters_per_ckpt = 500
+    iters_per_ckpt = 100
     weight_decay = 1e-6
     grad_clip_thresh = 1.0
     eg_text = 'OMAK is a thinking process which considers things always positively.'

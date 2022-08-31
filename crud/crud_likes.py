@@ -37,7 +37,9 @@ class Likes():
 
 
     async def get_all_liked_articles(self, user_id: str):
-        query = select(user_model.UserArticleLikes).where(user_model.UserArticleLikes.user_id == user_id)
+        # query = select(user_model.UserArticleLikes).where(user_model.UserArticleLikes.user_id == user_id)
+        query = select(article_model.Article).join(
+            user_model.UserArticleLikes).filter(user_model.UserArticleLikes.user_id == user_id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
 

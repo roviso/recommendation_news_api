@@ -4,9 +4,11 @@ __pycache__
 *.csv
 *.pth.tar
 *.pkl
-classification
-scrapper
-apienv
 ckpt 
 wavdir
-*.png
+venv
+logdir
+logs
+ne_np_female
+riri_nepali
+
