@@ -124,9 +124,9 @@ async def refresh_sources():
             #     source.default_image = DEFAULT_IMAGE
             # else:
             #     default_image = DEFAULT_IMAGE
-            if source.id == 5:
-                print(f"_________________STARTING NORMAL RSS SCRAPPING: {source.name}________________________")
-                await scrape_normal_rss(source)
+            # if source.id == 5:
+            print(f"_________________STARTING NORMAL RSS SCRAPPING: {source.name}________________________")
+            await scrape_normal_rss(source)
                 # await scrape_normal_rss(source.id, source.name , source.link, source.link_prefix, source.selector, source.image_selector, source.author_selector ,source.exception_selector, default_image)
         #         t = Thread(target=scrape_normal_rss, args=[source.id, source.link, source.link_prefix, source.selector, source.image_selector, source.exception_selector, default_image])
         #         threads.append(t)
@@ -228,13 +228,20 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
     global image_error, scraped_news
     try:
         print('Scraping news from link: '+link)
+        
         news_scrapper = crud_scrap.ScrapeLinkX(source,link)
+        print('news_scrapper')
         title = news_scrapper.scrape_title()
+        
+        print('titlre')
         head_image = news_scrapper.scrape_img(source.image_selector)
+        print('head_image')
         author = news_scrapper.scrape_author(author_name_selector =source.author_name_selector,author_img_selector =source.author_img_selector)
+        print('author')
         content, additional_img = news_scrapper.scrape_content(source.content_selector, None)
+        print('contenmt')
         label = news_scrapper.scrape_label(source.label_selector)
-
+        print('label')
 
         author_exists = await search_author(author.author_name)
         """ Checking if the author exists in the db"""

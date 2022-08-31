@@ -1,6 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String,ForeignKey
 from database import Base
 from sqlalchemy.orm import relationship
+from models.user_model import AuthorFollowing
 
 class Author(Base):
     __tablename__ = 'author'
@@ -14,6 +15,14 @@ class Author(Base):
     source = relationship("Source", back_populates="authors")
 
     articles = relationship("Article", back_populates="author", lazy = True)
+
+    user_followers = relationship(
+        'User',
+        secondary='author_following',
+        primaryjoin=id==AuthorFollowing.follower_id,
+        secondaryjoin=id==AuthorFollowing.following_id
+        # backref='followers'
+    )
 
     
 

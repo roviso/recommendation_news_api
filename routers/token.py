@@ -75,6 +75,7 @@ async def authenticate_user(async_session: Session, login_info: user_schema.User
     async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
+            print(f"email is {login_info.email}")
             user = await usercrud.get_user_by_email(login_info.email)
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")

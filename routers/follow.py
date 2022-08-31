@@ -75,3 +75,5 @@ async def get_user_followers_count(user_id: str, async_session: Session = Depend
             follow = Follow(session)
             followings_count =  await follow.get_followers_count(user_id)
             return {"count": followings_count}
+
+

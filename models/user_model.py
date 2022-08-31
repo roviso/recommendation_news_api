@@ -22,6 +22,12 @@ class UserFollowing(Base):
     following_id = Column(String, ForeignKey('user.id'), primary_key=True)
 
 
+class AuthorFollowing(Base):
+    __tablename__ = 'author_following'
+
+    follower_id =  Column(String, ForeignKey('user.id'), primary_key=True)
+    following_id = Column(String, ForeignKey('author.id'), primary_key=True)
+
 class User(Base):
     __tablename__ = 'user'
     
@@ -45,6 +51,15 @@ class User(Base):
         secondary='user_following',
         primaryjoin=id==UserFollowing.following_id,
         secondaryjoin=id==UserFollowing.follower_id,
+        # lazy='selectin',
+        # backref='followings'
+    )
+
+    author_followings = relationship(
+        'Author',
+        secondary='author_following',
+        primaryjoin=id==AuthorFollowing.following_id,
+        secondaryjoin=id==AuthorFollowing.follower_id,
         # lazy='selectin',
         # backref='followings'
     )

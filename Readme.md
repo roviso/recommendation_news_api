@@ -17,3 +17,4 @@ celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
  - 
 
 <!-- delete from "article" where type="latest" -->
+<!-- git remote set-url origin https://roviso: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@github.com/roviso/recommendation_news_api.git -->

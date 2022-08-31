@@ -46,7 +46,8 @@ class ScrapeLinkX():
         
 
     def scrape_img(self, image_selector:str):
-        # print(f'image_selector:{image_selector},999999999999999999')
+        print(f'image_selector:{image_selector},999999999999999999')
+        print(f"{self.tree.xpath(image_selector)},6666666666666666")
         img = self.tree.xpath(image_selector)[0].strip()
         if img:
             return img
@@ -450,17 +451,17 @@ def scrape_img(link: str, image_selector:str):
     image = ''
 
     # getting image link from content
+    print(f"image selector is : {image_selector}, 66666666666666666666666666666, {link_soup}")
     image_soup = link_soup.select(image_selector, limit=1)
     if len(image_soup) > 0:
         # image tag is available
+        print("Head Image found")
         if image_soup[0].has_attr(attribute):
             image = str(image_soup[0][attribute]).strip()
             if checkImageUrl(image):
                 image = generate_absolute_url(link, image)
 
     return image
-
-
 
 
 def scrape_author(link: str, author_selector:str):
@@ -480,7 +481,7 @@ def scrape_author(link: str, author_selector:str):
 
     author = link_soup.select(author_selector, limit=1)
 
-    print(author,55555555555555555555)
+    # print(author,55555555555555555555)
         
     author_img = author[0].find_all('img')
     author_img = author_img[0]['src'].strip()

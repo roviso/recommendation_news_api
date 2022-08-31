@@ -60,9 +60,11 @@ class UserCrud():
 
         # results = await self.db_session.execute(query)
         # print(f"results is {results ,results.scalars().all() }, 666666666666666666666666666666666666666666")
-        query = select(RegisteredUser).filter(RegisteredUser.email.ilike(email))
+        # query = select(RegisteredUser).filter(RegisteredUser.email.ilike(email))
+        query = select(RegisteredUser).where(RegisteredUser.email == email)
         results = await self.db_session.execute(query)
-        (result,) = results.one()
+        # (result,) = results.one()
+        result = results.scalars().one()
 
         return result
 
