@@ -7,7 +7,8 @@ The default is a set of ASCII characters that works well for English or text tha
 from apis.tts.riri.text import cmudict
 
 _pad        = '_'
-_punctuation = '!\'(),.:;? '
+# _punctuation = '!\'(),.:;? '
+_punctuation = '!\'(),।:;? '
 _special = '-'
 _letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 

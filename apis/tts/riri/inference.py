@@ -10,12 +10,12 @@ from apis.tts.riri.utils.audio import save_wav, inv_melspectrogram
 
 
 def load_model(ckpt_pth):
-    ckpt_dict = torch.load(ckpt_pth)
+    ckpt_dict = torch.load(ckpt_pth, map_location=torch.device('cpu'))
     model = Tacotron2()
     model.load_state_dict(ckpt_dict['model'])
     # model.load_state_dict(ckpt)
-    model = mode(model, True).eval()
-    # model = mode(model, False).eval()
+    # model = mode(model, True).eval()
+    model = mode(model, False).eval()
     return model
 
 
@@ -41,7 +41,7 @@ def plot(output, pth):
 
 
 def audio(output, pth):
-    print(f"saving audio at {pth}")
+    # print(f"saving audio at {pth}")
     mel_outputs, mel_outputs_postnet, _ = output
     wav_postnet = inv_melspectrogram(to_arr(mel_outputs_postnet[0]))
     # print(wav_postnet,1111111111111111)

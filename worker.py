@@ -15,7 +15,7 @@ celery = Celery("celery", backend=CELERY_BROKER_URL, broker=CELERY_RESULT_BACKEN
 celery.conf.beat_schedule = {
     'add-every-5-min': {
         'task': 'tasks.refresh_sources',
-        'schedule': 30.0,
+        'schedule': 300.0,
         # 'args': (16, 16)
     },
 }

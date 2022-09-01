@@ -17,14 +17,15 @@ class hparams:
     num_mels = 80
     num_freq = 513
     # num_freq = 555
-    # sample_rate = 22050 ## for LJSpeech dataset
-    sample_rate = 48000
+    sample_rate = 22050 ## for LJSpeech dataset
+    # sample_rate = 48000
     frame_shift = 256
-    frame_length = 1024
+    # frame_length = 1024
+    frame_length = 512
     fmin = 0
     fmax = 8000
     # power = 1.5
-    power = 1.1
+    power = 1.0
     gl_iters = 30
 
     ################################

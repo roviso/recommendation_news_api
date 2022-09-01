@@ -47,7 +47,7 @@ class ScrapeLinkX():
 
     def scrape_img(self, image_selector:str):
         print(f'image_selector:{image_selector},999999999999999999')
-        print(f"{self.tree.xpath(image_selector)},6666666666666666")
+        print(f"image is {self.tree.xpath(image_selector)}")
         img = self.tree.xpath(image_selector)[0].strip()
         if img:
             return img
@@ -449,6 +449,7 @@ def scrape_img(link: str, image_selector:str):
         del custom_selector
 
     image = ''
+    print('image_selector is ', image_selector, " 5555555555555555555555555555")
 
     # getting image link from content
     print(f"image selector is : {image_selector}, 66666666666666666666666666666, {link_soup}")
@@ -581,6 +582,3 @@ def scrape_label(link:str, label_selector:str):
 
     return label
 
-
-
-# def test_source_scrape()

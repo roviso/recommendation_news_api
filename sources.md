@@ -105,7 +105,6 @@ Step4:
   "analytics_id": "string"
 }
 
-
 {
   "name": "लोकान्तर",
   "image": "https://lktcdn.prixacdn.net/media/lokaantar_nepali_logo_Final_ULGccioncf.png",

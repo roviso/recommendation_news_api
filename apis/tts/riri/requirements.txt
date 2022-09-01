@@ -7,4 +7,10 @@ Unidecode
 matplotlib
 tensorboardX
 pydub
+<<<<<<< HEAD
+=======
+ffmpeg
+pyaudio
+
+>>>>>>> 8c50a74a073ba190940143b14aea0af0a996299d
 # torch==1.8.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html

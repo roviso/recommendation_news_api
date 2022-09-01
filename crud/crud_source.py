@@ -18,7 +18,11 @@ class SourceCrud():
         self.db_session.add(source)
         await self.db_session.flush()
 
-
+    async def get_source(self,source_id: str) -> Source:
+        query = select(Source).where(Source.id == source_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().one()
+        return result
 
     async def get_all_source(self) -> List[Source]:
         query = select(Source)

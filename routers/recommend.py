@@ -64,7 +64,7 @@ async def train_implicit_model():
             sparse_user_item = sparse_item_user.T.tocsr()
             start = time.time()  
 
-            model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=10, use_gpu = True)
+            model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=2, use_gpu = False)
             model.fit(2 * sparse_user_item)
             end = time.time()   
             print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")

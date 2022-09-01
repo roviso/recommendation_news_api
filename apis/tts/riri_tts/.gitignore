@@ -1,0 +1,14 @@
+.git
+__pycache__
+.ipynb_checkpoints
+*.csv
+*.pth.tar
+*.pkl
+ckpt 
+wavdir
+venv
+logdir
+logs
+ne_np_female
+riri_nepali
+

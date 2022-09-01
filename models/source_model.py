@@ -2,7 +2,7 @@ from xmlrpc.client import DateTime
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String,ForeignKey, DateTime
 from database import Base
 from sqlalchemy.orm import relationship
-
+from models.user_model import SourceFollowing
 class Source(Base):
     __tablename__ = 'source'
     id = Column(Integer, primary_key =True, index=True,autoincrement=True)
@@ -52,3 +52,10 @@ class Source(Base):
     authors = relationship("Author", back_populates="source", lazy = True)
 
     
+    user_followers = relationship(
+        'User',
+        secondary='source_following',
+        primaryjoin=id==SourceFollowing.follower_id,
+        secondaryjoin=id==SourceFollowing.following_id
+        # backref='followers'
+    )

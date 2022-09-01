@@ -73,7 +73,7 @@ async def test_source_scrape(source_id: int):
 
     # print(Newslinks)
     # testLink = next(iter(Newslinks)) 
-    testLink = list(Newslinks)[22]
+    testLink = list(Newslinks)[-1]
     
     print(f"Scrape Testing on Link: {testLink}")
     news_scrapper = crud_scrap.ScrapeLinkX(sourceInDb,testLink)
