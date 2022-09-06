@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.post('/userfollow', status_code = status.HTTP_201_CREATED)
+@router.post('/followuser', status_code = status.HTTP_201_CREATED)
 async def follow_user(follower_following: follow_schema.FollowUser, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
@@ -23,7 +23,24 @@ async def follow_user(follower_following: follow_schema.FollowUser, async_sessio
             return await follow.follow_user(follower_following)
 
 
-@router.post('/authorfollow', status_code = status.HTTP_201_CREATED)
+@router.post('/isfollowinguser', status_code = status.HTTP_201_CREATED)
+async def isfollowinguser(follower_following: follow_schema.FollowUser, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            isfollowing = await follow.check_user_following(follower_following)
+            return {'followstatus': True if isfollowing else False}
+
+
+@router.post('/unfollowuser')
+async def unfollow_user(follower_following: follow_schema.FollowUser, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            return await follow.unfollow_user(follower_following)
+
+
+@router.post('/followauthor', status_code = status.HTTP_201_CREATED)
 async def follow_author(follower_following: follow_schema.FollowAuthor, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
@@ -31,12 +48,45 @@ async def follow_author(follower_following: follow_schema.FollowAuthor, async_se
             return await follow.follow_author(follower_following)
 
 
-@router.post('/sourcefollow', status_code = status.HTTP_201_CREATED)
+@router.post('/isfollowingauthor', status_code = status.HTTP_201_CREATED)
+async def isfollowingauthor(follower_following: follow_schema.FollowAuthor, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            isfollowing = await follow.check_author_following(follower_following)
+            return {'followstatus': True if isfollowing else False}
+
+@router.post('/unfollowauthor', status_code = status.HTTP_201_CREATED)
+async def unfollow_author(follower_following: follow_schema.FollowAuthor, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            return await follow.unfollow_author(follower_following)
+
+
+@router.post('/followsource', status_code = status.HTTP_201_CREATED)
 async def follow_source(follower_following: follow_schema.FollowSource, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             follow = Follow(session)
             return await follow.follow_source(follower_following)
+
+
+@router.post('/isfollowingsource', status_code = status.HTTP_201_CREATED)
+async def isfollowingsource(follower_following: follow_schema.FollowSource, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            isfollowing = await follow.check_source_following(follower_following)
+            return {'followstatus': True if isfollowing else False}
+
+
+@router.post('/unfollowsource', status_code = status.HTTP_201_CREATED)
+async def unfollow_source(follower_following: follow_schema.FollowSource, async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            follow = Follow(session)
+            return await follow.unfollow_source(follower_following)
 
 
 

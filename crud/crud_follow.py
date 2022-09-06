@@ -39,6 +39,33 @@ class Follow():
         self.db_session.add(user_following)
         await self.db_session.flush()
 
+
+    async def check_user_following(self, follower_following: follow_schema.FollowUser):
+        query = select(user_model.UserFollowing).where(user_model.UserFollowing.follower_id == follower_following.follower_id,user_model.UserFollowing.following_id == follower_following.following_id)
+        results = await self.db_session.execute(query)
+        return results.fetchone()
+
+
+
+    async def unfollow_user(self, follower_following: follow_schema.FollowUser):
+        follower = await self.userdb.get_registerd_user(follower_following.follower_id)
+        following = await self.userdb.get_registerd_user(follower_following.following_id)
+
+
+        if not follower:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Registered User Found")
+        if not following:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Registered User Found")
+
+        # user_following = user_model.UserFollowing(
+        #     follower_id = follower_following.follower_id,
+        #     following_id = follower_following.following_id
+        # )
+        query = delete(user_model.UserFollowing).where(user_model.UserFollowing.follower_id == user_following.follower_id,follower_following.following_id == follower_following.following_id )
+        await self.db_session.execute(query)
+
+
+
     
     async def follow_author(self, follower_following: follow_schema.FollowAuthor):
         user = await self.userdb.get_registerd_user(follower_following.user_id)
@@ -58,6 +85,29 @@ class Follow():
         self.db_session.add(user_following)
         await self.db_session.flush()
 
+    
+    async def check_author_following(self, follower_following: follow_schema.FollowAuthor):
+        query = select(user_model.AuthorFollowing).where(user_model.AuthorFollowing.follower_id == follower_following.user_id,user_model.AuthorFollowing.following_id == follower_following.author_id)
+        results = await self.db_session.execute(query)
+        return results.fetchone()
+
+    
+    async def unfollow_author(self, follower_following: follow_schema.FollowAuthor):
+        user = await self.userdb.get_registerd_user(follower_following.user_id)
+        author = await self.authordb.get_author(follower_following.author_id)
+
+
+        if not user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
+        if not author:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Author Found")
+
+        query = delete(user_model.AuthorFollowing).where(user_model.AuthorFollowing.follower_id == follower_following.user_id,user_model.AuthorFollowing.following_id == follower_following.author_id )
+        await self.db_session.execute(query)
+
+
+    
+
     async def follow_source(self, follower_following: follow_schema.FollowSource):
         user = await self.userdb.get_registerd_user(follower_following.user_id)
         source = await self.sourcedb.get_source(follower_following.source_id)
@@ -76,6 +126,30 @@ class Follow():
         self.db_session.add(user_following)
         await self.db_session.flush()
 
+
+    async def check_source_following(self, follower_following: follow_schema.FollowSource):
+        query = select(user_model.SourceFollowing).where(user_model.SourceFollowing.follower_id == follower_following.user_id,user_model.SourceFollowing.following_id == follower_following.source_id)
+        results = await self.db_session.execute(query)
+        return results.fetchone()
+
+
+    async def unfollow_source(self, follower_following: follow_schema.FollowSource):
+        user = await self.userdb.get_registerd_user(follower_following.user_id)
+        source = await self.sourcedb.get_source(follower_following.source_id)
+
+
+        if not user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
+        if not source:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Source Found")
+
+        # user_following = user_model.SourceFollowing(
+        #     follower_id = follower_following.user_id,
+        #     following_id = follower_following.source_id
+        # )
+
+        query = delete(user_model.SourceFollowing).where(user_model.SourceFollowing.follower_id == follower_following.user_id,user_model.SourceFollowing.following_id == follower_following.source_id )
+        await self.db_session.execute(query)
 
 
     async def get_followings(self,user_id) -> List[user_model.RegisteredUser]:
