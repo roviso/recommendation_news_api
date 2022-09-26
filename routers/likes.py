@@ -49,10 +49,15 @@ async def get_likes_by_user(article_liked: likes_schema.GetUserArticleLikes, asy
                 liked = True
             all_liked_user =  await likes.get_articles_like(article_id=article_liked.article_id)
 
+            liked_users = [likes_schema.LikedUser(
+                id = liked_user.id,
+                username = liked_user.username
+            ) for liked_user in all_liked_user]
+
             response = likes_schema.GetUserArticleLikesResponse(
                 liked = liked,
                 total_likes = len(all_liked_user),
-                liked_users = all_liked_user
+                liked_users = liked_users
             )
             return response
             
