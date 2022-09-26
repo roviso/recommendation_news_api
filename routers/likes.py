@@ -38,19 +38,21 @@ async def get_likes_by_article(article_id:str, async_session: Session = Depends(
 
 
 @router.post('/get_likes_by_user', status_code = 200)
-async def get_likes_by_user(user_id: str, article_id:str, async_session: Session = Depends(database.get_session)):
+async def get_likes_by_user(article_liked: likes_schema.GetUserArticleLikes, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             likes = Likes(session)
-            liked = await likes.check_liked_articles(user_id=user_id, article_id=article_id)
+            liked = await likes.check_liked_articles(article_liked)
             if not liked:
                 liked = False
             else:
                 liked = True
-            all_liked_user =  await likes.get_articles_like(article_id=article_id)
+            all_liked_user =  await likes.get_articles_like(article_id=article_liked.article_id)
             return {
+                'liked': liked,
                 'total_likes': len(all_liked_user),
-                'liked': liked
+                'liked_users': all_liked_user
+                
             }
 
 

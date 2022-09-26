@@ -19,8 +19,8 @@ class Likes():
         self.authordb = crud_author.AuthorCrud(db_session)
         self.userdb = crud_user.UserCrud(db_session)
 
-    async def check_liked_articles(self, user_id: str, article_id:str):
-        query = select(user_model.UserArticleLikes).where(user_model.UserArticleLikes.article_id == article_id,user_model.UserArticleLikes.user_id == user_id)
+    async def check_liked_articles(self,article_liked:likes_schema.GetUserArticleLikes,):
+        query = select(user_model.UserArticleLikes).where(user_model.UserArticleLikes.article_id == article_liked.article_id,user_model.UserArticleLikes.user_id == article_liked.user_id)
         results = await self.db_session.execute(query)
         return results.fetchone()
 

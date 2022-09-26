@@ -10,3 +10,5 @@ apienv
 ckpt 
 wavdir
 *.png
+tts
+.vscode
