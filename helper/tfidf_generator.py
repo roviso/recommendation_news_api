@@ -8,7 +8,7 @@ from scipy.sparse import spmatrix  # type: ignore
 from sklearn.feature_extraction.text import CountVectorizer  # type: ignore
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
-
+import random
 
 COUNT_VEC_KWARGS: Dict = {
     'decode_error': 'ignore',
@@ -140,13 +140,16 @@ def extract_keywords(corpus: Iterable[str], word_idf: Mapping[str, float],
                               float(word_idf[words[idx_y]]))
 
         # Add leftover keywords scores at the end and compute top indices
-        final_keywords: np.ndarray = np.array([*keywords, kwds])
-        top_indices: np.ndarray = np.array([*tfidf_scores, scores],
+        
+        try:
+            temp_kwds = n_kwds
+            final_keywords: np.ndarray = np.array([*keywords, temp_kwds])
+            top_indices: np.ndarray = np.array([*tfidf_scores, scores],
                                            dtype=np.float64).argpartition(
-                                               kth=-n_kwds, axis=1)[:,
-                                                                    -n_kwds:]
-
-        for i, indices in enumerate(top_indices):
-            top_keywords.append(list(final_keywords[i, indices]))
-
+                                               kth=-temp_kwds, axis=1)[:,
+                                                                    -temp_kwds:]
+            for i, indices in enumerate(top_indices):
+                top_keywords.append(list(final_keywords[i, indices]))
+        except:
+            top_keywords.append(random.sample(list(corpus.split()),10))
     return top_keywords

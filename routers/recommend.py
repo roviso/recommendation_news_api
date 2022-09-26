@@ -64,7 +64,7 @@ async def train_implicit_model():
             sparse_user_item = sparse_item_user.T.tocsr()
             start = time.time()  
 
-            model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=2, use_gpu = False)
+            model = AlternatingLeastSquares(factors=64, regularization=0.05, iterations=12, use_gpu = False)
             model.fit(2 * sparse_user_item)
             end = time.time()   
             print(f"Time Taken for TRAIN recommendation MODEL: {end - start}, ##########################################")
@@ -160,7 +160,8 @@ async def get_tfidf_verctorizer(tfidf):
                 await latestnewscache.cache_news(all_latest_articles)
         
     articles = await latestnewscache.read_all_news_from_cache(0, 15)
-    # async with async_session() as session:
+    print(f"articles in cache is: {articles}")
+# async with async_session() as session:
     #     async with session.begin():
     #         articlecrud = ArticleCrud(session)
     #         articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)

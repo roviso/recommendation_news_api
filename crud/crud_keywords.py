@@ -23,6 +23,11 @@ class KeywordsCrud():
         self.db_session.add(keyword)
         await self.db_session.flush()
 
+    async def delete_keyword(self, keyword_id: int):
+        query = delete(article_model.AricleKeywords).where(article_model.AricleKeywords.keywords_id == keyword_id)
+        query = delete(article_model.Keywords).where(article_model.Keywords.id == keyword_id)
+        await self.db_session.execute(query)
+
     async def get_keyword(self,keyword_id: int) -> article_model.Keywords:
         query = select(article_model.Keywords).where(article_model.Keywords.id == keyword_id)
         results = await self.db_session.execute(query)

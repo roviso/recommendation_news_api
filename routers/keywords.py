@@ -80,6 +80,19 @@ async def create_keyword(tag: str):
 
             return await keywordcrud.get_keyword_by_tag(tag)
 
+@router.post('/delete_keywords/')
+async def delete_keywords(keyword_ids: List[int], async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            keywordcrud = KeywordsCrud(session)
+            for id in keyword_ids:
+                keyword = await keywordcrud.get_keyword(id)
+                if keyword:
+                
+                    print(f"Removing keyword: {keyword_ids}: {keyword}")
+                    await keywordcrud.delete_keyword(id)  
+                else:
+                    print(f"NO KEYWORD OF ID: {id} FOUND")
 
 @router.post('/add_article_keywords',status_code = 200 )
 async def add_article_keywords(keywords: List[str], article_id: str ):
@@ -109,20 +122,20 @@ async def update_keywords(article_id: str) -> List[article_model.LatestArticle]:
     async with async_session() as session:
         async with session.begin():
             latestcrud = LatestCrud(session)
-            if await tfidfcache.cache_exits():
-                tfidf_dict = await tfidfcache.read_from_cache()
-            else:
-                articles = await latestcrud.get_all_latest_article()
-                print(articles)
+            #if await tfidfcache.cache_exits():
+            #    tfidf_dict = await tfidfcache.read_from_cache()
+            #else:
+            articles = await latestcrud.get_all_latest_article()
+            print(articles)
                 
 
 
-                article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in articles]
+            article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in articles if article.content]
 
-                train_df = pd.DataFrame(article_text, columns= ['text'])
-                tfidf_dict = tfidf_generator.train_idfs(train_df)
+            train_df = pd.DataFrame(article_text, columns= ['text'])
+            tfidf_dict = tfidf_generator.train_idfs(train_df)
 
-                await tfidfcache.cache_latest_tfidf(tfidf_dict) ##Caching tfidf values in dictrionary 
+ #           await tfidfcache.cache_latest_tfidf(tfidf_dict) ##Caching tfidf values in dictrionary 
 
             article = await latestcrud.get_article_by_id(article_id)
             content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
