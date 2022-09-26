@@ -10,6 +10,6 @@ class CreateUserArticleLikes(BaseModel):
 
 class GetUserArticleLikes(BaseModel):
     user_id : str 
-    article_id: st
+    article_id: str
     class Config:
-        orm_mode = Truer 
+        orm_mode = True

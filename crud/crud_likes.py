@@ -57,7 +57,7 @@ class Likes():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such article Found")
 
 
-        already_liked = await self.check_liked_articles(user.id,article.id)
+        already_liked = await self.check_liked_articles(article_liked)
         if already_liked:
             await self.remove_liked_articles(user_id = user.id,article_id = article.id)
             await self.articledb.update_like(article_id = article.id, increase_like= None, decrease_like = 1)
