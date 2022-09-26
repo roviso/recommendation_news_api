@@ -80,6 +80,20 @@ async def create_keyword(tag: str):
 
             return await keywordcrud.get_keyword_by_tag(tag)
 
+@router.post('/delete_keywords/')
+async def delete_keywords(keyword_ids: List[int], async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            keywordcrud = KeywordsCrud(session)
+            for id in keyword_ids:
+                keyword = await keywordcrud.get_keyword(id)
+                if keyword:
+                
+                    print(f"Removing keyword: {keyword_ids}: {keyword}")
+                    await keywordcrud.delete_keyword(id)  
+                else:
+                    print(f"NO KEYWORD OF ID: {id} FOUND")
+
 
 @router.post('/add_article_keywords',status_code = 200 )
 async def add_article_keywords(keywords: List[str], article_id: str ):
