@@ -37,7 +37,7 @@ async def get_likes_by_article(article_id:str, async_session: Session = Depends(
             }
 
 
-@router.post('/get_likes_by_user', status_code = 200)
+@router.post('/get_likes_by_user', response_model= likes_schema.GetUserArticleLikesResponse)
 async def get_likes_by_user(article_liked: likes_schema.GetUserArticleLikes, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
@@ -48,12 +48,14 @@ async def get_likes_by_user(article_liked: likes_schema.GetUserArticleLikes, asy
             else:
                 liked = True
             all_liked_user =  await likes.get_articles_like(article_id=article_liked.article_id)
-            return {
-                'liked': liked,
-                'total_likes': len(all_liked_user),
-                'liked_users': all_liked_user
-                
-            }
+
+            response = likes_schema.GetUserArticleLikesResponse(
+                liked = liked,
+                total_likes = len(all_liked_user),
+                liked_users = all_liked_user
+            )
+            return response
+            
 
 
 @router.post('/get_all_likes_by_user', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
