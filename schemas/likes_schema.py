@@ -10,6 +10,20 @@ class CreateUserArticleLikes(BaseModel):
 
 class GetUserArticleLikes(BaseModel):
     user_id : str 
-    article_id: st
+    article_id: str
     class Config:
-        orm_mode = Truer 
+        orm_mode = True
+
+
+class LikedUser(BaseModel):
+    id: str 
+    username: str 
+    # registered: bool
+
+    class Config:
+        orm_mode = True
+
+class GetUserArticleLikesResponse(BaseModel):
+    liked: bool 
+    total_likes: int 
+    liked_users: Optional[LikedUser]
