@@ -20,10 +20,11 @@ from functools import reduce
 import pandas as pd
 from database import async_session
 import time
-
+import random
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from implicit.als import AlternatingLeastSquares
+from html.parser import HTMLParser
 
 
 router = APIRouter(
@@ -32,6 +33,10 @@ router = APIRouter(
 )
 
 
+class HTMLFilter(HTMLParser):
+    text = ""
+    def handle_data(self, data):
+        self.text += data.strip()
 
 
 
@@ -119,12 +124,17 @@ async def add_article_keywords(keywords: List[str], article_id: str ):
 @router.get('/update_keywords', status_code = 200)
 async def update_keywords(article, tfidf_dict) -> List[article_model.LatestArticle]:
     CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
-    content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
+    html_filter = HTMLFilter()
+    html_filter.feed(article.content[0])
+    content = [re.sub(CLEANR, '', article.heading + ' ' + html_filter.text) ]
             # print(content,1111111111111111111)
     try:
         keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
     except:
-        keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
+        try:
+            keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
+        except:
+            keywords = [key for key in random.sample(list(content[0].split()),int(0.2 * len(content[0].split()))) if len(key)>=3]
     final_keywords = reduce(add ,keywords)
 
     return await add_article_keywords(final_keywords,article.id)

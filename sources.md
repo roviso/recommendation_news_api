@@ -46,6 +46,46 @@ Step4:
 
 
 
+[
+{
+  "name": "सेतोपाटी",
+  "image": "https://www.setopati.com/themes/setopati/images/logo.svg?v=1.9",
+  "domain": "setopati.com",
+  "link": "https://setopati.com/feed",
+  "content_selector": ".editor-box",
+  "image_selector": "/html/body/div[6]/div/section/div[2]/div/figure/img/@src",
+  "author_img_selector": "/html/body/div[6]/div/section/div[1]/div[2]/div[1]/div/div[1]/img/@src",
+  "author_name_selector": "/html/body/div[7]/div/section/div[1]/div/div[1]/div/div[2]/h2/a/text()",
+  "label_selector": "/html/body/div[4]/div/header/div[1]/div[1]/div/a/figure/span/text()",
+  "disable": false,
+  "analytics_id": "string"
+}
+{
+  "name": "ICT Samachar",
+  "image": "https://ictsamachar.com/uploads/logo/969971682ictlogo123.png",
+  "domain": "ictsamachar.com",
+  "link": "https://ictsamachar.com/feed",
+  "content_selector": ".module-detail-page > section",
+  "image_selector": "/html/body/div[2]/div/div/div[1]/article[1]/section/figure/img/@src",
+  "author_img_selector": "/html/body/div[2]/div/div/div[1]/article[1]/header/ul/li[1]/img/@src",
+  "author_name_selector": "/html/body/div[2]/div/div/div[1]/article[1]/header/ul/li[1]/a/text()",
+  "label_selector": "/html/body/div[2]/div/div/div[1]/article[1]/header/div[1]/a/text()",
+  "disable": false,
+  "analytics_id": "UA-80504020-1"
+}
+
+
+]
+
+
+
+
+
+
+
+
+
+
 {
   "name": "फरक धार",
   "image": "https://fdcdn.prixa.net/media/albums/logo_for_website_Y6ZGNlriAS_adKxUhM1cf.png",
@@ -61,17 +101,19 @@ Step4:
   "analytics_id": "UA-125866437-1"
 }
 
+/html/body/div[2]/div/div/div[1]/article[1]/section/figure/img
 
+/html/body/div[2]/div/div/div[1]/article[1]/header/ul/li[1]/img
 {
   "name": "ICT Samachar",
   "image": "https://ictsamachar.com/uploads/logo/969971682ictlogo123.png",
   "domain": "ictsamachar.com",
   "link": "https://ictsamachar.com/feed",
   "content_selector": ".module-detail-page > section",
-  "image_selector": "/html/body/div[3]/div/div/div[1]/article[1]/section/figure/img/@src",
-  "author_img_selector": "/html/body/div[3]/div/div/div[1]/article[1]/header/ul/li[1]/img/@src",
-  "author_name_selector": "/html/body/div[3]/div/div/div[1]/article[1]/header/ul/li[1]/a/text()",
-  "label_selector": "/html/body/div[3]/div/div/div[1]/article[1]/header/div[1]/a/text()",
+  "image_selector": "/html/body/div[2]/div/div/div[1]/article[1]/section/figure/img/@src",
+  "author_img_selector": "/html/body/div[2]/div/div/div[1]/article[1]/header/ul/li[1]/img/@src",
+  "author_name_selector": "/html/body/div[2]/div/div/div[1]/article[1]/header/ul/li[1]/a/text()",
+  "label_selector": "/html/body/div[2]/div/div/div[1]/article[1]/header/div[1]/a/text()",
   "disable": false,
   "analytics_id": "UA-80504020-1"
 }
@@ -91,19 +133,6 @@ Step4:
   "analytics_id": "string"
 }
 
-{
-  "name": "सेतोपाटी",
-  "image": "https://www.setopati.com/themes/setopati/images/logo.svg?v=1.9",
-  "domain": "setopati.com",
-  "link": "https://setopati.com/feed",
-  "content_selector": ".editor-box",
-  "image_selector": "/html/body/div[6]/div/section/div[2]/div/figure/img/@src",
-  "author_img_selector": "/html/body/div[6]/div/section/div[1]/div[2]/div[1]/div/div[1]/img/@src",
-  "author_name_selector": "/html/body/div[7]/div/section/div[1]/div/div[1]/div/div[2]/h2/a/text()",
-  "label_selector": "/html/body/div[4]/div/header/div[1]/div[1]/div/a/figure/span/text()",
-  "disable": false,
-  "analytics_id": "string"
-}
 
 {
   "name": "लोकान्तर",
