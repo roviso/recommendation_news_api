@@ -150,7 +150,7 @@ class tfidf_obj():
 async def get_tfidf_verctorizer(tfidf):
 
     first_exists = await latestnewscache.check_news_exists(0)
-    last_exists = await latestnewscache.check_news_exists(15)
+    last_exists = await latestnewscache.check_news_exists(50)
     if not first_exists and not last_exists:
         print("CACHING LATEST ARTICLE")
         async with async_session() as session:
@@ -159,7 +159,7 @@ async def get_tfidf_verctorizer(tfidf):
                 all_latest_articles = await articlecrud.get_all_latest_article()
                 await latestnewscache.cache_news(all_latest_articles)
         
-    articles = await latestnewscache.read_all_news_from_cache(0, 15)
+    articles = await latestnewscache.read_all_news_from_cache(0, 50)
     print(f"articles in cache is: {articles}")
 # async with async_session() as session:
     #     async with session.begin():
@@ -344,7 +344,7 @@ async def recommend_similar_articles(article_id: str, user_id: str,offset: Union
             similar_articles = await articlecrud.get_all_articles_by_id(all_article_list,offset,limit)
 
     for article in similar_articles:
-        article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+        article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
     return  paginate(similar_articles)
     # return {"item": articles,
@@ -397,7 +397,7 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
 
         ## Replacing with redirect url
         for article in recommended_articles:
-            article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+            article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
         return  paginate(recommended_articles)
 

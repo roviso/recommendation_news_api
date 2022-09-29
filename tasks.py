@@ -102,6 +102,9 @@ def hello_world(self, name):
 
 @celery.task
 async def refresh_sources():
+    print(f"TRINGING RECOMMENDATION MODEL")
+    await train_implicit_model()
+    print("TRAINNING COMPLETE:::")
     """
     Refreshes the Scource and starts scrapping fro the source RSS
     """
@@ -224,7 +227,7 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
     Scrapes and saves news from news link
     Content selector, image selector, label selector is strictly required
     """
-    await train_implicit_model()
+    
 
     global image_error, scraped_news
     try:
