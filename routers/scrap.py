@@ -30,7 +30,7 @@ async def scrape_news():
     # task = celery.send_task(task_name, args=[news.pk,news.category_id,news.link,news.prefix,news.selector,
     # news.image_selector,news.exception_selector,news.default_image,news.pubDate,news.debug,])
     task = await celery.send_task(task_name)
-    return dict(id=task.id, url='localhost:8000/check_task/{}'.format(task.id))
+    return dict(id=task.id, url='localhost:8848/check_task/{}'.format(task.id))
 
 
 @router.get("/check_task/{id}")

@@ -53,6 +53,7 @@ Step4:
   "link": "https://farakdhar.com/hamro-rss",
   "content_selector": ".news-detail-content",
   "image_selector": "/html/body/section[4]/div/div/div[1]/div/div[3]/div[3]/img/@src",
+  /html/body/section[4]/div/div/div[1]/div/div[3]/div[3]/img
   "author_img_selector": "/html/body/section[4]/div/div/div[1]/div/div[3]/div[2]/div[1]/div/div/div[1]/img/@src",
   "author_name_selector": "/html/body/section[4]/div/div/div[1]/div/div[3]/div[2]/div[1]/div/div/div[2]/div/div[1]/a/text()",
   "label_selector": "/html/body/section[4]/div/div/div[1]/div/nav/ol/li[2]/a/text()",
@@ -90,15 +91,14 @@ Step4:
   "analytics_id": "string"
 }
 
-
 {
   "name": "सेतोपाटी",
   "image": "https://www.setopati.com/themes/setopati/images/logo.svg?v=1.9",
   "domain": "setopati.com",
   "link": "https://setopati.com/feed",
   "content_selector": ".editor-box",
-  "image_selector": "/html/body/div[7]/div/section/div[2]/div/figure/img/@src",
-  "author_img_selector": "/html/body/div[7]/div/section/div[1]/div/div[1]/div/div[1]/img/@src",
+  "image_selector": "/html/body/div[6]/div/section/div[2]/div/figure/img/@src",
+  "author_img_selector": "/html/body/div[6]/div/section/div[1]/div[2]/div[1]/div/div[1]/img/@src",
   "author_name_selector": "/html/body/div[7]/div/section/div[1]/div/div[1]/div/div[2]/h2/a/text()",
   "label_selector": "/html/body/div[4]/div/header/div[1]/div[1]/div/a/figure/span/text()",
   "disable": false,

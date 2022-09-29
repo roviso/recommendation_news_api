@@ -46,8 +46,8 @@ class ScrapeLinkX():
         
 
     def scrape_img(self, image_selector:str):
-        print(f'image_selector:{image_selector},999999999999999999')
-        print(f"image is {self.tree.xpath(image_selector)}")
+        # print(f'image_selector:{image_selector},999999999999999999')
+        # print(f"image is {self.tree.xpath(image_selector)}")
         img = self.tree.xpath(image_selector)[0].strip()
         if img:
             return img
@@ -60,6 +60,7 @@ class ScrapeLinkX():
         # if not author:
         #     return None
         if author_img_selector :
+            print(self.tree.xpath(author_img_selector),777777777777777)
 
             author_img = self.tree.xpath(author_img_selector)[0].strip()
 

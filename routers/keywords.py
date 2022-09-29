@@ -117,36 +117,50 @@ async def add_article_keywords(keywords: List[str], article_id: str ):
 
 
 @router.get('/update_keywords', status_code = 200)
-async def update_keywords(article_id: str) -> List[article_model.LatestArticle]:
+async def update_keywords(article, tfidf_dict) -> List[article_model.LatestArticle]:
     CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
-    async with async_session() as session:
-        async with session.begin():
-            latestcrud = LatestCrud(session)
-            #if await tfidfcache.cache_exits():
-            #    tfidf_dict = await tfidfcache.read_from_cache()
-            #else:
-            articles = await latestcrud.get_all_latest_article()
-            print(articles)
+    content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
+            # print(content,1111111111111111111)
+    try:
+        keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
+    except:
+        keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
+    final_keywords = reduce(add ,keywords)
+
+    return await add_article_keywords(final_keywords,article.id)
+
+
+#     CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
+#     async with async_session() as session:
+#         async with session.begin():
+#             latestcrud = LatestCrud(session)
+#             keywordcrud = KeywordsCrud(session)
+#             #if await tfidfcache.cache_exits():
+#             #    tfidf_dict = await tfidfcache.read_from_cache()
+#             #else:
+#             # articles = await latestcrud.get_all_latest_article()
+#             articles = await keywordcrud.get_article_no_keyword()
+#             print(articles)
                 
 
 
-            article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in articles if article.content]
+#             article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in articles if article.content]
 
-            train_df = pd.DataFrame(article_text, columns= ['text'])
-            tfidf_dict = tfidf_generator.train_idfs(train_df)
+#             train_df = pd.DataFrame(article_text, columns= ['text'])
+#             tfidf_dict = tfidf_generator.train_idfs(train_df)
 
- #           await tfidfcache.cache_latest_tfidf(tfidf_dict) ##Caching tfidf values in dictrionary 
+#  #           await tfidfcache.cache_latest_tfidf(tfidf_dict) ##Caching tfidf values in dictrionary 
 
-            article = await latestcrud.get_article_by_id(article_id)
-            content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
-            # print(content,1111111111111111111)
-            try:
-                keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
-            except:
-                keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
-            final_keywords = reduce(add ,keywords)
+#             article = await latestcrud.get_article_by_id(article_id)
+    #         content = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content)) ]
+    #         # print(content,1111111111111111111)
+    #         try:
+    #             keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
+    #         except:
+    #             keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
+    #         final_keywords = reduce(add ,keywords)
 
-    return await add_article_keywords(final_keywords,article_id)
+    # return await add_article_keywords(final_keywords,article_id)
     # return final_keywords
 
 
@@ -165,11 +179,19 @@ async def get_article_with_no_keywords(async_session: Session = Depends(database
 @router.get('/update_articles_keywords')
 async def update_articles_keywords():
     print(f"Updating Latest Article Keywords...")
+    CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
     async with async_session() as session:
         async with session.begin():
             keywordcrud = KeywordsCrud(session)
             article_with_no_keywords =  await keywordcrud.get_article_no_keyword()
-            article_ids_with_no_keywords = [article.id for article in article_with_no_keywords]
+            # article_ids_with_no_keywords = [article.id for article in article_with_no_keywords]
 
-    updated_articles = [await update_keywords(article_id) for article_id in article_ids_with_no_keywords]
+
+            article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in article_with_no_keywords if article.content]
+
+            train_df = pd.DataFrame(article_text, columns= ['text'])
+            tfidf_dict = tfidf_generator.train_idfs(train_df)
+
+
+    updated_articles = [await update_keywords(article,tfidf_dict) for article in article_with_no_keywords]
     return updated_articles
