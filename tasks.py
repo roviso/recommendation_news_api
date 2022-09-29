@@ -35,7 +35,7 @@ from routers.keywords import update_articles_keywords
 from routers.recommend import train_implicit_model
 
 from crud import crud_scrap
-
+import requests
 
 
 
@@ -103,7 +103,8 @@ def hello_world(self, name):
 @celery.task
 async def refresh_sources():
     print(f"TRINGING RECOMMENDATION MODEL")
-    await train_implicit_model()
+    url = "https://newstalk.prixa.net/recommend/train_model"
+    requests.get(url)
     print("TRAINNING COMPLETE:::")
     """
     Refreshes the Scource and starts scrapping fro the source RSS
