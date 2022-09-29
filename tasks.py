@@ -32,7 +32,7 @@ from routers.latest import create_latest_article, get_article_by_url
 from routers.author import create_author, search_author
 from routers import clicks ## clicks had to be imported for some reason unknown
 from routers.keywords import update_articles_keywords
-
+from routers.recommend import train_implicit_model
 
 from crud import crud_scrap
 
@@ -224,6 +224,7 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
     Scrapes and saves news from news link
     Content selector, image selector, label selector is strictly required
     """
+    await train_implicit_model()
 
     global image_error, scraped_news
     try:
