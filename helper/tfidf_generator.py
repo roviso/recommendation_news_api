@@ -151,5 +151,6 @@ def extract_keywords(corpus: Iterable[str], word_idf: Mapping[str, float],
             for i, indices in enumerate(top_indices):
                 top_keywords.append(list(final_keywords[i, indices]))
         except:
-            top_keywords.append(random.sample(list(corpus.split()),10))
+            print(f"corpus is :{corpus}, {type(corpus)}")
+            top_keywords.append(random.sample(list(corpus[0].split()),10))
     return top_keywords
