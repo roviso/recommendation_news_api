@@ -25,5 +25,5 @@ class LikedUser(BaseModel):
 class GetUserArticleLikesResponse(BaseModel):
     liked: bool 
     total_likes: int 
-    liked_users: Optional[LikedUser]
+    liked_users: Optional[List[LikedUser]]
 
