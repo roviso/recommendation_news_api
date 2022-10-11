@@ -149,12 +149,15 @@ async def update_keywords(article, tfidf_dict) -> List[article_model.LatestArtic
             # print(content,1111111111111111111)
     try:
         keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
+        final_keywords = reduce(add ,keywords)
     except:
         try:
             keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 10)
+            final_keywords = reduce(add ,keywords)
         except:
-            keywords = [key for key in random.sample(list(content[0].split()),int(0.2 * len(content[0].split()))) if len(key)>=3]
-    final_keywords = reduce(add ,keywords)
+            keywords = [key for key in random.sample(list(content[0].split()),int(0.2 * len(content[0].split()))) if len(key)>=5]
+            final_keywords = keywords
+    
 
     return await add_article_keywords(final_keywords,article.id)
 
