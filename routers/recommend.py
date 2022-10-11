@@ -26,6 +26,7 @@ from routers import utils
 from collections import Counter
 import operator
 from routers.user import get_user_keywords
+from routers.keywords import update_articles_keywords
 from newscacher import keywordcache, newscache, latestnewscache
 import time
 
@@ -148,6 +149,7 @@ class tfidf_obj():
 
 ## function to update tfidf class object 
 async def get_tfidf_verctorizer(tfidf):
+    await update_articles_keywords()
 
     first_exists = await latestnewscache.check_news_exists(0)
     last_exists = await latestnewscache.check_news_exists(50)
@@ -165,7 +167,7 @@ async def get_tfidf_verctorizer(tfidf):
     #     async with session.begin():
     #         articlecrud = ArticleCrud(session)
     #         articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
-    article_keyword = {article['id'] : [str(keyword['keyword']['tag']) for keyword in article['keywords'] ] for article in  articles }
+    article_keyword = {article['id'] : [str(keyword['keyword']['tag']) for keyword in article['keywords'] ] for article in  articles if article['keywords']}
 
     article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
 

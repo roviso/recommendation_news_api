@@ -13,5 +13,5 @@ wavdir
 tts
 .vscode
 *.jpg
-*.env
+.env
 *.pid

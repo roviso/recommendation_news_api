@@ -24,8 +24,8 @@ import random
 import scipy.sparse as sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from implicit.als import AlternatingLeastSquares
+from io import StringIO
 from html.parser import HTMLParser
-
 
 router = APIRouter(
     prefix = "/keywords",
@@ -37,6 +37,25 @@ class HTMLFilter(HTMLParser):
     text = ""
     def handle_data(self, data):
         self.text += data.strip()
+
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs= True
+        self.text = StringIO()
+    def handle_data(self, d):
+        self.text.write(d)
+    def get_data(self):
+        return self.text.getvalue()
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
 
 
 
@@ -124,9 +143,9 @@ async def add_article_keywords(keywords: List[str], article_id: str ):
 @router.get('/update_keywords', status_code = 200)
 async def update_keywords(article, tfidf_dict) -> List[article_model.LatestArticle]:
     CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
-    html_filter = HTMLFilter()
-    html_filter.feed(article.content[0])
-    content = [re.sub(CLEANR, '', article.heading + ' ' + html_filter.text) ]
+    # html_filter = HTMLFilter()
+    # html_filter.feed(article.content[0])
+    content = [re.sub(CLEANR, '', article.heading + ' ' + strip_tags(article.content[0])) ]
             # print(content,1111111111111111111)
     try:
         keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
@@ -194,10 +213,15 @@ async def update_articles_keywords():
         async with session.begin():
             keywordcrud = KeywordsCrud(session)
             article_with_no_keywords =  await keywordcrud.get_article_no_keyword()
+            if not article_with_no_keywords:
+                print("ALL ARTICLES HAS KEYWORDS :)")
+                return 
             # article_ids_with_no_keywords = [article.id for article in article_with_no_keywords]
+            html_filter = HTMLFilter()
+            # article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in article_with_no_keywords if article.content]
 
 
-            article_text = [re.sub(CLEANR, '', article.heading + ' ' + reduce(add ,article.content))  for article in article_with_no_keywords if article.content]
+            article_text = [re.sub(CLEANR, '', article.heading + ' ' + strip_tags(article.content[0]))  for article in article_with_no_keywords if article.content]
 
             train_df = pd.DataFrame(article_text, columns= ['text'])
             tfidf_dict = tfidf_generator.train_idfs(train_df)

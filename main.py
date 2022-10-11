@@ -3,7 +3,7 @@ from database import engine, Base
 # from fastapi.logger import logger
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
-from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label  ,recommend
+from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label   ,recommend
 # , recommendation, 
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware

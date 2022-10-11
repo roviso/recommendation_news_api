@@ -37,8 +37,14 @@ from routers.recommend import train_implicit_model
 from crud import crud_scrap
 import requests
 
+###_________FOR RIRI VOICE API_______________________ ####
+url = "https://riri.prixa.net/api/speak/"
 
 
+headers = {
+  'Authorization': 'Token r1YOqaiZ3ePjTUWJRgAP2fHUUMmMRQis7dA0MGcfAkKM5Wca3sXI72qV3tneSfdBRLh1bohRC7CrUTze77YK5pvGq3Z4jt5tUVcBUsFWJXRmRoqyEty7gt39qkHSDw5N'
+}
+## _______________________________________________________
 
 CONNECTION_TIMEOUT = 10
 DEFAULT_IMAGE = '/media/system/prixa_image.png'
@@ -290,6 +296,11 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
         article_created = await create_latest_article(new_article)
         if article_created:
             print("ARTICLE SUCCESFULLY ADDED")
+            print("_______PREPARING AUDIO FILE______________")
+            payload={'text': article_created.heading, 'voice': 'np_rija'}
+            response = requests.request("POST", url, headers=headers, data=payload)
+            if response.text:
+                print("___SUCCESSFULLY CREATED RIRI AUDIO_____")
         else:
             raise Exception(f'UNABLE TO ADD ARTICLE TO DB')
 
