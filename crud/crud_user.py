@@ -49,10 +49,17 @@ class UserCrud():
     async def get_user(self,user_id: str) -> User:
         query = select(User).where(User.id == user_id)
         results = await self.db_session.execute(query)
-        # result = results.fetchone()
-        # return result
         result = results.scalars().one()
         return result
+
+    
+    async def get_registerd_user(self,user_id: str) -> RegisteredUser:
+        query = select(RegisteredUser).where(RegisteredUser.id == user_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().one()
+        return result
+
+
 
     async def get_user_by_email(self,email: str) -> RegisteredUser:
         # print(f"email give is : {email}, 555555555555555555555555555555555555555555555555555")
@@ -60,9 +67,11 @@ class UserCrud():
 
         # results = await self.db_session.execute(query)
         # print(f"results is {results ,results.scalars().all() }, 666666666666666666666666666666666666666666")
-        query = select(RegisteredUser).filter(RegisteredUser.email.ilike(email))
+        # query = select(RegisteredUser).filter(RegisteredUser.email.ilike(email))
+        query = select(RegisteredUser).where(RegisteredUser.email == email)
         results = await self.db_session.execute(query)
-        (result,) = results.one()
+        # (result,) = results.one()
+        result = results.scalars().one()
 
         return result
 
@@ -170,8 +179,4 @@ class UserCrud():
         ).filter(comments_model.Comments.user_id == user_id).order_by(article_model.Article.date.desc()).limit(10)
         results = await self.db_session.execute(query)
         result = results.scalars().all()
-        return result
-
-
-    
-    
+        return 

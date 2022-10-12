@@ -21,6 +21,22 @@ class UserFollowing(Base):
     follower_id =  Column(String, ForeignKey('user.id'), primary_key=True)
     following_id = Column(String, ForeignKey('user.id'), primary_key=True)
 
+    followers = relationship("User", foreign_keys=[follower_id])
+    followings = relationship("User", foreign_keys=[following_id])
+
+
+class AuthorFollowing(Base):
+    __tablename__ = 'author_following'
+
+    follower_id =  Column(String, ForeignKey('user.id'), primary_key=True)
+    following_id = Column(String, ForeignKey('author.id'), primary_key=True)
+
+
+class SourceFollowing(Base):
+    __tablename__ = 'source_following'
+
+    follower_id =  Column(String, ForeignKey('user.id'), primary_key=True)
+    following_id = Column(Integer, ForeignKey('source.id'), primary_key=True)
 
 class User(Base):
     __tablename__ = 'user'
@@ -45,6 +61,25 @@ class User(Base):
         secondary='user_following',
         primaryjoin=id==UserFollowing.following_id,
         secondaryjoin=id==UserFollowing.follower_id,
+        # lazy='selectin',
+        # backref='followings'
+    )
+
+    author_followings = relationship(
+        'Author',
+        secondary='author_following',
+        primaryjoin=id==AuthorFollowing.following_id,
+        secondaryjoin=id==AuthorFollowing.follower_id,
+        # lazy='selectin',
+        # backref='followings'
+    )
+
+
+    source_followings = relationship(
+        'Source',
+        secondary='source_following',
+        primaryjoin=id==SourceFollowing.following_id,
+        secondaryjoin=id==SourceFollowing.follower_id,
         # lazy='selectin',
         # backref='followings'
     )
@@ -145,7 +180,3 @@ class UserArticleIgnored(Base):
 
     ignored_user = relationship("User", back_populates="ignored_articles")
     ignored_article = relationship("Article", back_populates="ignored_by")
-
-    
-
-
