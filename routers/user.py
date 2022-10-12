@@ -173,9 +173,17 @@ async def get_user_keywords(user_id: str):
         async with session.begin():
             usercrud = UserCrud(session)
             liked_articles = await usercrud.get_liked_articles_by_user(user_id)
+            if not liked_articles:
+                liked_articles = []
             viewed_articles = await usercrud.get_viewed_articles_by_user(user_id)
+            if not viewed_articles:
+                viewed_articles = []
             bookmarked_articles = await usercrud.get_bookmarked_articles_by_user(user_id)
+            if not bookmarked_articles:
+                bookmarked_articles = []
             commented_articles = await usercrud.get_commented_articles_by_user(user_id)
+            if not commented_articles:
+                commented_articles = []
 
     all_articles = liked_articles + viewed_articles + bookmarked_articles + commented_articles
 
