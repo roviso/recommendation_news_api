@@ -356,7 +356,7 @@ async def recommend_similar_articles(article_id: str, user_id: str,offset: Union
 
 
 @router.get('/user/{user_id}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Query(default=50), async_session: Session = Depends(database.get_session)):
+async def recommend_user_articles(user_id: str,async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
@@ -395,7 +395,7 @@ async def recommend_user_articles(user_id: str,offset: int = 0, limit: int = Que
             recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list + tfidf_similar_article_list))
             # + cf_similar_article_list))
 
-            recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list,offset,limit)
+            recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
 
         ## Replacing with redirect url
         for article in recommended_articles:
