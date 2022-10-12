@@ -26,6 +26,13 @@ class SourceCrud():
         return results.scalars().all()
 
 
+    async def get_source(self,source_id: int) -> Source:
+        query = select(Source).where(Source.id == source_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().one()
+        return result
+
+
     async def get_source_by_id(self, source_id: int) ->Source:
         query = select(Source).where(Source.id == source_id)
         results = await self.db_session.execute(query)
