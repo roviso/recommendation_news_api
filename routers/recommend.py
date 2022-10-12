@@ -329,7 +329,7 @@ async def recommend_by_tags(tags: str, async_session: Session = Depends(database
 
 
 @router.get('/similar/{article_id}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def recommend_similar_articles(article_id: str, user_id: str,offset: Union[int, None] = None, limit: Union[int, None] = None, async_session: Session = Depends(database.get_session)):
+async def recommend_similar_articles(article_id: str, user_id: str, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
@@ -343,7 +343,7 @@ async def recommend_similar_articles(article_id: str, user_id: str,offset: Union
 
             all_article_list = list(set([article.id] +tfidf_similar_article_list + cf_similar_article_list))
 
-            similar_articles = await articlecrud.get_all_articles_by_id(all_article_list,offset,limit)
+            similar_articles = await articlecrud.get_all_articles_by_id(all_article_list)
 
     for article in similar_articles:
         article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
