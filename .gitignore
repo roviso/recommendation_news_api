@@ -15,3 +15,5 @@ tts
 *.jpg
 .env
 *.pid
+*.dat
+
