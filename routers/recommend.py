@@ -1,5 +1,6 @@
 from typing import Union
 from crud.crud_user import UserCrud
+from crud.crud_likes import Likes
 from fastapi import APIRouter, status, HTTPException,Depends,Query
 
 from config import pathconfig
@@ -360,6 +361,7 @@ async def recommend_user_articles(user_id: str,async_session: Session = Depends(
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
+            likes = Likes(session)
             ### ____________-- Getting user keyword from model dataframe -- ____________________
             # user = pre.user_df.query(f'user == "{user_id}"')
             # keyword_list = [str(keyword) for keyword in user['user_keywords']]
@@ -392,8 +394,12 @@ async def recommend_user_articles(user_id: str,async_session: Session = Depends(
 
             cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
-            recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list + tfidf_similar_article_list))
+            all_recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list + tfidf_similar_article_list))
             # + cf_similar_article_list))
+            all_liked_articles = await likes.get_all_liked_articles(user_id=user_id)
+
+            liked_ids = [liked_articles.id for liked_articles in all_liked_articles]
+            recommended_article_list = [id for id in all_recommended_article_list if id not in liked_ids]
 
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
 
