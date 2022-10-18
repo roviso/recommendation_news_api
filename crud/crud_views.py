@@ -50,7 +50,7 @@ class Views():
     
     async def update_ignores(self, article_id: str, increase_ignores: Optional[int] = None, decrease_ignores: Optional[int] = None):
         article = await self.articledb.get_article_by_id(article_id)
-        article = article._mapping.Article
+        # article = article._mapping.Article
         q = update(Article).where(Article.id == article_id)
         if increase_ignores:
             print(f"Increasing the Ignores")
