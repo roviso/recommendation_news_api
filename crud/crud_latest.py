@@ -1,11 +1,12 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session,joinedload,contains_eager
-from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.article_model import Article, LatestArticle,AricleKeywords
 from crud.crud_article import ArticleCrud
-from sqlalchemy import desc
+from sqlalchemy import update, desc, and_
+import nepali_datetime
+import datetime
 
 class LatestCrud(ArticleCrud):
     def __init__(self, db_session: Session):
@@ -49,7 +50,16 @@ class LatestCrud(ArticleCrud):
 
 
     async def get_trending_article(self) -> List[LatestArticle]:
-        query = select(LatestArticle).join(LatestArticle.keywords).order_by(desc(LatestArticle.likes),desc(LatestArticle.shares)).limit(50)
+        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 1)
+        query = select(LatestArticle).join(LatestArticle.keywords).filter(LatestArticle.date >= str(n_days_ago.date())).order_by(desc(LatestArticle.likes),desc(LatestArticle.views))
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
+    async def n_days_news(self)  -> List[LatestArticle]:
+        n_days_ago = nepali_datetime.datetime.now()  - datetime.timedelta(days = 1)
+        print(n_days_ago.date(), type(n_days_ago.date()), 555555555555555)
+        query = select(LatestArticle).filter(LatestArticle.date >= str(n_days_ago.date()))
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
