@@ -7,6 +7,7 @@ from config import pathconfig
 from schemas import article_schema
 from database import async_session
 from crud.crud_article import ArticleCrud
+from crud.crud_latest import LatestCrud
 from crud.crud_recommendation import RecommendationCrud
 from repository.ncf_recommender.loader import load_pkl
 from config import pathconfig
@@ -36,6 +37,10 @@ router = APIRouter(
     prefix = "/recommend",
     tags=['recommend']
 )
+
+
+
+
 
 
 ### _______________________________ PREPARING RECOMMENDATION ENGINE _______________________________________________
@@ -261,7 +266,7 @@ def get_similar_articles(q):
 
 ## ____Function to extract keyword from recent articles provided____
 def get_trending_keywords(recent_articles):
-    keywords = [str(keyword.keyword.tag) for articles in  recent_articles for keyword in articles.keywords]
+    keywords = [str(keyword.keyword.tag) for articles in  recent_articles for keyword in articles.keywords if str(keyword.keyword.tag) not in stop_words]
     keyword_count = Counter(keywords)
 
     keyword_popularity = {}
@@ -446,23 +451,6 @@ def update_dictionary(old_dict, new_dict):
     
     return new_dict
 
-
-@router.get('/trending_keywords',)
-async def trending_keywords(offset: int = 0, limit: int = Query(default=500), async_session: Session = Depends(database.get_session)):
-    trending_len = await keywordcache.get_len("trending")
-    if trending_len == 0:
-        print("TRENDING KEYWORDS NOT IN CACHE")
-        async with async_session as session:
-            async with session.begin():
-                articlecrud = ArticleCrud(session)
-                recent_articles = await articlecrud.get_all_article(offset, limit)
-                trending_keywords = get_trending_keywords(recent_articles)
-                print("keyword is ::: ", trending_keywords)
-                await keywordcache.add_to_cache('trending',trending_keywords)
-    else:
-        print("TRENDING KEYWORDS IN CACHE")
-        trending_keywords = await keywordcache.read_from_cache("trending")            
-    return trending_keywords
 
 
 @router.get('/latest_news', response_model=LimitOffsetPage[article_schema.GetAllArticle])
