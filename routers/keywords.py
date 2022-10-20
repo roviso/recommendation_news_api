@@ -69,12 +69,14 @@ def update_dictionary(old_dict, new_dict):
     return new_dict
 
 
+stop_words = []
+with open('helper/non-potential-topic-word-list.txt', 'r', encoding="utf8") as reader:
+    for line in reader:
+        line = line.strip('\n')
+        stop_words.append(line)
+
+
 def get_trending_keywords(recent_articles):
-    stop_words = []
-    with open('helper/non-potential-topic-word-list.txt', 'r', encoding="utf8") as reader:
-        for line in reader:
-            line = line.strip('\n')
-            stop_words.append(line)
     # print(f"Using stopwords {stop_words}, {len(stop_words)}")
 
     keywords = [str(keyword.keyword.tag) for articles in  recent_articles for keyword in articles.keywords if str(keyword.keyword.tag) not in stop_words]
@@ -105,19 +107,19 @@ def get_trending_keywords(recent_articles):
 
 @router.get('/trending_keywords',)
 async def trending_keywords(async_session: Session = Depends(database.get_session)):
-    trending_len = await keywordcache.get_len("trending")
-    if trending_len == 0:
-        print("TRENDING KEYWORDS NOT IN CACHE")
-        async with async_session as session:
-            async with session.begin():
-                latestcrud = LatestCrud(session)
-                trending_articles = await latestcrud.get_trending_article()
-                trending_keywords = get_trending_keywords(trending_articles)
-                print("keyword is ::: ", trending_keywords)
-                await keywordcache.add_to_cache('trending',trending_keywords)
-    else:
-        print("TRENDING KEYWORDS IN CACHE")
-        trending_keywords = await keywordcache.read_from_cache("trending")            
+    # trending_len = await keywordcache.get_len("trending")
+    # if trending_len == 0:
+        # print("TRENDING KEYWORDS NOT IN CACHE")
+    async with async_session as session:
+        async with session.begin():
+            latestcrud = LatestCrud(session)
+            trending_articles = await latestcrud.get_trending_article()
+            trending_keywords = get_trending_keywords(trending_articles)
+            # print("keyword is ::: ", trending_keywords)
+            # await keywordcache.add_to_cache('trending',trending_keywords)
+    # else:
+    #     print("TRENDING KEYWORDS IN CACHE")
+    #     trending_keywords = await keywordcache.read_from_cache("trending")            
     return trending_keywords
 
 

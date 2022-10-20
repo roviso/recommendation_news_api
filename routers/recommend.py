@@ -39,7 +39,11 @@ router = APIRouter(
 )
 
 
-
+stop_words = []
+with open('helper/non-potential-topic-word-list.txt', 'r', encoding="utf8") as reader:
+    for line in reader:
+        line = line.strip('\n')
+        stop_words.append(line)
 
 
 
