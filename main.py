@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from database import engine, Base
 # from fastapi.logger import logger
+from apis.sugariri.main import sugaApi
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
 from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label   ,recommend
@@ -32,7 +33,7 @@ app.add_middleware(
 )
 
 
-# app.mount("/api/keyword", keywordApi)
+app.mount("/api/sugariri", sugaApi)
 
 
 # app.mount("/api/tts", ttsApi)
