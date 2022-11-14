@@ -7,7 +7,7 @@ from models import author_model, article_model
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import update,delete
-
+from crud import crud_follow
 
 class SourceCrud():
     def __init__(self, db_session: Session):
@@ -36,7 +36,31 @@ class SourceCrud():
     async def get_source_profile(self,source_id: int) -> Source:
         query = select(Source).where(Source.id == source_id).options(selectinload(Source.articles))
         results = await self.db_session.execute(query)
-        return results.scalars().all()[0]
+        source_profile = results.scalars().all()[0]
+
+        followcrud = crud_follow.Follow(self.db_session)
+
+        follower_count = await followcrud.get_source_followers(source_id)
+#         following_count = await followcrud.get_source_followings(source_id)
+        total_articles = source_profile.articles
+        total_likes = sum(articles.__dict__['likes'] for articles in total_articles)
+        total_views = sum(articles.__dict__['views'] for articles in total_articles)
+
+            
+        setattr(source_profile,'followers',int(len(follower_count)))
+        setattr(source_profile,'total_articles',len(total_articles))
+        setattr(source_profile,'total_likes',total_likes)
+        setattr(source_profile,'total_views',total_views)
+
+        return source_profile
+
+
+    async def get_top_sources(self) -> List[Source]:
+        all_sources = await self.get_all_source()
+        all_source_profiles = [await self.get_source_profile(source.id) for source in all_sources]
+        # top_author_profiles = sorted(all_author_profiles, key=lambda x: (x['followers'],x['total_articles'],x['total_likes'],x['total_views']))
+        top_source_profiles = sorted(all_source_profiles, key=lambda x: (-x.total_views, -x.total_likes, -x.followers))
+        return top_source_profiles
 
 
     async def get_source_by_id(self, source_id: int) ->Source:

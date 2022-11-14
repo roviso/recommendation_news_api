@@ -5,10 +5,12 @@ from sqlalchemy.future import select
 # from schemas import article_schema
 from models.author_model import Author
 from models import article_model
+from crud import crud_follow
 
 class AuthorCrud():
     def __init__(self, db_session: Session):
         self.db_session = db_session
+        # self.followcrud = crud_follow.Follow(db_session)
 
     async def create_author(self, author: Author):
         self.db_session.add(author)
@@ -27,10 +29,30 @@ class AuthorCrud():
         return result
 
     async def get_author_profile(self,author_id: str) -> Author:
-
         query = select(Author).where(Author.id == author_id).options(selectinload(Author.articles))
         results = await self.db_session.execute(query)
-        return results.scalars().all()[0]
+        author_profile =  results.scalars().all()[0]
+
+        followcrud = crud_follow.Follow(self.db_session)
+
+
+        follower_count = await followcrud.get_author_followers(author_id)
+        following_count = await followcrud.get_author_followings(author_id)
+        total_articles = author_profile.articles
+        total_likes = sum(articles.__dict__['likes'] for articles in total_articles)
+        total_views = sum(articles.__dict__['views'] for articles in total_articles)
+
+            
+        setattr(author_profile,'followers',int(len(follower_count)))
+        setattr(author_profile,'following',int(len(following_count)))
+        setattr(author_profile,'total_articles',len(total_articles))
+        setattr(author_profile,'total_likes',total_likes)
+        setattr(author_profile,'total_views',total_views)
+
+        return author_profile
+
+
+
         # results = await self.db_session.execute(query)
         # (result,) = results.one()
         # return result
@@ -61,6 +83,13 @@ class AuthorCrud():
         result = results.scalars().all()
         return result
 
+
+    async def get_top_authors(self) -> List[Author]:
+        all_authors = await self.get_all_author()
+        all_author_profiles = [await self.get_author_profile(author.id) for author in all_authors]
+        # top_author_profiles = sorted(all_author_profiles, key=lambda x: (x['followers'],x['total_articles'],x['total_likes'],x['total_views']))
+        top_author_profiles = sorted(all_author_profiles, key=lambda x: (-x.total_views, -x.total_likes, -x.followers))
+        return top_author_profiles
 
 
     async def update_author(self, author_id: str, author_name: Optional[str], author_img: Optional[str]):

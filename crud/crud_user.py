@@ -6,7 +6,7 @@ from sqlalchemy.future import select
 # from schemas import article_schema
 from models.user_model import User,RegisteredUser, UserArticleBookmarks,NonRegisteredUser
 from models import article_model, user_model, comments_model
-
+from crud import crud_follow
 
 class UserCrud():
     def __init__(self, db_session: Session):
@@ -77,16 +77,27 @@ class UserCrud():
 
     async def get_user_profile(self,user_id: str) -> User:
         entity = with_polymorphic(User, RegisteredUser)
-
         query = select(entity).where(entity.id == user_id)
-        # .options(selectinload(entity.user_followings))
-        # print(query,111111111111111111111111111111111)
-        # query = select(User).where(User.id == user_id)
         results = await self.db_session.execute(query)
-        # print(results)
-        # (result,) = results.one()
-        result = results.scalars().one()
-        return result
+        user_profile = results.scalars().one()
+
+        followcrud = crud_follow.Follow(self.db_session)
+
+        follower_count = await followcrud.get_followers_count(user_id)
+        following_count = await followcrud.get_following_count(user_id)
+
+        setattr(user_profile,'followers',int(follower_count))
+        setattr(user_profile,'following',int(following_count))
+        return user_profile
+
+
+    async def get_top_users(self,) -> List[RegisteredUser]:
+        all_users = await self.get_all_registered_user()
+        all_user_profiles = [await self.get_user_profile(user.id) for user in all_users]
+        top_user_profiles = sorted(all_user_profiles, key=lambda x: (-x.followers))
+        return top_user_profiles
+
+
 
     async def check_user_exists(self,device_id: str,device_name:str) -> User:
         query = select(User).where(User.device_id == device_id,User.device_name == device_name)

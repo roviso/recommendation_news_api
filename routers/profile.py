@@ -44,15 +44,17 @@ async def user_profile(current_user: user_schema.User = Depends(), async_session
     async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
-            followcrud = Follow(session)
             user_profile =  await usercrud.get_user_profile(current_user.id)
-            follower_count = await followcrud.get_followers_count(current_user.id)
-            following_count = await followcrud.get_following_count(current_user.id)
+            return user_profile
+    #         followcrud = Follow(session)
+    #         user_profile =  await usercrud.get_user_profile(current_user.id)
+    #         follower_count = await followcrud.get_followers_count(current_user.id)
+    #         following_count = await followcrud.get_following_count(current_user.id)
 
-    print(f"user profile: {user_profile}")
-    setattr(user_profile,'followers',int(follower_count))
-    setattr(user_profile,'following',int(following_count))
-    return user_profile
+    # print(f"user profile: {user_profile}")
+    # setattr(user_profile,'followers',int(follower_count))
+    # setattr(user_profile,'following',int(following_count))
+    # return user_profile
 
 
 @router.post("/upload/profilePic")
@@ -80,24 +82,7 @@ async def spurce_profile(source_id: int, async_session: Session = Depends(databa
     async with async_session as session:
         async with session.begin():
             sourcecrud= SourceCrud(session)
-            followcrud = Follow(session)
-            
             source_profile =  await sourcecrud.get_source_profile(source_id)
-    #         print()
-            follower_count = await followcrud.get_source_followers(source_id)
-    #         following_count = await followcrud.get_source_followings(source_id)
-            total_articles = source_profile.articles
-            total_likes = sum(articles.__dict__['likes'] for articles in total_articles)
-            total_views = sum(articles.__dict__['views'] for articles in total_articles)
-
-            
-    setattr(source_profile,'followers',int(len(follower_count)))
-    setattr(source_profile,'total_articles',len(total_articles))
-    setattr(source_profile,'total_likes',total_likes)
-    setattr(source_profile,'total_views',total_views)
-            # user_bookmarked = author_profile.articles
-
-            # print('user bookmark : ',user_bookmarked )
     
     return source_profile
 
@@ -108,24 +93,7 @@ async def author_profile(author_id: str, async_session: Session = Depends(databa
     async with async_session as session:
         async with session.begin():
             authorcrud= AuthorCrud(session)
-            followcrud = Follow(session)
-            
             author_profile =  await authorcrud.get_author_profile(author_id)
-            follower_count = await followcrud.get_author_followers(author_id)
-            following_count = await followcrud.get_author_followings(author_id)
-            total_articles = author_profile.articles
-            total_likes = sum(articles.__dict__['likes'] for articles in total_articles)
-            total_views = sum(articles.__dict__['views'] for articles in total_articles)
 
-            
-    setattr(author_profile,'followers',int(len(follower_count)))
-    setattr(author_profile,'following',int(len(following_count)))
-    setattr(author_profile,'total_articles',len(total_articles))
-    setattr(author_profile,'total_likes',total_likes)
-    setattr(author_profile,'total_views',total_views)
-            # user_bookmarked = author_profile.articles
-
-            # print('user bookmark : ',user_bookmarked )
-    
     return author_profile
 

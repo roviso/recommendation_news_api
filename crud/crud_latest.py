@@ -50,7 +50,14 @@ class LatestCrud(ArticleCrud):
 
 
     async def get_trending_article(self) -> List[LatestArticle]:
-        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 1)
+        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 3)
+        query = select(LatestArticle).join(LatestArticle.keywords).filter(LatestArticle.date >= str(n_days_ago.date())).order_by(desc(LatestArticle.likes),desc(LatestArticle.views))
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+
+    async def get_top_article(self, n_days: int) -> List[LatestArticle]:
+        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = n_days)
         query = select(LatestArticle).join(LatestArticle.keywords).filter(LatestArticle.date >= str(n_days_ago.date())).order_by(desc(LatestArticle.likes),desc(LatestArticle.views))
         results = await self.db_session.execute(query)
         return results.scalars().all()

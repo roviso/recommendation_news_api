@@ -4,7 +4,7 @@ from database import engine, Base
 from apis.sugariri.main import sugaApi
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
-from routers import article,cache,source, author,user,likes, views, token, latest , comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label   ,recommend
+from routers import article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label   ,recommend
 # , recommendation, 
 import db_loader
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,6 +57,8 @@ app.include_router(recommend.router)
 
 app.include_router(profile.router)
 
+
+app.include_router(top.router)
 
 app.include_router(user.router)
 app.include_router(follow.router)
