@@ -16,12 +16,38 @@ class UserProfile(BaseModel):
     following: int
     profile_Image: Optional[str] = None
 
+    class Config:
+        orm_mode = True
 
-    
 
-    # bookmarked_articles : List[article_schema.GetAllArticle]
+class AuthorProfile(BaseModel):
+    id: str
+    author_name: str
+    author_img: Optional[str] = None 
+    source_id: int
+
+    followers: int 
+    following: int
+    total_articles: int
+    total_likes: int
+    total_views: int
+
 
     class Config:
         orm_mode = True
 
 
+class SourceProfile(BaseModel):
+    id: str
+    name: str
+    image: Optional[str] = None 
+    domain: str
+
+    followers: int 
+    total_articles: int
+    total_likes: int
+    total_views: int
+
+
+    class Config:
+        orm_mode = True

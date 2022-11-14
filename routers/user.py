@@ -98,6 +98,14 @@ async def read_user(current_user: user_schema.User = Depends(), async_session: S
             usercrud= UserCrud(session)
             return await usercrud.get_user(current_user.id)
 
+# @router.get("/get_all_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
+# async def read_all_user(async_session: Session = Depends(database.get_session)):
+#     async with async_session as session:
+#         async with session.begin():
+#             usercrud= UserCrud(session)
+#             users_list =  await usercrud.get_all_user()
+#             return paginate(users_list)
+
 @router.get("/get_all_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
 async def read_all_user(async_session: Session = Depends(database.get_session)):
     async with async_session as session:
@@ -105,6 +113,8 @@ async def read_all_user(async_session: Session = Depends(database.get_session)):
             usercrud= UserCrud(session)
             users_list =  await usercrud.get_all_user()
             return paginate(users_list)
+    # return users_list
+
 
 
 @router.get("/get_all_registered_user", response_model = LimitOffsetPage[user_schema.GetRegisteredUsers])
@@ -113,6 +123,14 @@ async def read_all_registered_user(async_session: Session = Depends(database.get
         async with session.begin():
             usercrud= UserCrud(session)
             users_list =  await usercrud.get_all_registered_user()
+            return paginate(users_list)
+
+@router.get("/get_all_nonregistered_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
+async def read_all_nonregistered_user(async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            users_list =  await usercrud.get_all_nonregistered_user()
             return paginate(users_list)
 
 

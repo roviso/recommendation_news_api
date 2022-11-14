@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session,with_polymorphic,selectinload,joinedload,subq
 from sqlalchemy import update
 from sqlalchemy.future import select
 # from schemas import article_schema
-from models.user_model import User,RegisteredUser, UserArticleBookmarks
+from models.user_model import User,RegisteredUser, UserArticleBookmarks,NonRegisteredUser
 from models import article_model, user_model, comments_model
 
 
@@ -111,17 +111,29 @@ class UserCrud():
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
-    async def get_all_user(self) -> List[User]:
-        query = select(User).order_by(User.id)
-        results = await self.db_session.execute(query)
-        return results.scalars().all()
-        # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
+    
 
     
     async def get_all_registered_user(self) -> List[RegisteredUser]:
         query = select(RegisteredUser).order_by(RegisteredUser.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
+
+    async def get_all_nonregistered_user(self) -> List[NonRegisteredUser]:
+        query = select(NonRegisteredUser).order_by(NonRegisteredUser.id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+    async def get_all_user(self) -> List[User]:
+        # query = select(User).order_by(User.id)
+        # results = await self.db_session.execute(query)
+        # return results.scalars().all()
+        registereduser = await self.get_all_registered_user()
+        nonregistereduser = await self.get_all_nonregistered_user()
+        registereduser.extend(nonregistereduser)
+        # print(f"all users arerere: {registereduser}, *********************************")
+        return registereduser
+        # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
 
 
     async def update_user(self, user_id: str, username: Optional[str], password: Optional[str], first_name: Optional[str],last_name: Optional[str], email: Optional[str] ):

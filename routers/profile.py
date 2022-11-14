@@ -3,14 +3,17 @@ from fileinput import filename
 from fastapi import  Depends,APIRouter, HTTPException, status, UploadFile, File, BackgroundTasks
 from schemas import user_schema, profile_schema
 from crud.crud_user import UserCrud
+from crud.crud_source import SourceCrud
 from crud.crud_author import AuthorCrud
 from crud.crud_follow import Follow
+from crud.crud_likes import Likes
 from database import async_session
 import database
 from sqlalchemy.orm import Session
 from PIL import Image
 from config import imgconfig
 from fastapi.responses import JSONResponse
+from schemas import profile_schema
 
 router = APIRouter(
     prefix = "/profile",
@@ -34,7 +37,7 @@ def resize_image(filename: str):
 
 
 
-@router.get("/get_user_profile")
+@router.get("/get_user_profile", status_code = 200, response_model=profile_schema.UserProfile)
 # ,response_model=profile_schema.UserProfile)
 async def user_profile(current_user: user_schema.User = Depends(), async_session: Session = Depends(database.get_session)):
     # return UserCrud.get_user(user_id=current_user.id)\
@@ -71,18 +74,58 @@ async def upload_profile_Image(background_tasks: BackgroundTasks, current_user: 
     background_tasks.add_task(resize_image, filename=file_name)
     return JSONResponse(content={"message": "success"})
 
+@router.get("/get_source_profile", status_code = 200  , response_model=profile_schema.SourceProfile)
+async def spurce_profile(source_id: int, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            sourcecrud= SourceCrud(session)
+            followcrud = Follow(session)
+            
+            source_profile =  await sourcecrud.get_source_profile(source_id)
+    #         print()
+            follower_count = await followcrud.get_source_followers(source_id)
+    #         following_count = await followcrud.get_source_followings(source_id)
+            total_articles = source_profile.articles
+            total_likes = sum(articles.__dict__['likes'] for articles in total_articles)
+            total_views = sum(articles.__dict__['views'] for articles in total_articles)
 
-@router.get("/get_author_profile")
+            
+    setattr(source_profile,'followers',int(len(follower_count)))
+    setattr(source_profile,'total_articles',len(total_articles))
+    setattr(source_profile,'total_likes',total_likes)
+    setattr(source_profile,'total_views',total_views)
+            # user_bookmarked = author_profile.articles
+
+            # print('user bookmark : ',user_bookmarked )
+    
+    return source_profile
+
+
+@router.get("/get_author_profile", status_code = 200 , response_model=profile_schema.AuthorProfile)
 async def author_profile(author_id: str, async_session: Session = Depends(database.get_session)):
     # return UserCrud.get_user(user_id=current_user.id)\
     async with async_session as session:
         async with session.begin():
             authorcrud= AuthorCrud(session)
+            followcrud = Follow(session)
+            
             author_profile =  await authorcrud.get_author_profile(author_id)
-            print('user Profile is: ',author_profile)
+            follower_count = await followcrud.get_author_followers(author_id)
+            following_count = await followcrud.get_author_followings(author_id)
+            total_articles = author_profile.articles
+            total_likes = sum(articles.__dict__['likes'] for articles in total_articles)
+            total_views = sum(articles.__dict__['views'] for articles in total_articles)
 
+            
+    setattr(author_profile,'followers',int(len(follower_count)))
+    setattr(author_profile,'following',int(len(following_count)))
+    setattr(author_profile,'total_articles',len(total_articles))
+    setattr(author_profile,'total_likes',total_likes)
+    setattr(author_profile,'total_views',total_views)
             # user_bookmarked = author_profile.articles
 
             # print('user bookmark : ',user_bookmarked )
     
     return author_profile
+

@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,selectinload
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.source_model import Source
@@ -31,6 +31,12 @@ class SourceCrud():
         results = await self.db_session.execute(query)
         result = results.scalars().one()
         return result
+        
+
+    async def get_source_profile(self,source_id: int) -> Source:
+        query = select(Source).where(Source.id == source_id).options(selectinload(Source.articles))
+        results = await self.db_session.execute(query)
+        return results.scalars().all()[0]
 
 
     async def get_source_by_id(self, source_id: int) ->Source:

@@ -201,7 +201,7 @@ class Follow():
         return results.scalars().all()
         
 
-    async def get_source_followers(self,source_id):
+    async def get_source_followers(self,source_id: int):
         query = select(user_model.RegisteredUser).join(
             user_model.SourceFollowing).filter(user_model.SourceFollowing.following_id == source_id)
 
