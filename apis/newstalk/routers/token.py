@@ -159,7 +159,7 @@ async def login(async_session: Session = Depends(database.get_session), form_dat
 
 @router.post("/logout", response_model = token_schema.Token)
 async def logout(logout_user: token_schema.CreateUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
-    access_token = await create_user(logout_user)
+    access_token = await create_user(logout_user,async_session)
     return access_token
     # user = await authenticate_registered_user(async_session, form_data.username, form_data.password)
     # if not user:
