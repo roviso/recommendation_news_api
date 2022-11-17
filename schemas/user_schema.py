@@ -19,13 +19,14 @@ class UserInDB(User):
     class Config:
         orm_mode = True
 
-class RegisterUser(User):
+class RegisterUser(BaseModel):
     username: str
     password: str
     first_name: Optional[str] = None 
     last_name: Optional[str] = None
     email: Optional[str] = None
-
+    class Config:
+        orm_mode = True
 
 # class CommentedUsers(User):
 #     username: str 
