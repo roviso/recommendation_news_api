@@ -115,6 +115,27 @@ async def create_user(create_user: token_schema.CreateUser, async_session: Sessi
     return access_token
 
 
+@router.post("/refresh_token", response_model = token_schema.Token)
+async def refresh_token(async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+    user_id = current_user.id
+    async with async_session as session:
+        async with session.begin():
+            usercrud= crud_user.UserCrud(session)
+            user = usercrud.get_user(user_id)
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid Token",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+    access_token_expires = timedelta(minutes=authconfig.REFRESH_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"user_id": user.id}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
 
 
 

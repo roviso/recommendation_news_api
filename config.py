@@ -62,6 +62,7 @@ class AuthConfig:
     SECRET_KEY:str  ='9cd0545638607dc61ec68d09f116aa27138b1290273035dd78c7d00480d8c4c8'
     ALGORITHM:str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES:int = 555
+    REFRESH_TOKEN_EXPIRE_MINUTES:int = 5555
 
 
 authconfig = AuthConfig()
