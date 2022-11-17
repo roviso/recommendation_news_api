@@ -121,7 +121,7 @@ async def refresh_token(async_session: Session = Depends(database.get_session),c
     async with async_session as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
-            user = usercrud.get_user(user_id)
+            user = await usercrud.get_user(user_id)
 
             if not user:
                 raise HTTPException(
