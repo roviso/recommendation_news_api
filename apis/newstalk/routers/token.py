@@ -70,13 +70,13 @@ def create_new_user_model(device_id: str, device_name: str,ip_address: str):
     return user
 
 @router.post("/create_user", response_model=token_schema.Token)
-async def create_user(device_id: str, device_name: str,ip_address: str, async_session: Session = Depends(database.get_session)):
+async def create_user(create_user: token_schema.CreateUser, async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
-            user_exists = await usercrud.check_user_exists(device_id=device_id, device_name=device_name)
+            user_exists = await usercrud.check_user_exists(device_id=create_user.device_id, device_name=create_user.device_name)
     if not user_exists:
-        user = create_new_user_model(device_id,device_name,ip_address)
+        user = create_new_user_model(create_user.device_id,create_user.device_name,create_user.ip_address)
         await usercrud.create_user(user)
         access_token = generate_access_token(user.id)
         # return {'user_id':user_exists.User.id,
@@ -85,7 +85,7 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
         if not user_exists.registered:
             access_token = generate_access_token(user_exists.id)
         else:
-            user = create_new_user_model(device_id,device_name,ip_address)
+            user = create_new_user_model(create_user.device_id,create_user.device_name,create_user.ip_address)
             await usercrud.create_user(user)
             access_token =generate_access_token(user.id)
     

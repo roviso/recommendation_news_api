@@ -2,6 +2,14 @@ from typing import List
 from pydantic import BaseModel
 from typing import Optional
 
+class CreateUser(BaseModel):
+    device_id: str
+    device_name: str
+    ip_address: str
+
+    class Config:
+        orm_mode = True
+        
 class Token(BaseModel):
     access_token: str
     token_type: str
