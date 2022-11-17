@@ -117,8 +117,10 @@ async def create_user(create_user: token_schema.CreateUser, async_session: Sessi
 
 
 @router.post("/refresh_token", response_model = token_schema.Token)
-async def refresh_token(async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
-    user_id = current_user.id
+async def refresh_token(token: str,async_session: Session = Depends(database.get_session)):
+    payload = jwt.decode(token, authconfig.SECRET_KEY, algorithms=[authconfig.ALGORITHM])
+
+    user_id: str = payload.get("user_id")
     async with async_session as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
