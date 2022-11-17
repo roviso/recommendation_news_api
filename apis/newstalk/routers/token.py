@@ -60,11 +60,11 @@ async def authenticate_registered_user(async_session: Session, user_email: str, 
     async with async_session as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
-            user = await usercrud.get_user_by_email(user_email)
+            
+            user = await usercrud.check_user_exists_by_email(user_email)
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
     else:
-        # user = user
         if not verify_password(user_password, user.password):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password Incorrect.")
 
