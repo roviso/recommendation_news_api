@@ -14,7 +14,7 @@ from fastapi_pagination import Page, add_pagination
 from models import label_model
 
 # from pydantic import BaseSettings
-
+from apis.newstalk.routers import recommend
 
 
 app = FastAPI(title='News Recommendation')
@@ -47,6 +47,7 @@ async def startup():
         #await conn.run_sync(Base.metadata.drop_all)
         # db_loader.load_model_data()
         await conn.run_sync(Base.metadata.create_all)
+        await recommend.startup_event()
 
 app.include_router(scrap.router)
 app.include_router(source.router)

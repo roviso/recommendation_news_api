@@ -5,6 +5,7 @@ from apis.newstalk.routers import user, token, profile, recommend, search, top, 
 
 newstalkApi = FastAPI(title="NewsTalk", openapi_url="/openapi.json")
 
+
 newstalkApi.include_router(user.router)
 
 newstalkApi.include_router(token.router)
