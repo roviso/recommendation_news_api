@@ -82,12 +82,13 @@ async def create_user(create_user: token_schema.CreateUser, async_session: Sessi
         # return {'user_id':user_exists.User.id,
         #         'username': user_exists.User.username}
     else:
-        if not user_exists.registered:
-            access_token = generate_access_token(user_exists.id)
+        user = await usercrud.get_existing_user(device_id=create_user.device_id, device_name=create_user.device_name)
+        if not user.registered:
+            access_token = generate_access_token(user.id)
         else:
-            user = create_new_user_model(create_user.device_id,create_user.device_name,create_user.ip_address)
-            await usercrud.create_user(user)
-            access_token =generate_access_token(user.id)
+            new_user = create_new_user_model(create_user.device_id,create_user.device_name,create_user.ip_address)
+            await usercrud.create_user(new_user)
+            access_token =generate_access_token(new_user.id)
     
     return access_token
 

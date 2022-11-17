@@ -49,8 +49,8 @@ class UserCrud():
     async def get_user(self,user_id: str) -> User:
         query = select(User).where(User.id == user_id)
         results = await self.db_session.execute(query)
-        # result = results.scalars().one()
-        (result,) = results.one()
+        result = results.scalars().one()
+        # (result,) = results.one()
         return result
 
     
@@ -104,6 +104,12 @@ class UserCrud():
         query = select(User).where(User.device_id == device_id,User.device_name == device_name)
         results = await self.db_session.execute(query)
         result = results.fetchone()
+        return result
+
+    async def get_existing_user(self,device_id: str,device_name:str) -> User:
+        query = select(User).where(User.device_id == device_id,User.device_name == device_name)
+        results = await self.db_session.execute(query)
+        result = results.scalars().one()
         return result
 
     async def get_registered_user(self,user_id: str) -> RegisteredUser:
