@@ -19,7 +19,7 @@ class Replies():
         self.commentsdb = crud_comments.Comments(db_session)
 
     
-    async def get_replies_by_id(self, replies_id: str):
+    async def get_replies_by_id(self, replies_id: str) -> comments_model.Replies:
         query = select(comments_model.Replies).where(comments_model.Replies.id == replies_id)
         results = await self.db_session.execute(query)
         # return results.fetchone()
@@ -60,11 +60,11 @@ class Replies():
 
     
     async def create_replies(self, replies_comment:replies_schema.CreateReplies,):
-        user = await self.userdb.get_user(replies_comment.id)
+        user = await self.userdb.get_user(replies_comment.user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
             
-        comment = await self.commentsdb.get_comment_by_id(replies_comment.comment.id)
+        comment = await self.commentsdb.get_comment_by_id(replies_comment.comment_id)
 
         if not comment:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Comment Found")
@@ -85,12 +85,12 @@ class Replies():
 
 
     async def like_replies(self, replies_like: replies_schema.LikeReplies,):
-        user = await self.userdb.get_user(replies_like.id)
+        user = await self.userdb.get_user(replies_like.user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
 
         
-        replies = await self.get_replies_by_id(replies_like.replies.id)
+        replies = await self.get_replies_by_id(replies_like.replies_id)
         if not replies:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reply not Found")
 

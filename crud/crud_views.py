@@ -69,9 +69,9 @@ class Views():
     async def view_article(self, article_viewed:views_schema.CreateUserArticleViews,):
         user = await self.userdb.get_user(article_viewed.user_id)
         article = await self.articledb.get_article_by_id(article_viewed.article_id)
-        start_time = timefhuman(article_viewed.viewed.start_time)
-        end_time = timefhuman(article_viewed.viewed.end_time)
-        total_time_spend = article_viewed.viewed.total_time_spend
+        start_time = timefhuman(article_viewed.start_time)
+        end_time = timefhuman(article_viewed.end_time)
+        total_time_spend = article_viewed.total_time_spend
 
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")

@@ -37,7 +37,7 @@ class Comment(BaseModel):
 
 class LikeComments(BaseModel):
     user_id: str
-    comment: Comment
+    comment_id: str
 
     class Config:
         orm_mode = True

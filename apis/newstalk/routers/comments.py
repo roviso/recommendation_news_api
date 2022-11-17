@@ -39,8 +39,10 @@ async def get_comment_by_id(comment_id: str, async_session: Session = Depends(da
 
 @router.post('/like_comment', status_code = status.HTTP_201_CREATED)
 async def like_article_comment(comment_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
-    comment_like = comments_schema.LikeComments(user_id = current_user.id)
-    comment_like.comment.id = comment_id
+    comment_like = comments_schema.LikeComments(user_id = current_user.id,
+    comment_id = comment_id)
+    # comment_like.comment.id = comment_id
+    # # return comment_like
     async with async_session as session:
         async with session.begin():
             comments = Comments(session)

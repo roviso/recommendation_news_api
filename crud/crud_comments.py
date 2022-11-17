@@ -86,7 +86,7 @@ class Comments():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
 
         
-        comment = await self.get_comment_by_id(comment_like.comment.id)
+        comment = await self.get_comment_by_id(comment_like.comment_id)
         if not comment:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Comment not Found")
 

@@ -8,9 +8,9 @@ class Replies(BaseModel):
     id : str
     
 
-
-class CreateReplies(user_schema.User):
-    comment: comments_schema.Comment
+class CreateRepliesRequest(BaseModel):
+    
+    comment_id: str
     date_of_replies: str
     replies: str
 
@@ -18,9 +18,27 @@ class CreateReplies(user_schema.User):
         orm_mode = True
 
 
+class CreateReplies(CreateRepliesRequest):
+    user_id: str
 
-class LikeReplies(user_schema.User):
-    replies: Replies
+    class Config:
+        orm_mode = True
+
+
+
+# class CreateReplies(user_schema.User):
+#     comment: comments_schema.Comment
+#     date_of_replies: str
+#     replies: str
+
+#     class Config:
+#         orm_mode = True
+
+
+
+class LikeReplies(BaseModel):
+    user_id: str
+    replies_id: str
 
     class Config:
         orm_mode = True
