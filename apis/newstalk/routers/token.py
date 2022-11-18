@@ -37,7 +37,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=555)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, authconfig.SECRET_KEY, algorithm=authconfig.ALGORITHM)
     return encoded_jwt
@@ -77,7 +77,14 @@ def generate_access_token(user_id: str):
     access_token = create_access_token(
         data={"user_id": user_id}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    refresh_token_expires = timedelta(minutes=authconfig.REFRESH_TOKEN_EXPIRE_MINUTES)
+    refresh_token = create_access_token(
+        data={"user_id": user_id}, expires_delta=refresh_token_expires
+    )
+    return {"access_token": access_token,"refresh_token": refresh_token ,"token_type": "bearer"}
+
+
 
 def create_new_user_model(device_id: str, device_name: str,ip_address: str):
     user_id = secrets.token_urlsafe(32)
@@ -124,7 +131,7 @@ async def refresh_token(token: str,async_session: Session = Depends(database.get
     async with async_session as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
-            user = await usercrud.get_user(user_id)
+            user = await usercrud.check_userid_exists(user_id)
 
             if not user:
                 raise HTTPException(
@@ -132,12 +139,10 @@ async def refresh_token(token: str,async_session: Session = Depends(database.get
                     detail="Invalid Token",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
+            else:
+                access_token =generate_access_token(user_id)
+                return access_token
 
-    access_token_expires = timedelta(minutes=authconfig.REFRESH_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"user_id": user.id}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
 
 
 
