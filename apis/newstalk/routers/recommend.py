@@ -334,8 +334,8 @@ async def latest_news(offset: int = 0, limit: int = Query(default=50), async_ses
                 articlecrud = ArticleCrud(session)
                 all_latest_articles = await articlecrud.get_all_latest_article()
                 await latestnewscache.cache_news(all_latest_articles)
-        
-    latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
+    else:
+        latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
     
     # for article in latest_articles:
     #     article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
