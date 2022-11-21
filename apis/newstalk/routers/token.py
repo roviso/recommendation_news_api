@@ -157,11 +157,8 @@ async def login(async_session: Session = Depends(database.get_session), form_dat
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=authconfig.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"user_id": user.id}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+    access_token =generate_access_token(user.id)
+    return access_token
 
 
 @router.post("/logout", response_model = token_schema.Token)
