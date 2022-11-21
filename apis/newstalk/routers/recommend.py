@@ -324,7 +324,7 @@ def update_dictionary(old_dict, new_dict):
 
 
 @router.get('/latest_news', response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def latest_news(offset: int = 0, limit: int = Query(default=500), async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+async def latest_news(offset: int = 0, limit: int = Query(default=50), async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     first_exists = await latestnewscache.check_news_exists(offset)
     last_exists = await latestnewscache.check_news_exists(limit)
     if not first_exists and not last_exists:
@@ -332,7 +332,7 @@ async def latest_news(offset: int = 0, limit: int = Query(default=500), async_se
         async with async_session as session:
             async with session.begin():
                 articlecrud = ArticleCrud(session)
-                all_latest_articles = await articlecrud.get_all_recommended_article(offset = 0 , limit = 500)
+                all_latest_articles = await articlecrud.get_all_latest_article()
                 await latestnewscache.cache_news(all_latest_articles)
         
     latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
