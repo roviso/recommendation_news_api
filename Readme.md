@@ -1,3 +1,18 @@
+##server side:
+ssh root@165.232.184.231
+cd /home/admin/web/newstalk/recommendation_news_api
+
+ssh -N -L 3377:localhost:5432 root@165.232.184.231 
+
+ssh -N -L 1234:165.232.184.231:5432 root@165.232.184.231 -i id_rsa
+
+ssh -L 1234:localhost:5432 root@165.232.184.231 -N -v -v
+
+ssh root@165.232.184.231 -p 1234
+
+
+pypy -m pip install ----
+
 ## Start venv
 .\apienv\Scripts\activate
 
@@ -7,11 +22,23 @@ systemctl restart postgresql
 
 ## to kill process
 
-sudo kill -9 `sudo lsof -t -i:8000`
+sudo kill -9 `sudo lsof -t -i:8848`
+
+
+#!/bin/bash
+cd /home/admin/web/newstalk/recommendation_news_api
+conda activate py38
+celery worker -A tasks -P celery_pool_asyncio:TaskPool --scheduler celery_pool_asyncio:PersistentScheduler
+
+#!/bin/bash
+cd /home/admin/web/newstalk/recommendation_news_api
+conda activate py38
+celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
+
+
 
 ## to Start celery scrapping
 celery worker -A tasks -P celery_pool_asyncio:TaskPool --scheduler celery_pool_asyncio:PersistentScheduler
-celery beat -A tasks --scheduler celery_pool_asyncio:PersistentScheduler
 
 ## Required Files:
  - 
@@ -76,3 +103,40 @@ ibpKHKHi54s3atX_GDmQoL5wxyMyxqTsH4Qrw_kAVeA: {
 
 
 similar api not giving list of news.
+
+
+\
+
+
+
+
+
+
+{
+  "user_id": "vEryzLF08X3VjoQxzzwg0_PBb2pEmRoXSQa7Lvu9rg0",
+  "username": "trustworthyGive889"
+}
+
+
+{
+  "user_id": "4138zPBqNT6aW0nyXjSM-Oa_Ba0qNQIkpn0f24tPiGg",
+  "username": "officialSoftware711"
+}
+
+
+KQT-qD5nvgQpdxd7Jb3-P13j1lH-nfGcpa2ghrGSGqo
+
+yaUj7fP4zjVMrg1_DsNimdFHpMNHXIYCtBpOdiTwBQw
+
+
+Kw2Fc8d4osYh8KluULNSVi2CGCGw9atR38SVc1cBbi4
+
+lBJYM0UjY2xwA3C394iXjXc8u_Z2YrYSJQX159z7Bl4
+
+bZF_4XCFUOgVORFMHjfQmP7g7byW8LoF73bkt93UE_k
+
+8pMJCvgGhl-eKOfNiVFr4A_vF6Acvxr7Jb9HbWar_Zc
+
+Sse5kTsPIPUGKU1QLzBM_utCd7yhfY9ADtQLPdDh-RI
+
+tz3uF0QT0AfqpQRVTWQMM0dACJu0kfGKbqvYtcarCw0
