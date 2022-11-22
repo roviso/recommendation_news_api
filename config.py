@@ -75,6 +75,9 @@ class CacheConfig(BaseSettings):
     KEYWORDS_EXPIRY_TIME = 60*5 ##5 min
     EXPIRY_TIME = 60 * 20 # 20 min
     LATEST_EXPIRY_TIME = 60*20
+    TOP_NEWS_EXPIRY_TIME = 60*60
+    TOP_SOURCE_EXPIRY_TIME = 60*60
+    TOP_AUTHOR_EXPIRY_TIME = 60*60
 
 cacheconfig = CacheConfig()
 

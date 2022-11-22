@@ -80,6 +80,9 @@ async def train_implicit_model():
 
             # return user_id_dict,article_id_dict,sparse_user_item,model
 
+@router.get('/train_model')
+async def train_model():
+    return await train_implicit_model()
 
 
 class tfidf_obj():
@@ -96,17 +99,17 @@ async def get_tfidf_verctorizer(tfidf):
     await update_articles_keywords()
 
     first_exists = await latestnewscache.check_news_exists(0)
-    last_exists = await latestnewscache.check_news_exists(50)
-    if not first_exists and not last_exists:
+    last_exists = await latestnewscache.check_news_exists(200)
+    if not bool(first_exists) or not bool(last_exists):
         print("CACHING LATEST ARTICLE")
         async with async_session() as session:
             async with session.begin():
                 articlecrud = ArticleCrud(session)
-                all_latest_articles = await articlecrud.get_all_latest_article()
+                all_latest_articles = await articlecrud.get_n_latest_articles(500)
                 await latestnewscache.cache_news(all_latest_articles)
         
-    articles = await latestnewscache.read_all_news_from_cache(0, 50)
-    print(f"articles in cache is: {articles}")
+    articles = await latestnewscache.read_all_news_from_cache(0, 200)
+    # print(f"articles in cache is: {articles}")
 
     article_keyword = {article['id'] : [str(keyword['keyword']['tag']) for keyword in article['keywords'] ] for article in  articles if article['keywords']}
 
@@ -326,21 +329,15 @@ def update_dictionary(old_dict, new_dict):
 @router.get('/latest_news', response_model=LimitOffsetPage[article_schema.GetAllArticle])
 async def latest_news(offset: int = 0, limit: int = Query(default=50), async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     first_exists = await latestnewscache.check_news_exists(offset)
-    last_exists = await latestnewscache.check_news_exists(limit)
-    if not first_exists and not last_exists:
+    last_exists = await latestnewscache.check_news_exists(offset+limit)
+    if not bool(first_exists) or not bool(last_exists):
         print("CACHING LATEST ARTICLE")
         async with async_session as session:
             async with session.begin():
                 articlecrud = ArticleCrud(session)
-                all_latest_articles = await articlecrud.get_all_latest_article()
+                all_latest_articles = await articlecrud.get_n_latest_articles(50+offset+limit)
                 await latestnewscache.cache_news(all_latest_articles)
-    else:
-        latest_articles = await latestnewscache.read_all_news_from_cache(offset, limit)
-    
-    # for article in latest_articles:
-    #     article.url =  f"http://localhost:8000/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
-    
+    latest_articles = await latestnewscache.read_all_news_from_cache(0, limit + offset)
+
     return paginate(latest_articles)
-
-

@@ -109,7 +109,7 @@ def hello_world(self, name):
 @celery.task
 async def refresh_sources():
     print(f"TRINGING RECOMMENDATION MODEL")
-    url = "https://newstalk.prixa.net/recommend/train_model"
+    url = "https://newstalk.prixa.net/api/newstalk/recommend/train_model"
     requests.get(url)
     print("TRAINNING COMPLETE:::")
     """
