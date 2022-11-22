@@ -80,7 +80,7 @@ async def get_top_author(current_user: user_model.User = Depends(get_current_use
 
 
 @router.get('/top_users', status_code = 200 , response_model= LimitOffsetPage[profile_schema.UserProfile])
-async def get_top_users(current_user: User = Depends(get_current_user)) -> List[user_model.RegisteredUser]:
+async def get_top_users(current_user: user_model.User = Depends(get_current_user)) -> List[user_model.RegisteredUser]:
     async with async_session() as session:
         async with session.begin():
             usercrud = UserCrud(session)
