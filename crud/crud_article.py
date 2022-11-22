@@ -68,6 +68,10 @@ class ArticleCrud():
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
+    async def get_n_latest_articles(self,n)-> List[LatestArticle]:
+        query = select(LatestArticle).order_by(LatestArticle.date.desc()).limit(n)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
 
 
     async def update_article(self, article_id: str, url: Optional[str], head_image: Optional[str], heading: Optional[str],

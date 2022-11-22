@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import update,delete
 from crud import crud_follow
+from schemas import profile_schema
 
 class SourceCrud():
     def __init__(self, db_session: Session):
@@ -33,7 +34,7 @@ class SourceCrud():
         return result
         
 
-    async def get_source_profile(self,source_id: int) -> Source:
+    async def get_source_profile(self,source_id: int) -> profile_schema.SourceProfile:
         query = select(Source).where(Source.id == source_id).options(selectinload(Source.articles))
         results = await self.db_session.execute(query)
         source_profile = results.scalars().all()[0]
@@ -55,11 +56,12 @@ class SourceCrud():
         return source_profile
 
 
-    async def get_top_sources(self) -> List[Source]:
+    async def get_top_sources(self)-> List[profile_schema.SourceProfile]:
         all_sources = await self.get_all_source()
         all_source_profiles = [await self.get_source_profile(source.id) for source in all_sources]
         # top_author_profiles = sorted(all_author_profiles, key=lambda x: (x['followers'],x['total_articles'],x['total_likes'],x['total_views']))
         top_source_profiles = sorted(all_source_profiles, key=lambda x: (-x.total_views, -x.total_likes, -x.followers))
+        print(f"{top_source_profiles}, top_source_profiles top_source_profiles,")
         return top_source_profiles
 
 

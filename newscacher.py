@@ -118,6 +118,8 @@ class LatestNewsCache(UserCache):
         for i,news in enumerate(latestNewsList):
             news_dict = row2dict(news)
             news_dict.update({'author': row2dict(news.author)})
+            news_dict.update({'source': row2dict(news.source)})
+            news_dict.update({'label': row2dict(news.label)})
             keywords_list = []
             for key in news.keywords:
                 keywords = row2dict(key)
@@ -143,13 +145,65 @@ class LatestNewsCache(UserCache):
         return latest_news_obj_as_dict
 
     async def read_all_news_from_cache(self, offset: int, limit: int):
-        news_list = [await self.read_news_from_cache(i) for i in range(offset, offset+limit)]
+        news_list = [await self.read_news_from_cache(i) for i in range(offset, limit)]
         return news_list
 
     async def check_news_exists(self, news_index: int):
         return await self.redis.exists(f"latest_news:{news_index}")
 
 latestnewscache = LatestNewsCache()
+
+
+class TopNewsCache(UserCache):
+    def __init__(self):
+        super().__init__()
+
+    async def add_to_cache(self, news_index, latestNews):
+        await self.redis.set(f'top_news:{news_index}', json.dumps(latestNews)) ## saving nested dict as str to decode later when read
+        await self.redis.expire(f'top_news:{news_index}',cacheconfig.TOP_NEWS_EXPIRY_TIME)
+
+    
+    async def cache_news(self, latestNewsList):
+        row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
+        news_list = []
+        for i,news in enumerate(latestNewsList):
+            news_dict = row2dict(news)
+            news_dict.update({'author': row2dict(news.author)})
+            news_dict.update({'source': row2dict(news.source)})
+            news_dict.update({'label': row2dict(news.label)})
+            keywords_list = []
+            for key in news.keywords:
+                keywords = row2dict(key)
+                keywords.update({"keyword": row2dict(key.keyword)})
+                keywords_list.append(keywords)
+            # keywords_list = [row2dict(key).update({"keyword": row2dict(key.keyword)})  for key in news.keywords ]
+            news_dict.update({'keywords': keywords_list})
+            news_list.append(news_dict)
+        latest_news_set = [self.add_to_cache(i,news) for i,news in enumerate(news_list)]
+
+        await asyncio.gather(
+            *latest_news_set
+        )
+
+    
+    async def read_news_from_cache(self, news_index: int):
+        latest_news_as_bytes = await self.redis.get(f'top_news:{news_index}')
+        # print(latest_news_as_bytes, type(latest_news_as_bytes))
+        # latest_news_obj_as_str = latest_news_as_bytes.decode("utf-8")
+        latest_news_obj_as_dict = json.loads(latest_news_as_bytes)
+        latest_news_obj_as_dict.update({'content':ast.literal_eval(latest_news_obj_as_dict['content'])}) ##converting content as str to list
+        latest_news_obj_as_dict.update({'additional_img':ast.literal_eval(latest_news_obj_as_dict['additional_img'])}) ##converting additional_img as str to list
+        return latest_news_obj_as_dict
+
+    async def read_all_news_from_cache(self, offset: int, limit: int):
+        news_list = [await self.read_news_from_cache(i) for i in range(offset, limit)]
+        return news_list
+
+    async def check_news_exists(self, news_index: int):
+        return await self.redis.exists(f"top_news:{news_index}")
+
+topnewscache = TopNewsCache()
+
 
 
 class NewsCache(UserCache):
