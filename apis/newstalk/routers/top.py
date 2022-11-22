@@ -4,7 +4,7 @@ from crud.crud_source import SourceCrud
 from crud.crud_latest import LatestCrud
 from crud.crud_user import UserCrud
 from models.author_model import Author
-from models.user_model import RegisteredUser, User
+from models import user_model
 from schemas import author_schema,article_schema,profile_schema
 from typing import List, Optional
 import secrets
@@ -26,7 +26,7 @@ async def cache_top_sources(top_sources):
 
 
 @router.get('/top_articles', status_code = 200 , response_model= LimitOffsetPage[article_schema.GetAllArticle])
-async def get_top_articles(n_days: int,offset: int = 0, limit: int = Query(default=50)) -> List[Author]:
+async def get_top_articles(n_days: int,offset: int = 0, limit: int = Query(default=50),current_user: user_model.User = Depends(get_current_user)) -> List[Author]:
     cache_exists = await topnewscache.check_news_exists(limit + offset)
     if not bool(cache_exists):
         async with async_session() as session:
@@ -41,7 +41,7 @@ async def get_top_articles(n_days: int,offset: int = 0, limit: int = Query(defau
 
 
 @router.get('/top_source', status_code = 200  , response_model= LimitOffsetPage[profile_schema.SourceProfile])
-async def get_top_source(background_tasks: BackgroundTasks) -> List[Author]:
+async def get_top_source(current_user: user_model.User = Depends(get_current_user)) -> List[Author]:
     cache_exists = await topcache.cache_source_exits(1)
     if not bool(cache_exists):
         print('Reading Top source from db ')
@@ -62,7 +62,7 @@ async def get_top_source(background_tasks: BackgroundTasks) -> List[Author]:
 
 
 @router.get('/top_author', status_code = 200 , response_model= LimitOffsetPage[profile_schema.AuthorProfile])
-async def get_top_author() -> List[Author]:
+async def get_top_author(current_user: user_model.User = Depends(get_current_user)) -> List[Author]:
     cache_exists = await topcache.cache_author_exits(1)
     if not bool(cache_exists):
         print('Reading Top author from db ')
@@ -80,7 +80,7 @@ async def get_top_author() -> List[Author]:
 
 
 @router.get('/top_users', status_code = 200 , response_model= LimitOffsetPage[profile_schema.UserProfile])
-async def get_top_users(current_user: User = Depends(get_current_user)) -> List[RegisteredUser]:
+async def get_top_users(current_user: User = Depends(get_current_user)) -> List[user_model.RegisteredUser]:
     async with async_session() as session:
         async with session.begin():
             usercrud = UserCrud(session)

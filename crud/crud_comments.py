@@ -26,7 +26,7 @@ class Comments():
         return result
 
     async def get_comments_by_article(self, article_id: str):
-        query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id)
+        query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id).order_by(comments_model.Comments.date_of_comment.desc())
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
