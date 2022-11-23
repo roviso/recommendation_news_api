@@ -231,7 +231,8 @@ async def recommend_by_tags(tags: str, async_session: Session = Depends(database
 
 
 @router.get('/similar/{article_id}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def recommend_similar_articles(article_id: str, user_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+async def recommend_similar_articles(article_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+    user_id = current_user.id
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
