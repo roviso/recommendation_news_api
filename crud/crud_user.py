@@ -12,7 +12,7 @@ class UserCrud():
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    async def create_user(self, user: User):
+    async def create_user(self, user: NonRegisteredUser):
         self.db_session.add(user)
         await self.db_session.flush()
 
