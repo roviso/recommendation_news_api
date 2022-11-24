@@ -4,6 +4,8 @@ import nepali_roman as nr
 from nepali_unicode_converter.convert import Converter
 import requests
 from pydantic import BaseModel
+import boto3
+import hashlib
 
 class suga_request(BaseModel):
     voice: str 
@@ -11,6 +13,18 @@ class suga_request(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+session = boto3.Session(
+    aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
+    aws_secret_access_key='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',
+)
+
+s3 = session.resource('s3')
+BUCKET = "riri.prixacdn.net"
+
+bucket_session = s3.Bucket(BUCKET)
+
 
 
 
@@ -65,6 +79,14 @@ def suga( voice: str, file: UploadFile = File(...),):
     return response.json()
 
 
+class riri_reponse(BaseModel):
+    status: str 
+    text: str
+    result_audio: str
+
+    class Config:
+        orm_mode = True
+
 
 
 
@@ -75,11 +97,31 @@ def tts(suga_request: suga_request):
         converter = Converter()
         text = converter.convert(text)
 
-    payload= {'text': text, 'voice': suga_request.voice}
-    response = requests.request("POST", url, headers=headers, data=payload)
-    # print("response: ", response, response.json())
+    ntext = text + '_' + suga_request.voice
 
-    return response.json()
+    filename_md5_encodded = hashlib.md5(ntext.encode())
+    filename =  filename_md5_encodded.hexdigest()
+
+    
+    fname = f"output/{filename}.wav"
+
+    file_exists = None
+    for my_bucket_object in bucket_session.objects.filter(Prefix=fname):
+        file_exists = my_bucket_object
+    if file_exists:
+        print("file already exists in s3 bucket")
+        return riri_reponse(
+            status= "success",
+            text = text,
+            result_audio = f"{BUCKET}/{fname}"
+        )
+    else:
+        print("Np file exists in bucket so inferecing the text")
+        payload= {'text': text, 'voice': suga_request.voice}
+        response = requests.request("POST", url, headers=headers, data=payload)
+        # print("response: ", response, response.json())
+
+        return response.json()
 
 
 if __name__ == "__main__":
