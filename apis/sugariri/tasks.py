@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Mapping
 import argparse
 import torch
-
+import boto3
 from fastapi.responses import FileResponse
 from starlette.requests import Request
 import boto3
