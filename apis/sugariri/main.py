@@ -113,7 +113,7 @@ def tts(suga_request: suga_request):
         return riri_reponse(
             status= "success",
             text = text,
-            result_audio = f"{BUCKET}/{fname}"
+            result_audio = f"https://{BUCKET}/{fname}"
         )
     else:
         print("Np file exists in bucket so inferecing the text")
