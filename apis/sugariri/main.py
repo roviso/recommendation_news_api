@@ -68,7 +68,7 @@ def suga( voice: str, file: UploadFile = File(...),):
 
 
 
-@sugaApi.post("/tts/{text}")
+@sugaApi.post("/tts")
 def tts(suga_request: suga_request):
     if not nr.is_devanagari(text):
         converter = Converter()
