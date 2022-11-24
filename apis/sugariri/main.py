@@ -70,11 +70,12 @@ def suga( voice: str, file: UploadFile = File(...),):
 
 @sugaApi.post("/tts")
 def tts(suga_request: suga_request):
+    text = suga_request.text
     if not nr.is_devanagari(text):
         converter = Converter()
         text = converter.convert(text)
 
-    payload= {'text': suga_request.text, 'voice': suga_request.voice}
+    payload= {'text': text, 'voice': suga_request.voice}
     response = requests.request("POST", url, headers=headers, data=payload)
     # print("response: ", response, response.json())
 
