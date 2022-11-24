@@ -3,6 +3,16 @@ import speech_recognition as sr
 import nepali_roman as nr
 from nepali_unicode_converter.convert import Converter
 import requests
+from pydantic import BaseModel
+
+class suga_request(BaseModel):
+    voice: str 
+    text: str
+
+    class Config:
+        orm_mode = True
+
+
 
 sugaApi = FastAPI(title="Suga-RiRi", openapi_url="/openapi.json")
 
@@ -55,13 +65,16 @@ def suga( voice: str, file: UploadFile = File(...),):
     return response.json()
 
 
-@sugaApi.get("/tts/{text}")
-def tts(voice: str,text: str):
+
+
+
+@sugaApi.post("/tts/{text}")
+def tts(suga_request: suga_request):
     if not nr.is_devanagari(text):
         converter = Converter()
         text = converter.convert(text)
 
-    payload= {'text': text, 'voice': voice}
+    payload= {'text': suga_request.text, 'voice': suga_request.voice}
     response = requests.request("POST", url, headers=headers, data=payload)
     # print("response: ", response, response.json())
 
