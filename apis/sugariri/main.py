@@ -5,6 +5,7 @@ from nepali_unicode_converter.convert import Converter
 import requests
 from pydantic import BaseModel
 import boto3
+import botocore
 import hashlib
 
 class suga_request(BaseModel):
@@ -105,9 +106,21 @@ def tts(suga_request: suga_request):
     
     fname = f"output/{filename}.wav"
 
-    file_exists = None
-    for my_bucket_object in bucket_session.objects.filter(Prefix=fname):
-        file_exists = my_bucket_object
+    # file_exists = None
+    # for my_bucket_object in bucket_session.objects.filter(Prefix=fname):
+    #     file_exists = my_bucket_object
+    try:
+        s3.Object(BUCKET, fname).load()
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            print("Object Does not exists")
+        else:
+            print("Something else has gone wrong.")
+        file_exists = False
+    else:
+        # The object does exist.
+        file_exists = True
+        ...
     if file_exists:
         print("file already exists in s3 bucket")
         return riri_reponse(
