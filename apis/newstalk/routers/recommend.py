@@ -82,7 +82,11 @@ async def train_implicit_model():
 
 @router.get('/train_model')
 async def train_model():
-    return await train_implicit_model()
+    try:
+        await train_implicit_model()
+        return {'status': 'successfully model trained',}
+    except:
+        return {'status': 'Error training model',}
 
 
 class tfidf_obj():
@@ -264,6 +268,7 @@ async def recommend_user_articles(current_user: user_model.User = Depends(get_cu
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
+            latestcrud = LatestCrud(session)
             likes = Likes(session)
             ### ____________-- Getting user keyword from model dataframe -- ____________________
             # user = pre.user_df.query(f'user == "{user_id}"')
@@ -278,8 +283,11 @@ async def recommend_user_articles(current_user: user_model.User = Depends(get_cu
                 if not keyword_list:
                     keyword_list = await keywordcache.read_from_cache("trending")
                     if not keyword_list:
-                        recent_articles = await articlecrud.get_all_article(0, 100)
-                        keyword_list = get_trending_keywords(recent_articles)
+                        # recent_articles = await articlecrud.get_all_article(0, 100)
+                        # keyword_list = get_trending_keywords(recent_articles)
+                        
+                        top_articles = await latestcrud.get_top_article(5)
+                        keyword_list = get_trending_keywords(top_articles)
                 await keywordcache.add_to_cache(user_id,keyword_list)
             else:
                 print("USER ALREADY CACHED")
@@ -290,11 +298,10 @@ async def recommend_user_articles(current_user: user_model.User = Depends(get_cu
             
             tfidf_similar_article_list =  get_similar_articles(keywords)
 
-
-
             cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
             if user_id not in user_id_dict:
+                print(f"user not found in db, using random recommendation")
                 user_id = random.choice(list(user_id_dict))
 
             cf_recommended_article_list = get_recommended_cf_articles(user_id)
@@ -305,6 +312,7 @@ async def recommend_user_articles(current_user: user_model.User = Depends(get_cu
 
             liked_ids = [liked_articles.id for liked_articles in all_liked_articles]
             recommended_article_list = [id for id in all_recommended_article_list if id not in liked_ids]
+            random.shuffle(recommended_article_list)
 
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
 
