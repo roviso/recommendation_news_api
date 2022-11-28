@@ -14,20 +14,20 @@ import uuid
 import requests
 import hashlib
 import os
-
-import whisper
+from celery import shared_task
+# import whisper
 
     
     
 remote_url = 'https://riri.prixa.net/dashboard/submit-result/'
-aws_access_key = safequote("AKIAT2O2SZBBDI4Q3EFJ")
-aws_secret_key = safequote("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")
+aws_access_key = safequote("AKIA5BJRLA5THBMHDDKZ")
+aws_secret_key = safequote("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")
 
 broker_url = "sqs://{aws_access_key}:{aws_secret_key}@".format(
     aws_access_key=aws_access_key, aws_secret_key=aws_secret_key,
 )
 
-app = Celery('tasks', broker=broker_url)
+app = Celery('tasks_ref', broker=broker_url,broker_transport_options = {'region': 'ap-southeast-1'} )
 session = boto3.Session(
     aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
     aws_secret_access_key='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',
@@ -41,20 +41,37 @@ bucket_session = s3.Bucket(BUCKET)
 
 
 ## ======================================== LOADING TTS MODEL =================================================== ##
-model = whisper.load_model("large")
+# model = whisper.load_model("large")
 ## ================================================================================================================================
     
-@app.task(bind=True)
-def add(self, x, y):
-    print(self.request.id)
+@shared_task(name= 'add2')
+def add2(x, y):
+    # print(self.request.id)
     return x + y
 
-@app.task(bind=True, name="get_audio_text")
-def get_audio_text(self, filename):
-    audio_path = f"test_audio/{filename}"
-    transcription = model.transcribe(audio_path,**transcribe_options)["text"]
-    return transcription
+
+@app.task(bind=True, name = "fixed_data")
+def fixed_data(self,x):
+    print(self.request.id)
+    print(x)
     
+
+
+# @app.task(name="srec")
+@shared_task(name="srec2")
+def srec2(url):
+    # print(self.request.id)
+    print(url)
+    # audio_path = f"test_audio/{filename}"
+    # transcription = model.transcribe(audio_path,**transcribe_options)["text"]
+    return "server not hit"
+    # return transcription
+    
+
+# @app.task(bind=True, name="process_audio")
+# def process_audio(self, text, voice):
+#     print('processing audio')
+#     return "server not HITTTT!!!"
     
     
     # req_name = self.request.id

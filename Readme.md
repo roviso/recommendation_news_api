@@ -1,6 +1,7 @@
 ##server side:
 ssh root@165.232.184.231
 cd /home/admin/web/newstalk/recommendation_news_api
+<!-- 165.232.184.231:0 - "GET /recommend/train_model HTTP/1.0" 404 Not Found -->
 
 ssh -N -L 3377:localhost:5432 root@165.232.184.231 
 
@@ -12,6 +13,14 @@ ssh root@165.232.184.231 -p 1234
 
 
 pypy -m pip install ----
+
+
+
+
+
+
+
+
 
 ## Start venv
 .\apienv\Scripts\activate
