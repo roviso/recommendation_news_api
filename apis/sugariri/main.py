@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile,HTTPException
+from fastapi import FastAPI, File, UploadFile,HTTPException,Depends
 import speech_recognition as sr
 import nepali_roman as nr
 from nepali_unicode_converter.convert import Converter
@@ -7,6 +7,17 @@ from pydantic import BaseModel
 import boto3
 import botocore
 import hashlib
+from celery.result import AsyncResult
+from fastapi.responses import JSONResponse
+import database
+from sqlalchemy.orm import Session
+from models import tasks_model
+from schemas import tasks_schema
+from sqlalchemy.future import select
+from kombu.utils.url import safequote
+from celery import Celery
+from celery import shared_task
+import time
 
 class suga_request(BaseModel):
     voice: str 
@@ -118,8 +129,93 @@ def suga( voice: str, file: UploadFile = File(...),):
     return check_and_infer(text, voice)
 
 
+aws_access_key = safequote("AKIA5BJRLA5THBMHDDKZ")
+aws_secret_key = safequote("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")
+
+broker_url = "sqs://{aws_access_key}:{aws_secret_key}@".format(
+    aws_access_key=aws_access_key, aws_secret_key=aws_secret_key,
+)
+
+app = Celery('tasks_ref', broker=broker_url,broker_transport_options = {'region': 'ap-southeast-1'} )
+
+# @app.task(name="srec")
+@app.task(name="srec2")
+def srec2(url):
+    # print(self.request.id)
+    print(url)
+    # audio_path = f"test_audio/{filename}"
+    # transcription = model.transcribe(audio_path,**transcribe_options)["text"]
+    return "server not hit"
+    # return transcription
+
+async def wait_until(task_id, timeout,async_session, period=0.25,):
+    print("waiting")
+    mustend = time.time() + timeout
+    while time.time() < mustend:
+        status  =await get_status(task_id,async_session)
+        if status: 
+            return True
+        time.sleep(period)
+    return False
 
 
+@sugaApi.get("/whisper")
+async def whisper( url: str,  async_session: Session = Depends(database.get_session)):
+    task = await srec2.delay(url)
+    # id = url
+    # print(task)
+    await wait_until(task.id,10,async_session)
+
+    task_sucess =  await get_task(id, async_session)
+
+    return check_and_infer(task_sucess.result, 'np_rija')
+
+
+
+
+@sugaApi.post("/update_tasks")
+async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            new_task = tasks_model.Tasks(
+            id = task.id, 
+            status = task.status,
+            result = task.result
+            )
+            session.add(new_task)
+            await session.flush()
+            return task
+
+
+@sugaApi.get("/test_task")
+def test_task():
+    url = 'https://newstalk.prixa.net/api/sugariri/update_tasks'
+    payload={'id': 'test_id', 'status': 'sucess', 'result': 'transcription'}
+    response = requests.request("POST", url, json=payload)
+    return response.text
+
+
+@sugaApi.get("/get_tasks_status/{task_id}")
+async def get_status(task_id: str,async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            query = select(tasks_model.Tasks).where(tasks_model.Tasks.id == task_id)
+            results = await session.execute(query)
+            result = results.fetchone()
+            if result:
+                return True 
+            else:          
+                return False
+
+
+@sugaApi.get("/get_tasks/{task_id}")
+async def get_task(task_id: str,async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            query = select(tasks_model.Tasks).where(tasks_model.Tasks.id == task_id)
+            results = await session.execute(query)
+            result = results.scalars().one()
+            return result
 
 
 

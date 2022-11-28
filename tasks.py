@@ -21,9 +21,6 @@ from database import async_session
 from pydantic import BaseModel
 from typing import Optional
 from typing import List
-from schemas import  author_schema
-# article_schema,
-
 from models import source_model
 from routers.source import getAllSource
 from routers.label import get_label_by_name,addlabel
@@ -35,7 +32,6 @@ from routers.keywords import update_articles_keywords
 from routers.recommend import train_implicit_model
 
 from crud import crud_scrap
-import requests
 
 ###_________FOR RIRI VOICE API_______________________ ####
 url = "https://riri.prixa.net/api/speak/"
