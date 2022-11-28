@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile,HTTPException
 import speech_recognition as sr
 import nepali_roman as nr
 from nepali_unicode_converter.convert import Converter
@@ -53,33 +53,6 @@ headers = {
 #         print("Could not understand your audio, PLease try again !")
 #         return 0
 
-
-
-
-
-@sugaApi.post("/suga")
-def suga( voice: str, file: UploadFile = File(...),):
-    contents = file.file.read()
-    recognizer = sr.Recognizer()
-
-
-    # audio_source = sr.AudioData(contents, 22050, 2)
-    audio_source = sr.AudioData(contents, 16000, 2)
-
-    text = recognizer.recognize_google(audio_data=audio_source,language = 'ne-NP')
-    if not nr.is_devanagari(text):
-        converter = Converter()
-        text = converter.convert(text)
-
-    # return text
-
-    payload= {'text': text, 'voice': voice}
-    response = requests.request("POST", url, headers=headers, data=payload)
-    # print("response: ", response, response.json())
-
-    return response.json()
-
-
 class riri_reponse(BaseModel):
     status: str 
     text: str
@@ -87,6 +60,65 @@ class riri_reponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+
+def check_and_infer(text: str, voice: str):
+    ntext = text + '_' + voice
+    filename_md5_encodded = hashlib.md5(ntext.encode())
+    filename =  filename_md5_encodded.hexdigest()
+
+    fname = f"output/{filename}.wav"
+
+    try:
+        s3.Object(BUCKET, fname).load()
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            print("Object Does not exists")
+        else:
+            print("Something else has gone wrong.")
+        # file_exists = False
+        print("Np file exists in bucket so inferecing the text")
+        try:
+            payload= {'text': text, 'voice': voice}
+            response = requests.request("POST", url, headers=headers, data=payload)
+            # print("response: ", response, response.json())
+
+            return response.json()
+        except:
+            raise HTTPException(status_code=404, detail="RIRI Server connection error!!!")
+    else:
+        # file_exists = True
+        print("file already exists in s3 bucket")
+        return riri_reponse(
+            status= "success",
+            text = text,
+            result_audio = f"https://{BUCKET}/{fname}")
+
+
+@sugaApi.post("/suga")
+def suga( voice: str, file: UploadFile = File(...),):
+    try:
+        contents = file.file.read()
+        recognizer = sr.Recognizer()
+        # audio_source = sr.AudioData(contents, 22050, 2)
+        audio_source = sr.AudioData(contents, 16000, 2)
+
+        text = recognizer.recognize_google(audio_data=audio_source,language = 'ne-NP')
+        if not nr.is_devanagari(text):
+            converter = Converter()
+            text = converter.convert(text)
+    except Exception:
+        return {"message": "There was an error Reading/Uploading the wav file"}
+        # return text
+    finally:
+        file.file.close()
+
+    
+    return check_and_infer(text, voice)
+
+
+
 
 
 
@@ -98,43 +130,41 @@ def tts(suga_request: suga_request):
         converter = Converter()
         text = converter.convert(text)
 
-    ntext = text + '_' + suga_request.voice
+    return check_and_infer(text, suga_request.voice)
 
-    filename_md5_encodded = hashlib.md5(ntext.encode())
-    filename =  filename_md5_encodded.hexdigest()
+    # ntext = text + '_' + suga_request.voice
+
+    # filename_md5_encodded = hashlib.md5(ntext.encode())
+    # filename =  filename_md5_encodded.hexdigest()
 
     
-    fname = f"output/{filename}.wav"
+    # fname = f"output/{filename}.wav"
 
-    # file_exists = None
-    # for my_bucket_object in bucket_session.objects.filter(Prefix=fname):
-    #     file_exists = my_bucket_object
-    try:
-        s3.Object(BUCKET, fname).load()
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == "404":
-            print("Object Does not exists")
-        else:
-            print("Something else has gone wrong.")
-        file_exists = False
-    else:
-        # The object does exist.
-        file_exists = True
-        ...
-    if file_exists:
-        print("file already exists in s3 bucket")
-        return riri_reponse(
-            status= "success",
-            text = text,
-            result_audio = f"https://{BUCKET}/{fname}"
-        )
-    else:
-        print("Np file exists in bucket so inferecing the text")
-        payload= {'text': text, 'voice': suga_request.voice}
-        response = requests.request("POST", url, headers=headers, data=payload)
-        # print("response: ", response, response.json())
+    # try:
+    #     s3.Object(BUCKET, fname).load()
+    # except botocore.exceptions.ClientError as e:
+    #     if e.response['Error']['Code'] == "404":
+    #         print("Object Does not exists")
+    #     else:
+    #         print("Something else has gone wrong.")
+    #     file_exists = False
+    # else:
+    #     file_exists = True
+        
+    # if file_exists:
+    #     print("file already exists in s3 bucket")
+    #     return riri_reponse(
+    #         status= "success",
+    #         text = text,
+    #         result_audio = f"https://{BUCKET}/{fname}"
+    #     )
+    # else:
+    #     print("Np file exists in bucket so inferecing the text")
+    #     payload= {'text': text, 'voice': suga_request.voice}
+    #     response = requests.request("POST", url, headers=headers, data=payload)
+    #     # print("response: ", response, response.json())
 
-        return response.json()
+    #     return response.json()
 
 
 if __name__ == "__main__":
