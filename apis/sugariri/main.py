@@ -161,14 +161,17 @@ async def wait_until(task_id, timeout,async_session, period=0.25,):
 
 @sugaApi.get("/whisper")
 async def whisper( url: str,  async_session: Session = Depends(database.get_session)):
-    newtask = await srec2.delay(url)
-    # id = url
-    # print(task)
-    await wait_until(newtask.id,10,async_session)
+    task = await srec2.delay(url)
+    print(task)
+# id = url
 
-    task_sucess =  await get_task(newtask.id, async_session)
+    # await wait_until(task.id,10,async_session)
 
-    return check_and_infer(task_sucess.result, 'np_rija')
+    # task_sucess =  await get_task(id, async_session)
+
+
+    # return check_and_infer(task_sucess.result, 'np_rija')
+    return task.id
 
 
 
