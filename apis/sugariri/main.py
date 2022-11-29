@@ -7,17 +7,20 @@ from pydantic import BaseModel
 import boto3
 import botocore
 import hashlib
-from celery.result import AsyncResult
 from fastapi.responses import JSONResponse
 import database
+from database import async_session
 from sqlalchemy.orm import Session
 from models import tasks_model
 from schemas import tasks_schema
+from crud import crud_tasks
 from sqlalchemy.future import select
 from kombu.utils.url import safequote
 from celery import Celery
 from celery import shared_task
 import time
+import pathlib
+import os
 
 class suga_request(BaseModel):
     voice: str 
@@ -79,7 +82,7 @@ def check_and_infer(text: str, voice: str):
     filename_md5_encodded = hashlib.md5(ntext.encode())
     filename =  filename_md5_encodded.hexdigest()
 
-    fname = f"output/{filename}.wav"
+    fname = f"output/{filename}.mp3"
 
     try:
         s3.Object(BUCKET, fname).load()
@@ -148,45 +151,106 @@ def srec2(url):
     return "server not hit"
     # return transcription
 
-async def wait_until(task_id, timeout,async_session, period=0.25,):
+async def wait_until(task_id, timeout, period=0.25,):
     print("waiting")
     mustend = time.time() + timeout
     while time.time() < mustend:
-        status  =await get_status(task_id,async_session)
+        status  =await get_status(task_id)
         if status: 
             return True
         time.sleep(period)
     return False
 
 
-@sugaApi.get("/whisper")
-async def whisper( url: str,  async_session: Session = Depends(database.get_session)):
-    task = await srec2.delay(url)
-    # id = url
-    print(task)
-    # await wait_until(task.id,10,async_session)
+@sugaApi.post("/whisper")
+async def whisper( voice: str, file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
+    try:
+        contents = file.file.read()
+        
+        audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
+        with open(audio_path, 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
 
-    # task_sucess =  await get_task(id, async_session)
+    finally:
+        
+        file.file.close()
 
-    # return check_and_infer(task_sucess.result, 'np_rija')
-    return task.id
+
+    op_path = "output/"+file.filename
+    if os.path.exists(audio_path):
+        bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
+
+    if os.path.isfile(audio_path):
+        print(f"removing file: {audio_path}")
+        os.remove(audio_path)
+    else:    ## Show an error ##
+        print("Error: %s file not found" % audio_path)
+
+    cdn_path = "https://riri.prixacdn.net/"+op_path
+
+    task = await srec2.delay(cdn_path)
+
+    await wait_until(task.id,20)
+
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task_exists = await taskscrud.check_tasks(task.id)
+            if task_exists:
+                infer_text = await taskscrud.get_tasks(task.id)
+                return check_and_infer(infer_text.result, voice)
+            else:
+                return {'status:' : "ERROR"}
+
+    
+    
+    # # id = url
+    # print(task)
+    # # await wait_until(task.id,10,async_session)
+
+    # # task_sucess =  await get_task(id, async_session)
+
+    # # return check_and_infer(task_sucess.result, 'np_rija')
+    # return task.id
 
 
+# @sugaApi.post("/suga")
+# def suga( voice: str, file: UploadFile = File(...),):
+#     try:
+#         contents = file.file.read()
+#         recognizer = sr.Recognizer()
+#         # audio_source = sr.AudioData(contents, 22050, 2)
+#         audio_source = sr.AudioData(contents, 16000, 2)
+
+#         text = recognizer.recognize_google(audio_data=audio_source,language = 'ne-NP')
+#         if not nr.is_devanagari(text):
+#             converter = Converter()
+#             text = converter.convert(text)
+#     except Exception:
+#         return {"message": "There was an error Reading/Uploading the wav file"}
+#         # return text
+#     finally:
+#         file.file.close()
+
+    
+#     return check_and_infer(text, voice)
 
 
 @sugaApi.post("/update_tasks")
 async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
             new_task = tasks_model.Tasks(
             id = task.id, 
             status = task.status,
             result = task.result
             )
-            session.add(new_task)
-            await session.flush()
-            return task
-
+            
+            await taskscrud.create_tasks(new_task)
+            return new_task
 
 @sugaApi.get("/test_task")
 def test_task():
@@ -197,13 +261,12 @@ def test_task():
 
 
 @sugaApi.get("/get_tasks_status/{task_id}")
-async def get_status(task_id: str,async_session: Session = Depends(database.get_session)):
-    async with async_session as session:
+async def get_status(task_id: str,):
+    async with async_session() as session:
         async with session.begin():
-            query = select(tasks_model.Tasks).where(tasks_model.Tasks.id == task_id)
-            results = await session.execute(query)
-            result = results.fetchone()
-            if result:
+            taskscrud= crud_tasks.TasksCrud(session)
+            task = await taskscrud.check_tasks(task_id)
+            if task:
                 return True 
             else:          
                 return False
@@ -213,10 +276,9 @@ async def get_status(task_id: str,async_session: Session = Depends(database.get_
 async def get_task(task_id: str,async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
-            query = select(tasks_model.Tasks).where(tasks_model.Tasks.id == task_id)
-            results = await session.execute(query)
-            result = results.scalars().one()
-            return result
+            taskscrud= crud_tasks.TasksCrud(session)
+            task = await taskscrud.get_tasks(task_id)
+            return task
 
 
 
