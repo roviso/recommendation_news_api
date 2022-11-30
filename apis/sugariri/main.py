@@ -150,12 +150,18 @@ app = Celery('tasks_ref', broker=broker_url,broker_transport_options = {'region'
 # @app.task(name="srec")
 @app.task(name="srec2")
 def srec2(url):
-    # print(self.request.id)
     print(url)
-    # audio_path = f"test_audio/{filename}"
-    # transcription = model.transcribe(audio_path,**transcribe_options)["text"]
     return "server not hit"
-    # return transcription
+
+
+
+@app.task(name="translate")
+def translate(url):
+    print(url)
+    return "server not hit"
+
+
+
 
 async def wait_until(task_id, timeout, period=0.25,):
     print("waiting")
@@ -218,7 +224,54 @@ async def whisper( voice: str, file: UploadFile = File(...), async_session: Sess
             'text': "",
             'result_audio': ""}
     
+
+@sugaApi.post("/translate")
+async def whisper(file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
+    try:
+        contents = file.file.read()
+        
+        audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
+        with open(audio_path, 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return {"message": "There was an error uploading the file"}
+
+    finally:
+        file.file.close()
+
+
+    op_path = "output/"+file.filename
+    if os.path.exists(audio_path):
+        bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
+
+    if os.path.isfile(audio_path):
+        print(f"removing file: {audio_path}")
+        os.remove(audio_path)
+    else:    ## Show an error ##
+        print("Error: %s file not found" % audio_path)
+
+    cdn_path = "https://riri.prixacdn.net/"+op_path
+
+    task = translate.delay(cdn_path)
+
+    sucess = await wait_until(task.id,20)
     
+    if sucess:
+        async with async_session as session:
+            async with session.begin():
+                taskscrud= crud_tasks.TasksCrud(session)
+                task_exists = await taskscrud.check_tasks(task.id)
+                if task_exists:
+                    infer_text = await taskscrud.get_tasks(task.id)
+                    return {'id': task.id,
+                            'status': infer_text.status,
+                            'text':infer_text.result,
+                            'result_audio': cdn_path}
+    return {'id': task.id,
+            'status': "Retrying",
+            'text': "",
+            'result_audio': cdn_path}
+
 
 @sugaApi.post("/sugaid")
 async def suga_from_id(id: str,voice: str  ,async_session: Session = Depends(database.get_session)):
