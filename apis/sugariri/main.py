@@ -104,10 +104,16 @@ def check_and_infer(text: str, voice: str):
     else:
         # file_exists = True
         print("file already exists in s3 bucket")
-        return riri_reponse(
-            status= "success",
-            text = text,
-            result_audio = f"https://{BUCKET}/{fname}")
+        return { 'status': "success",
+                'text':text,
+                'result_audio': f"https://{BUCKET}/{fname}"
+        }
+
+        # }
+        # return riri_reponse(
+        #     status= "success",
+        #     text = text,
+        #     result_audio = f"https://{BUCKET}/{fname}")
 
 
 @sugaApi.post("/suga")
@@ -188,52 +194,50 @@ async def whisper( voice: str, file: UploadFile = File(...), async_session: Sess
 
     cdn_path = "https://riri.prixacdn.net/"+op_path
 
-    task = await srec2.delay(cdn_path)
+    task = srec2.delay(cdn_path)
 
-    await wait_until(task.id,20)
+    sucess = await wait_until(task.id,20)
+    
+    if sucess:
+        async with async_session as session:
+            async with session.begin():
+                taskscrud= crud_tasks.TasksCrud(session)
+                task_exists = await taskscrud.check_tasks(task.id)
+                if task_exists:
+                    infer_text = await taskscrud.get_tasks(task.id)
+                    result = check_and_infer(infer_text.result, voice)
+                    print(result,5555555555555555555)
+                    return {'id': task.id,
+                            'status': result['status'],
+                            'text':result['text'],
+                            'result_audio': result['result_audio']}
+    return {'id': task.id,
+            'status': "Retrying",
+            'text': "",
+            'result_audio': ""}
+    
+    
 
+@sugaApi.post("/sugaid")
+async def suga_from_id(id: str,voice: str  ,async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             taskscrud= crud_tasks.TasksCrud(session)
-            task_exists = await taskscrud.check_tasks(task.id)
-            if task_exists:
-                infer_text = await taskscrud.get_tasks(task.id)
-                return check_and_infer(infer_text.result, voice)
-            else:
-                return {'status:' : "ERROR"}
+            task = await taskscrud.check_tasks(id)
+            if task:
+                task = await taskscrud.get_tasks(id)
+                result = check_and_infer(task.result, voice)
+                return {'id': task.id,
+                            'status': result['status'],
+                            'text':result['text'],
+                            'result_audio': result['result_audio']}
 
-    
-    
-    # # id = url
-    # print(task)
-    # # await wait_until(task.id,10,async_session)
+            else:          
+                return {'id': id,
+                        'status': "Does Not Exists",
+                        'text': "",
+                        'result_audio': ""}
 
-    # # task_sucess =  await get_task(id, async_session)
-
-    # # return check_and_infer(task_sucess.result, 'np_rija')
-    # return task.id
-
-
-# @sugaApi.post("/suga")
-# def suga( voice: str, file: UploadFile = File(...),):
-#     try:
-#         contents = file.file.read()
-#         recognizer = sr.Recognizer()
-#         # audio_source = sr.AudioData(contents, 22050, 2)
-#         audio_source = sr.AudioData(contents, 16000, 2)
-
-#         text = recognizer.recognize_google(audio_data=audio_source,language = 'ne-NP')
-#         if not nr.is_devanagari(text):
-#             converter = Converter()
-#             text = converter.convert(text)
-#     except Exception:
-#         return {"message": "There was an error Reading/Uploading the wav file"}
-#         # return text
-#     finally:
-#         file.file.close()
-
-    
-#     return check_and_infer(text, voice)
 
 
 @sugaApi.post("/update_tasks")
