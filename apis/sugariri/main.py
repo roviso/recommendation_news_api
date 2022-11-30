@@ -178,7 +178,6 @@ async def wait_until(task_id, timeout, period=0.25,):
 async def whisper( voice: str, file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
     try:
         contents = file.file.read()
-        
         audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
         with open(audio_path, 'wb') as f:
             f.write(contents)
@@ -186,7 +185,6 @@ async def whisper( voice: str, file: UploadFile = File(...), async_session: Sess
         return {"message": "There was an error uploading the file"}
 
     finally:
-        
         file.file.close()
 
 
