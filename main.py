@@ -5,7 +5,8 @@ from apis.sugariri.main import sugaApi
 from apis.newstalk.main import newstalkApi
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
-from routers import article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label  
+from routers import clicks
+# article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label  
 #  ,recommend
 # , recommendation, 
 import db_loader
@@ -49,50 +50,42 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
         await recommend.startup_event()
 
-app.include_router(scrap.router)
-app.include_router(source.router)
+# app.include_router(scrap.router)
+# app.include_router(source.router)
 
 # app.include_router(recommendation.router)
-app.include_router(keywords.router)
+# app.include_router(keywords.router)
 
-app.include_router(search.router)
+# app.include_router(search.router)
 # app.include_router(recommend.router)
 
-app.include_router(profile.router)
+# app.include_router(profile.router)
 
 
-app.include_router(top.router)
+# app.include_router(top.router)
 
-app.include_router(user.router)
-app.include_router(follow.router)
-
-
-
+# app.include_router(user.router)
+# app.include_router(follow.router)
 
 
 
-
-app.include_router(article.router)
-app.include_router(latest.router)
-
+# app.include_router(article.router)
+# app.include_router(latest.router)
 
 
+# app.include_router(cache.router)
+# app.include_router(author.router)
 
-app.include_router(cache.router)
-app.include_router(author.router)
-
-
-app.include_router(label.router)
-
+# app.include_router(label.router)
 app.include_router(clicks.router)
-app.include_router(likes.router)
-app.include_router(bookmarks.router)
-app.include_router(views.router)
+# app.include_router(likes.router)
+# app.include_router(bookmarks.router)
+# app.include_router(views.router)
 
-app.include_router(comments.router)
-app.include_router(replies.router)
+# app.include_router(comments.router)
+# app.include_router(replies.router)
 
-app.include_router(token.router)
+# app.include_router(token.router)
 
 add_pagination(app)
 
