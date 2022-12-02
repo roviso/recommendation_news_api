@@ -76,6 +76,12 @@ class riri_reponse(BaseModel):
         orm_mode = True
 
 
+class suga_id(BaseModel):
+    id: str 
+    voice: str
+    class Config:
+        orm_mode = True
+
 
 def check_and_infer(text: str, voice: str):
     ntext = text + '_' + voice
@@ -271,22 +277,24 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
             'result_audio': cdn_path}
 
 
+
+
 @sugaApi.post("/sugaid")
-async def suga_from_id(id: str,voice: str  ,async_session: Session = Depends(database.get_session)):
+async def suga_from_id(sugaid: suga_id  ,async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             taskscrud= crud_tasks.TasksCrud(session)
-            task = await taskscrud.check_tasks(id)
+            task = await taskscrud.check_tasks(sugaid.id)
             if task:
-                task = await taskscrud.get_tasks(id)
-                result = check_and_infer(task.result, voice)
+                task = await taskscrud.get_tasks(sugaid.id)
+                result = check_and_infer(task.result, sugaid.voice)
                 return {'id': task.id,
                             'status': result['status'],
                             'text':result['text'],
                             'result_audio': result['result_audio']}
 
             else:          
-                return {'id': id,
+                return {'id': sugaid.id,
                         'status': "Does Not Exists",
                         'text': "",
                         'result_audio': ""}
