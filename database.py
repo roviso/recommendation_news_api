@@ -10,7 +10,8 @@ from config import settings
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 # print(SQLALCHEMY_DATABASE_URL)
 
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL,future=True, echo=True)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL,future=True, echo=True,pool_size=20,
+    max_overflow=10,)
 
 db_engine = create_engine(settings.SYNC_DB_URL)
 
