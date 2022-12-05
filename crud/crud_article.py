@@ -42,7 +42,8 @@ class ArticleCrud():
         n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 7)
         # print(n_days_ago.date(),"n_days_ago")
 
-        query = select(Article).filter(Article.id.in_(article_ids)).filter(Article.date > str(n_days_ago.date())).order_by(desc(Article.likes),desc(Article.views))
+        query = select(Article).filter(Article.id.in_(article_ids)).filter(Article.date > str(n_days_ago.date()))
+        # .order_by(desc(Article.likes),desc(Article.views))
         results = await self.db_session.execute(query)
         
         return results.scalars().all()
