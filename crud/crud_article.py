@@ -38,7 +38,8 @@ class ArticleCrud():
         
 
     async def get_all_articles_by_id(self, article_ids: list) -> List[Article]:
-        query = select(Article).filter(Article.id.in_(article_ids)).order_by(Article.date.desc())
+        query = select(Article).filter(Article.id.in_(article_ids))
+        # .order_by(Article.date.desc())
         results = await self.db_session.execute(query)
         
         return results.scalars().all()
