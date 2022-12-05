@@ -312,10 +312,10 @@ async def recommend_user_articles(current_user: user_model.User = Depends(get_cu
 
             liked_ids = [liked_articles.id for liked_articles in all_liked_articles]
             recommended_article_list = [id for id in all_recommended_article_list if id not in liked_ids]
-            random.shuffle(recommended_article_list)
+            
 
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
-
+            random.shuffle(recommended_articles)
         ## Replacing with redirect url
         for article in recommended_articles:
             article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
