@@ -268,37 +268,37 @@ async def web_recommend(async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             articlecrud = ArticleCrud(session)
-            latestcrud = LatestCrud(session)
+            # latestcrud = LatestCrud(session)
             likes = Likes(session)
             ### ____________-- Getting user keyword from model dataframe -- ____________________
             # user = pre.user_df.query(f'user == "{user_id}"')
             # keyword_list = [str(keyword) for keyword in user['user_keywords']]
 
             ### ___________ -- GETTING USER KEYWORD FROM HISTORY -- __________________
-            keywords_len = await keywordcache.get_len(user_id)
-            if keywords_len == 0:
-                print("USER NOT IN CACHE")
-                keyword_list = await get_user_keywords(user_id)
-                print("keyword_list is ::: ", keyword_list)
-                if not keyword_list:
-                    keyword_list = await keywordcache.read_from_cache("trending")
-                    if not keyword_list:
-                        # recent_articles = await articlecrud.get_all_article(0, 100)
-                        # keyword_list = get_trending_keywords(recent_articles)
+            # keywords_len = await keywordcache.get_len(user_id)
+            # if keywords_len == 0:
+            #     print("USER NOT IN CACHE")
+            #     keyword_list = await get_user_keywords(user_id)
+            #     print("keyword_list is ::: ", keyword_list)
+            #     if not keyword_list:
+            #         keyword_list = await keywordcache.read_from_cache("trending")
+            #         if not keyword_list:
+            #             # recent_articles = await articlecrud.get_all_article(0, 100)
+            #             # keyword_list = get_trending_keywords(recent_articles)
                         
-                        top_articles = await latestcrud.get_top_article(5)
-                        keyword_list = get_trending_keywords(top_articles)
-                await keywordcache.add_to_cache(user_id,keyword_list)
-            else:
-                print("USER ALREADY CACHED")
-                keyword_list = await keywordcache.read_from_cache(user_id)
+            #             top_articles = await latestcrud.get_top_article(5)
+            #             keyword_list = get_trending_keywords(top_articles)
+            #     await keywordcache.add_to_cache(user_id,keyword_list)
+            # else:
+            #     print("USER ALREADY CACHED")
+            #     keyword_list = await keywordcache.read_from_cache(user_id)
                 
-            keywords = ' '.join([str(keyword) for keyword in keyword_list]) 
+            # keywords = ' '.join([str(keyword) for keyword in keyword_list]) 
 
             
-            tfidf_similar_article_list =  get_similar_articles(keywords)
+            # tfidf_similar_article_list =  get_similar_articles(keywords)
 
-            cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
+            # cf_similar_article_list = get_similar_cf_articles(tfidf_similar_article_list)
 
             # if user_id not in user_id_dict:
             #     print(f"user not found in db, using random recommendation")
@@ -306,12 +306,13 @@ async def web_recommend(async_session: Session = Depends(database.get_session)):
 
             cf_recommended_article_list = get_recommended_cf_articles(user_id)
 
-            all_recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list + tfidf_similar_article_list))
+            # all_recommended_article_list = list(set(cf_recommended_article_list + cf_similar_article_list + tfidf_similar_article_list))
+
             # + cf_similar_article_list))
             all_liked_articles = await likes.get_all_liked_articles(user_id=user_id)
 
             liked_ids = [liked_articles.id for liked_articles in all_liked_articles]
-            recommended_article_list = [id for id in all_recommended_article_list if id not in liked_ids]
+            recommended_article_list = [id for id in cf_recommended_article_list if id not in liked_ids]
             
 
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
