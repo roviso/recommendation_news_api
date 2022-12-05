@@ -1,11 +1,12 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session,joinedload,contains_eager
-from sqlalchemy import update
+from sqlalchemy import update, desc
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.article_model import Article,RecommendedArticle, LatestArticle,AricleKeywords
 from crud.crud_comments import Comments
-
+import nepali_datetime
+import datetime
 
 class ArticleCrud():
     def __init__(self, db_session: Session):
@@ -38,8 +39,10 @@ class ArticleCrud():
         
 
     async def get_all_articles_by_id(self, article_ids: list) -> List[Article]:
-        query = select(Article).filter(Article.id.in_(article_ids))
-        # .order_by(Article.date.desc())
+        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 7)
+        # print(n_days_ago.date(),"n_days_ago")
+
+        query = select(Article).filter(Article.id.in_(article_ids)).filter(Article.date > str(n_days_ago.date())).order_by(desc(Article.likes),desc(Article.views))
         results = await self.db_session.execute(query)
         
         return results.scalars().all()

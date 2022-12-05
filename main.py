@@ -5,8 +5,8 @@ from apis.sugariri.main import sugaApi
 from apis.newstalk.main import newstalkApi
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
-from routers import clicks
-# article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, scrap, search , clicks , scrap, keywords , label  
+from routers import clicks, scrap
+# article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, , search , clicks , scrap, keywords , label  
 #  ,recommend
 # , recommendation, 
 import db_loader
@@ -50,7 +50,7 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
         await recommend.startup_event()
 
-# app.include_router(scrap.router)
+app.include_router(scrap.router)
 # app.include_router(source.router)
 
 # app.include_router(recommendation.router)

@@ -8,6 +8,7 @@ from models.user_model import User,RegisteredUser, UserArticleBookmarks,NonRegis
 from models import article_model, user_model, comments_model
 from crud import crud_follow
 
+
 class UserCrud():
     def __init__(self, db_session: Session):
         self.db_session = db_session
@@ -157,18 +158,15 @@ class UserCrud():
         # return self.db_session.query(article_model.Article).filter(article_model.Article.url == article_url).first()
 
 
-    async def update_user(self, user_id: str, username: Optional[str], password: Optional[str], first_name: Optional[str],last_name: Optional[str], email: Optional[str] ):
+    async def update_user(self, user_id: str, username: Optional[str], first_name: Optional[str],last_name: Optional[str] ):
         q = update(RegisteredUser).where(RegisteredUser.id == user_id)
         if username:
             q = q.values(username=username)
-        if password:
-            q = q.values(password=password)
         if first_name:
             q = q.values(first_name=first_name)
         if last_name:
             q = q.values(last_name=last_name)
-        if email:
-            q = q.values(email=email)
+            
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 

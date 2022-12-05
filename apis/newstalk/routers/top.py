@@ -11,10 +11,10 @@ import secrets
 from database import async_session
 from fastapi_pagination import paginate,LimitOffsetPage
 from cacher.top_cache import topcache
-from newscacher import topnewscache
+from newscacher import topnewscache,keywordcache
 from fastapi import BackgroundTasks
 from apis.newstalk.routers.user import get_current_user
-
+from apis.newstalk.routers.keywords import get_trending_keywords
 
 router = APIRouter(
     prefix = "/top",
@@ -23,6 +23,26 @@ router = APIRouter(
 
 async def cache_top_sources(top_sources):
     await topcache.cache_source(top_sources)
+
+
+
+
+@router.get('/top_tags',)
+async def trending_keywords():
+    trending_len = await keywordcache.get_len("trending")
+    if trending_len == 0:
+        print("TRENDING KEYWORDS NOT IN CACHE")
+        async with async_session() as session:
+            async with session.begin():
+                latestcrud = LatestCrud(session)
+                trending_articles = await latestcrud.get_trending_article()
+                trending_keywords = get_trending_keywords(trending_articles)
+                # print("keyword is ::: ", trending_keywords)
+                await keywordcache.add_to_cache('trending',trending_keywords)
+    else:
+        print("TRENDING KEYWORDS IN CACHE")
+        trending_keywords = await keywordcache.read_from_cache("trending")            
+    return trending_keywords
 
 
 @router.get('/top_articles', status_code = 200 , response_model= LimitOffsetPage[article_schema.GetAllArticle])
@@ -85,6 +105,4 @@ async def get_top_users(current_user: user_model.User = Depends(get_current_user
         async with session.begin():
             usercrud = UserCrud(session)
             top_users = await usercrud.get_top_users()
-            
-
     return paginate(top_users)

@@ -16,6 +16,19 @@ from config import imgconfig
 from fastapi.responses import JSONResponse
 from schemas import profile_schema
 from apis.newstalk.routers.user import get_current_user
+import os
+import boto3
+
+session = boto3.Session(
+    aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
+    aws_secret_access_key='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',
+)
+
+s3 = session.resource('s3')
+BUCKET = "riri.prixacdn.net"
+
+bucket_session = s3.Bucket(BUCKET)
+
 
 router = APIRouter(
     prefix = "/profile",
@@ -48,6 +61,7 @@ async def user_profile(current_user: user_model.User = Depends(get_current_user)
             usercrud= UserCrud(session)
             user_profile =  await usercrud.get_user_profile(current_user.id)
             return user_profile
+            
     #         followcrud = Follow(session)
     #         user_profile =  await usercrud.get_user_profile(current_user.id)
     #         follower_count = await followcrud.get_followers_count(current_user.id)
@@ -60,23 +74,45 @@ async def user_profile(current_user: user_model.User = Depends(get_current_user)
 
 
 @router.post("/upload/profilePic")
-async def upload_profile_Image(background_tasks: BackgroundTasks, current_user: user_model.User = Depends(get_current_user), async_session: Session = Depends(database.get_session), file: UploadFile = File(...)):
+async def upload_profile_Image(current_user: user_model.User = Depends(get_current_user), file: UploadFile = File(...)):
+    async with async_session() as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            # user_profile =  await usercrud.get_user_profile(current_user.id)
+            file_name = current_user.id + "-" +file.filename
+            extension = file_name.split('.')[-1]
+            
+            with open(imgconfig.IMG_SAVED_PATH + file_name , "wb") as myfile:
+                    content = await file.read()
+                    myfile.write(content)
+                    myfile.close()
+            resize_image(file_name)
+            op_path = "profile/"+file_name
+            file_path = imgconfig.IMG_SAVED_PATH + file_name
+            if os.path.exists(file_path):
+                print(f"File Created at {file_path}")
+                bucket_session.upload_file(file_path,op_path,ExtraArgs={'ContentType': f"image/{extension}", 'ACL': "public-read"} )
+                cdn_path = "https://riri.prixacdn.net/"+op_path
+                await usercrud.upload_profile_Image(user_id = current_user.id,profile_Image = cdn_path)
+                os.remove(file_path)
+
+            return cdn_path
+
+
+@router.post('/update_profile', response_model=profile_schema.UserProfile)
+async def update_profile(user_info: user_schema.EditProfile , async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
+            await usercrud.update_user(user_id= current_user.id, username=user_info.username,
+                first_name = user_info.first_name,last_name =user_info.last_name)
+
             user_profile =  await usercrud.get_user_profile(current_user.id)
-    # SAVE FILE ORIGINAL
-            file_name = user_profile.username+ f"{user_profile.email.split('@')[0]}" + ".png"
-            with open(imgconfig.IMG_SAVED_PATH + file_name , "wb") as myfile:
-                content = await file.read()
-                myfile.write(content)
-                myfile.close()
+            return user_profile
 
-            await usercrud.upload_profile_Image(current_user.id, file_name)
+    
 
-    # RESIZE IMAGES
-    background_tasks.add_task(resize_image, filename=file_name)
-    return JSONResponse(content={"message": "success"})
+
 
 @router.get("/get_source_profile", status_code = 200  , response_model=profile_schema.SourceProfile)
 async def spurce_profile(source_id: int, async_session: Session = Depends(database.get_session), current_user: user_model.User = Depends(get_current_user)):

@@ -72,7 +72,7 @@ class CacheConfig(BaseSettings):
     redis_url: str = 'redis://127.0.0.1'
     URL_EXPIRY_TIME = 60*60*3 ##3 hours
     TFIDF_EXPIRY_TIME = 60*2 ## 2min
-    KEYWORDS_EXPIRY_TIME = 60*5 ##5 min
+    KEYWORDS_EXPIRY_TIME = 60*3 ##3 min
     EXPIRY_TIME = 60 * 20 # 20 min
     LATEST_EXPIRY_TIME = 60*5
     TOP_NEWS_EXPIRY_TIME = 60*60

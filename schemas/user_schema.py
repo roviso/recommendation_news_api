@@ -34,6 +34,15 @@ class RegisterUser(BaseModel):
 #     class Config:
 #         orm_mode = True
 
+class EditProfile(BaseModel):
+    username: str
+    first_name: Optional[str] = None 
+    last_name: Optional[str] = None
+    # email: Optional[str] = None
+    class Config:
+        orm_mode = True
+
+
 
 class CreateUserArticleLikes(User):
     article: article_schema.RecommendedArticle

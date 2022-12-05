@@ -31,20 +31,20 @@ async def like_article(article_id:str, async_session: Session = Depends(database
             return await likes.like_article(article_liked)
 
 
-@router.post('/get_likes_by_article',status_code = 200)
-async def get_likes_by_article(article_id:str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
-    async with async_session as session:
-        async with session.begin():
-            likes = Likes(session)
-            all_liked_user =  await likes.get_articles_like(article_id=article_id)
-            return {
-                'total_likes': len(all_liked_user),
-                'liked_user': all_liked_user
-            }
+# @router.post('/get_likes_by_article',status_code = 200)
+# async def get_likes_by_article(article_id:str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+#     async with async_session as session:
+#         async with session.begin():
+#             likes = Likes(session)
+#             all_liked_user =  await likes.get_articles_like(article_id=article_id)
+#             return {
+#                 'total_likes': len(all_liked_user),
+#                 'liked_user': all_liked_user
+#             }
 
 
-@router.post('/get_likes_by_user', response_model= likes_schema.GetUserArticleLikesResponse)
-async def get_likes_by_user(article_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+@router.post('/get_likes_by_article', response_model= likes_schema.GetUserArticleLikesResponse)
+async def get_likes_by_article(article_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     article_liked = likes_schema.GetUserArticleLikes(
         user_id = current_user.id, 
         article_id= article_id

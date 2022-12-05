@@ -1,18 +1,8 @@
 from celery import Celery
 from kombu.utils.url import safequote
-import json
-import os
 from pathlib import Path
 from typing import List, Mapping
-import argparse
-import torch
 import boto3
-from fastapi.responses import FileResponse
-from starlette.requests import Request
-import boto3
-import uuid
-import requests
-import hashlib
 import os
 from celery import shared_task
 # import whisper

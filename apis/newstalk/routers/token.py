@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from models import user_model
 
 from schemas import token_schema, user_schema
-
+from database import async_session
 import secrets
 import database
 from sqlalchemy.orm import Session
@@ -163,33 +163,18 @@ async def login(async_session: Session = Depends(database.get_session), form_dat
 async def logout(logout_user: token_schema.CreateUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     access_token = await create_user(logout_user,async_session)
     return access_token
-    # user = await authenticate_registered_user(async_session, form_data.username, form_data.password)
-    # if not user:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Incorrect username or password",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    # access_token_expires = timedelta(minutes=authconfig.ACCESS_TOKEN_EXPIRE_MINUTES)
-    # access_token = create_access_token(
-    #     data={"user_id": user.id}, expires_delta=access_token_expires
-    # )
-    # return {"access_token": access_token, "token_type": "bearer"}
 
 
 
 @router.post('/SignUp', response_model = token_schema.Token)
-async def sign_up(user_info: user_schema.RegisterUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
-    async with async_session as session:
+async def sign_up(user_info: user_schema.RegisterUser,current_user: user_model.User = Depends(get_current_user)):
+    async with async_session() as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
             hashed_password = get_password_hash(user_info.password)
             await usercrud.register_user(user_id= current_user.id, username=user_info.username, password = hashed_password,
                 first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
 
-    access_token_expires = timedelta(minutes=authconfig.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"user_id": current_user.id}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-    
+            access_token =generate_access_token(current_user.id)
+
+    return access_token

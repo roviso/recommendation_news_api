@@ -105,21 +105,37 @@ def get_trending_keywords(recent_articles):
 
 
 
+# if keywords_len == 0:
+#                 print("USER NOT IN CACHE")
+#                 keyword_list = await get_user_keywords(user_id)
+#                 print("keyword_list is ::: ", keyword_list)
+#                 if not keyword_list:
+#                     keyword_list = await keywordcache.read_from_cache("trending")
+#                     if not keyword_list:
+#                         # recent_articles = await articlecrud.get_all_article(0, 100)
+#                         # keyword_list = get_trending_keywords(recent_articles)
+                        
+#                         top_articles = await latestcrud.get_top_article(5)
+#                         keyword_list = get_trending_keywords(top_articles)
+#                 await keywordcache.add_to_cache(user_id,keyword_list)
+                
+
+
 @router.get('/trending_keywords',)
 async def trending_keywords(async_session: Session = Depends(database.get_session)):
-    # trending_len = await keywordcache.get_len("trending")
-    # if trending_len == 0:
-        # print("TRENDING KEYWORDS NOT IN CACHE")
-    async with async_session as session:
-        async with session.begin():
-            latestcrud = LatestCrud(session)
-            trending_articles = await latestcrud.get_trending_article()
-            trending_keywords = get_trending_keywords(trending_articles)
-            # print("keyword is ::: ", trending_keywords)
-            # await keywordcache.add_to_cache('trending',trending_keywords)
-    # else:
-    #     print("TRENDING KEYWORDS IN CACHE")
-    #     trending_keywords = await keywordcache.read_from_cache("trending")            
+    trending_len = await keywordcache.get_len("trending")
+    if trending_len == 0:
+        print("TRENDING KEYWORDS NOT IN CACHE")
+        async with async_session as session:
+            async with session.begin():
+                latestcrud = LatestCrud(session)
+                trending_articles = await latestcrud.get_trending_article()
+                trending_keywords = get_trending_keywords(trending_articles)
+                # print("keyword is ::: ", trending_keywords)
+                await keywordcache.add_to_cache('trending',trending_keywords)
+    else:
+        print("TRENDING KEYWORDS IN CACHE")
+        trending_keywords = await keywordcache.read_from_cache("trending")            
     return trending_keywords
 
 

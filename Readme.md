@@ -3,13 +3,9 @@ ssh root@165.232.184.231
 cd /home/admin/web/newstalk/recommendation_news_api
 <!-- 165.232.184.231:0 - "GET /recommend/train_model HTTP/1.0" 404 Not Found -->
 
-ssh -N -L 3377:localhost:5432 root@165.232.184.231 
-
-ssh -N -L 1234:165.232.184.231:5432 root@165.232.184.231 -i id_rsa
-
-ssh -L 1234:localhost:5432 root@165.232.184.231 -N -v -v
-
-ssh root@165.232.184.231 -p 1234
+##TO connect to metabase:
+>> systemctl start metabase
+>> ssh -L 1234:localhost:5432 root@165.232.184.231 -N -v -v
 
 
 pypy -m pip install ----
