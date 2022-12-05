@@ -32,7 +32,7 @@ async def bookmark_article(article_id: str, async_session: Session = Depends(dat
 
 
 
-@router.post('/get_all_bookmarks_by_user', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
+@router.get('/get_all_bookmarks_by_user', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
 async def get_all_likes_by_user(current_user: user_model.User = Depends(get_current_user), async_session: Session = Depends(database.get_session)):
     user_id = current_user.id
     async with async_session as session:
