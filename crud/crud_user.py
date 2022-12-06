@@ -57,7 +57,7 @@ class UserCrud():
 
 
     async def remove_user(self, user_id: str):
-        query = delete(user_model.User).where(user_model.User.user_id == user_id)
+        query = delete(user_model.User).where(user_model.User.id == user_id)
         await self.db_session.execute(query)
 
     async def check_userid_exists(self,user_id: str) -> User:
@@ -173,6 +173,17 @@ class UserCrud():
         if last_name:
             q = q.values(last_name=last_name)
             
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
+
+    async def update_user_info(self, user_id: str, device_id: Optional[str], device_name: Optional[str] ):
+        q = update(RegisteredUser).where(RegisteredUser.id == user_id)
+        if device_id:
+            q = q.values(device_id=device_id)
+        if device_name:
+            q = q.values(device_name=device_name)
+
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
 
