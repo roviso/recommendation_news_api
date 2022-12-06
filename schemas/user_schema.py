@@ -82,10 +82,10 @@ class SearchUsers(BaseModel):
 
 class GetRegisteredUsers(BaseModel):
     id: str
-    username: str 
-    email: str
-    first_name: str
-    last_name: str
+    username: Optional[str] 
+    email: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
 
     class Config:
         orm_mode = True
