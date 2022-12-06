@@ -9,7 +9,16 @@ class CreateUser(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class LoginUser(BaseModel):
+    email: str
+    password: str
+    class Config:
+        orm_mode = True
         
+
+
 class Token(BaseModel):
     access_token: str
     refresh_token: str

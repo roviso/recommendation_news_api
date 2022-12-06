@@ -146,9 +146,9 @@ async def refresh_token(token: token_schema.RefreshToken,async_session: Session 
 
 
 @router.post("/login", response_model = token_schema.Token)
-async def login(async_session: Session = Depends(database.get_session), form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(login_form: token_schema.LoginUser, async_session: Session = Depends(database.get_session)):
 
-    user = await authenticate_registered_user(async_session, form_data.username, form_data.password)
+    user = await authenticate_registered_user(async_session, login_form.email, login_form.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
