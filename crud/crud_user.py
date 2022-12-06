@@ -57,7 +57,7 @@ class UserCrud():
 
 
     async def remove_user(self, user_id: str):
-        query = delete(user_model.User).where(user_model.User.user_id == user_id)
+        query = delete(user_model.User).where(user_model.User.id == user_id)
         await self.db_session.execute(query)
 
     async def check_userid_exists(self,user_id: str) -> User:
