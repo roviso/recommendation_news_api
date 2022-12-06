@@ -98,6 +98,16 @@ async def read_user(current_user: user_schema.User = Depends(), async_session: S
             usercrud= UserCrud(session)
             return await usercrud.get_user(current_user.id)
 
+
+@router.get("/remove_user")
+async def remove_user(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.remove_user(user_id)
+
+
 # @router.get("/get_all_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
 # async def read_all_user(async_session: Session = Depends(database.get_session)):
 #     async with async_session as session:

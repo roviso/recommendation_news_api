@@ -1,13 +1,12 @@
 from re import L
 from typing import List, Optional
 from sqlalchemy.orm import Session,with_polymorphic,selectinload,joinedload,subqueryload
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models.user_model import User,RegisteredUser, UserArticleBookmarks,NonRegisteredUser
 from models import article_model, user_model, comments_model
 from crud import crud_follow
-
 
 class UserCrud():
     def __init__(self, db_session: Session):
@@ -18,7 +17,7 @@ class UserCrud():
         await self.db_session.flush()
 
 
-    async def register_user(self, user_id: str, username: Optional[str], password: Optional[str], first_name: Optional[str],last_name: Optional[str], email: Optional[str] ):
+    async def register_user(self, user_id: str, device_id: str ,username: Optional[str], password: Optional[str], first_name: Optional[str],last_name: Optional[str], email: Optional[str] ):
         l = update(User).where(User.id == user_id)
         l = l.values(registered = True)
         l.execution_options(synchronize_session="fetch")
@@ -27,6 +26,8 @@ class UserCrud():
         q = update(RegisteredUser).where(RegisteredUser.id == user_id)
         if username:
             q = q.values(username=username)
+        if device_id:
+            q = q.values(device_id = device_id)
         if password:
             q = q.values(password=password)
         if first_name:
@@ -53,6 +54,11 @@ class UserCrud():
         result = results.scalars().one()
         # (result,) = results.one()
         return result
+
+
+    async def remove_user(self, user_id: str):
+        query = delete(user_model.User).where(user_model.User.user_id == user_id)
+        await self.db_session.execute(query)
 
     async def check_userid_exists(self,user_id: str) -> User:
         query = select(User).where(User.id == user_id)

@@ -61,7 +61,7 @@ class Follow():
         #     follower_id = follower_following.follower_id,
         #     following_id = follower_following.following_id
         # )
-        query = delete(user_model.UserFollowing).where(user_model.UserFollowing.follower_id == user_following.follower_id,follower_following.following_id == follower_following.following_id )
+        query = delete(user_model.UserFollowing).where(user_model.UserFollowing.follower_id == follower_following.follower_id,follower_following.following_id == follower_following.following_id )
         await self.db_session.execute(query)
 
 

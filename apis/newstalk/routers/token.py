@@ -172,9 +172,10 @@ async def sign_up(user_info: user_schema.RegisterUser,current_user: user_model.U
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
             hashed_password = get_password_hash(user_info.password)
-            await usercrud.register_user(user_id= current_user.id, username=user_info.username, password = hashed_password,
+            user = await usercrud.get_user(current_user.id)
+            new_device_id = user.device_id + "_" + current_user.id
+            await usercrud.register_user(user_id= current_user.id,device_id = new_device_id ,username=user_info.username, password = hashed_password,
                 first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
-
             access_token =generate_access_token(current_user.id)
 
     return access_token
