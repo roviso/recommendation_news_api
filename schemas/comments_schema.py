@@ -56,6 +56,7 @@ class ArticleComments():
 class CommentedUser(BaseModel):
     id: str 
     username: str 
+    profile_Image: Optional[str]
     # registered: bool
 
     class Config:
