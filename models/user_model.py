@@ -47,6 +47,7 @@ class User(Base):
     device_id = Column(String)
     ip_address = Column(String)
     registered = Column(Boolean)
+    profile_Image = Column(String(250))
 
     user_followers = relationship(
         'User',
@@ -116,7 +117,7 @@ class RegisteredUser(User):
     password = Column(String)
     first_name = Column(String(50))
     last_name = Column(String(50))
-    profile_Image = Column(String(250))
+
 
     email = Column(EmailType)
     __mapper_args__ = {'polymorphic_identity': True}
