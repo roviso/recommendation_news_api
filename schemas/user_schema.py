@@ -24,7 +24,7 @@ class RegisterUser(BaseModel):
     password: str
     first_name: Optional[str] = None 
     last_name: Optional[str] = None
-    email: Optional[str] = None
+    email: str = None
     class Config:
         orm_mode = True
 

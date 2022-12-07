@@ -80,6 +80,15 @@ class UserCrud():
         result = results.fetchone()
         return result
 
+    
+    async def check_user_exists_by_username(self,email: str)-> RegisteredUser:
+        query = select(RegisteredUser).where(RegisteredUser.email == email)
+        results = await self.db_session.execute(query)
+        result = results.fetchone()
+        return result
+
+    
+
     async def get_user_by_email(self,email: str) -> RegisteredUser:
         query = select(RegisteredUser).where(RegisteredUser.email == email)
         results = await self.db_session.execute(query)

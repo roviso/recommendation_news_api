@@ -49,7 +49,7 @@ async def authenticate_user(async_session: Session, user_id: str):
             usercrud= crud_user.UserCrud(session)
             user = await usercrud.get_user(user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found.")
     else:
         user = user
 
@@ -63,11 +63,11 @@ async def authenticate_registered_user(async_session: Session, user_email: str, 
             
             user = await usercrud.check_user_exists_by_email(user_email)
     if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found.")
     else:
         user = await usercrud.get_user_by_email(user_email)
         if not verify_password(user_password, user.password):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password Incorrect.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password.")
 
         return user
 
@@ -168,11 +168,30 @@ async def logout(logout_user: token_schema.CreateUser, async_session: Session = 
 
 @router.post('/SignUp', response_model = token_schema.Token)
 async def sign_up(user_info: user_schema.RegisterUser,current_user: user_model.User = Depends(get_current_user)):
+    if not user_info.email or not user_info.first_name or not user_info.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email, Firstname or Password is missing",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    
+
     async with async_session() as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
             hashed_password = get_password_hash(user_info.password)
             user = await usercrud.get_user(current_user.id)
+
+            email_exists = await usercrud.check_user_exists_by_email(user_info.email)
+
+            if email_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Email already exists.",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+            if not user_info.username:
+                user_info.username = user.username
             new_device_id = user.device_id + "_" + current_user.id
             await usercrud.register_user(user_id= current_user.id,device_id = new_device_id ,username=user_info.username, password = hashed_password,
                 first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
