@@ -79,8 +79,9 @@ async def upload_profile_Image(current_user: user_model.User = Depends(get_curre
         async with session.begin():
             usercrud= UserCrud(session)
             # user_profile =  await usercrud.get_user_profile(current_user.id)
-            file_name = current_user.id + "-" +file.filename
             extension = file_name.split('.')[-1]
+            file_name = current_user.id + "." + extension
+            
             
             with open(imgconfig.IMG_SAVED_PATH + file_name , "wb") as myfile:
                     content = await file.read()
