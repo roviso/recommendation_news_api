@@ -79,19 +79,25 @@ async def user_profile(current_user: user_model.User = Depends(get_current_user)
 async def upload_profile_Image(current_user: user_model.User = Depends(get_current_user), file: UploadFile = File(...)):
     async with async_session() as session:
         async with session.begin():
-            usercrud= UserCrud(session)
-            user_profile =  await usercrud.get_user_profile(current_user.id)
-            extension = file.filename.split('.')[-1]
-            file_name = str(uuid.uuid1())+ "." +extension
-            
-            op_path = "profile/"+file_name
-            content = await file.read()
-            s3.Object(BUCKET,op_path).put(Body=content)
+            try:
+                usercrud= UserCrud(session)
+                user_profile =  await usercrud.get_user_profile(current_user.id)
+                extension = file.filename.split('.')[-1]
+                file_name = str(uuid.uuid1())+ "." +extension
+                
+                op_path = "profile/"+file_name
+                content = await file.read()
+                s3.Object(BUCKET,op_path).put(Body=content)
 
 
-            cdn_path = "https://riri.prixacdn.net/"+op_path
-            await usercrud.upload_profile_Image(user_id = current_user.id,profile_Image = cdn_path)
-            # os.remove(file_path)
+                cdn_path = "https://riri.prixacdn.net/"+op_path
+                await usercrud.upload_profile_Image(user_id = current_user.id,profile_Image = cdn_path)
+                # os.remove(file_path)
+                
+            except Exception:
+                return {"message": "There was an error Reading/Uploading the wav file"}
+            finally:
+                file.file.close()
 
             return cdn_path
 
