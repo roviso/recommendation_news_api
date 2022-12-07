@@ -18,6 +18,8 @@ from schemas import profile_schema
 from apis.newstalk.routers.user import get_current_user
 import os
 import boto3
+import uuid
+
 
 session = boto3.Session(
     aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
@@ -78,24 +80,18 @@ async def upload_profile_Image(current_user: user_model.User = Depends(get_curre
     async with async_session() as session:
         async with session.begin():
             usercrud= UserCrud(session)
-            # user_profile =  await usercrud.get_user_profile(current_user.id)
+            user_profile =  await usercrud.get_user_profile(current_user.id)
             extension = file.filename.split('.')[-1]
-            file_name = current_user.id + "." +extension
+            file_name = str(uuid.uuid1())+ "." +extension
             
-            
-            with open(imgconfig.IMG_SAVED_PATH + file_name , "wb") as myfile:
-                    content = await file.read()
-                    myfile.write(content)
-                    myfile.close()
-            resize_image(file_name)
             op_path = "profile/"+file_name
-            file_path = imgconfig.IMG_SAVED_PATH + file_name
-            if os.path.exists(file_path):
-                print(f"File Created at {file_path}")
-                bucket_session.upload_file(file_path,op_path,ExtraArgs={'ContentType': f"image/{extension}", 'ACL': "public-read"} )
-                cdn_path = "https://riri.prixacdn.net/"+op_path
-                await usercrud.upload_profile_Image(user_id = current_user.id,profile_Image = cdn_path)
-                os.remove(file_path)
+            content = await file.read()
+            s3.Object(BUCKET,op_path).put(Body=content)
+
+
+            cdn_path = "https://riri.prixacdn.net/"+op_path
+            await usercrud.upload_profile_Image(user_id = current_user.id,profile_Image = cdn_path)
+            # os.remove(file_path)
 
             return cdn_path
 
