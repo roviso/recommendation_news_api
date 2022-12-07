@@ -67,13 +67,15 @@ async def get_comment_liked(comment_id: str,async_session: Session = Depends(dat
             }
 
 
-@router.get('/get_article_comments', response_model=List[comments_schema.GetComments])
+@router.get('/get_article_comments', )
+# response_model=List[comments_schema.GetComments])
 async def get_article_comments(article_id: str,current_user: user_model.User = Depends(get_current_user)):
     res = []
     async with async_session() as session:
         async with session.begin():
             comments = Comments(session)
             all_comments = await comments.get_comments_by_article(article_id)
+            print(all_comments)
             return all_comments
 
     
