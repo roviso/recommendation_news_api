@@ -96,7 +96,7 @@ async def upload_profile_Image(current_user: user_model.User = Depends(get_curre
             return cdn_path
 
 
-@router.post('/update_profile', response_model=profile_schema.UserProfile)
+@router.patch('/update_profile', response_model=profile_schema.UserProfile)
 async def update_profile(user_info: user_schema.EditProfile , async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
