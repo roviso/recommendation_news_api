@@ -104,6 +104,12 @@ async def upload_profile_Image(current_user: user_model.User = Depends(get_curre
 
 @router.patch('/update_profile', response_model=profile_schema.UserProfile)
 async def update_profile(user_info: user_schema.EditProfile , async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+    if not user_info.username or not user_info.first_name or not user_info.last_name:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Username, Firstname or Lastname is missing",
+            headers={"WWW-Authenticate": "Basic"},
+        )
     async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
