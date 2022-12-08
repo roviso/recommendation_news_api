@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import update, delete
+from sqlalchemy import update, delete, asc
 from sqlalchemy.future import select
 # from schemas import article_schema
 from models import user_model, author_model, article_model, comments_model
@@ -26,7 +26,7 @@ class Comments():
         return result
 
     async def get_comments_by_article(self, article_id: str, user_id: str):
-        query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id).order_by(comments_model.Comments.date_of_comment.desc())
+        query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id).order_by(asc(comments_model.Comments.date_of_comment))
         results = await self.db_session.execute(query)
         commented_articles = results.scalars().all()
         for comment in commented_articles:

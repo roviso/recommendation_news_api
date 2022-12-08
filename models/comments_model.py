@@ -49,7 +49,7 @@ class Replies(Base):
     reply = Column(String)
     likes = Column(Integer)
 
-    replied_user = relationship("User", back_populates="replied_comments")
+    replied_user = relationship("User", back_populates="replied_comments",lazy='selectin')
     replied_comment = relationship("Comments", back_populates="comment_replies")
 
     replies_liked_by = relationship("UserRepliesLikes", back_populates="replies_likes")

@@ -64,10 +64,11 @@ class CommentedUser(BaseModel):
 
 class CommentReplies(BaseModel):
     id: str 
-    user_id: str 
+    # user_id: str 
     reply: str 
     date_of_replies: datetime 
     likes: int
+    replied_user: Optional[CommentedUser]
 
     class Config:
         orm_mode = True
