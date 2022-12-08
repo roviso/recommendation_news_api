@@ -83,7 +83,7 @@ class Comments():
         new_comment = comments_model.Comments(id = comment_id, user_id = user.id, article_id= article.id,date_of_comment =date_of_comment , comments = article_commented.comment, likes = likes)
         self.db_session.add(new_comment)
         await self.db_session.flush()
-        await self.articledb.update_comments(article.id)
+        await self.articledb.update_comments(article.id,article_commented.user_id)
         return JSONResponse(status_code=status.HTTP_201_CREATED, content="Comment Successfull")
 
 

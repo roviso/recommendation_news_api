@@ -154,11 +154,11 @@ class ArticleCrud():
 
     
 
-    async def update_comments(self,  article_id: str,):
+    async def update_comments(self,  article_id: str,user_id:str):
         article = await self.get_article_by_id(article_id)
         # article = article._mapping.Article
         commentdb = Comments(self.db_session)
-        total_comments = len(await commentdb.get_comments_by_article(article_id))
+        total_comments = len(await commentdb.get_comments_by_article(article_id, user_id))
         q = update(Article).where(Article.id == article_id)
         q = q.values(total_comments=total_comments)
         q.execution_options(synchronize_session="fetch")
