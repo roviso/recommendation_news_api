@@ -98,7 +98,7 @@ class Comments():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
 
         
-        comment = await self.get_comment_by_id(comment_like.comment_id)
+        comment = await self.get_comment_by_id(comment_like.comment_id,comment_like.user_id)
         if not comment:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Comment not Found")
 
@@ -118,10 +118,10 @@ class Comments():
 
     
     async def update_replies(self, comment_id: str, total_replies : int):
-        comment = await self.get_comment_by_id(comment_id)
+        # comment = await self.get_comment_by_id(comment_id,user_id)
         # comment = comment._mapping.Comments
 
-        q = update(comments_model.Comments).where(comments_model.Comments.id == comment.id)
+        q = update(comments_model.Comments).where(comments_model.Comments.id == comment_id)
         q = q.values(totalreplies=total_replies)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
