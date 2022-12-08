@@ -17,6 +17,7 @@ class GetUserArticleLikes(BaseModel):
 class LikedUser(BaseModel):
     id: str 
     username: str 
+    profile_Image: Optional[str]
     # registered: bool
 
     class Config:

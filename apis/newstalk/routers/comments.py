@@ -67,8 +67,7 @@ async def get_comment_liked(comment_id: str,async_session: Session = Depends(dat
             }
 
 
-@router.get('/get_article_comments', )
-# response_model=List[comments_schema.GetComments])
+@router.get('/get_article_comments',  response_model=List[comments_schema.GetComments])
 async def get_article_comments(article_id: str,current_user: user_model.User = Depends(get_current_user)):
     res = []
     async with async_session() as session:

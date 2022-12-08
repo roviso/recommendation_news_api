@@ -61,7 +61,8 @@ async def get_likes_by_article(article_id: str, async_session: Session = Depends
 
             liked_users = [likes_schema.LikedUser(
                 id = liked_user.id,
-                username = liked_user.username
+                username = liked_user.username,
+                profile_Image= liked_user.profile_Image
             ) for liked_user in all_liked_user]
 
             response = likes_schema.GetUserArticleLikesResponse(
