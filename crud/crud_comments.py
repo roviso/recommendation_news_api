@@ -25,10 +25,17 @@ class Comments():
         result = results.scalars().one()
         return result
 
-    async def get_comments_by_article(self, article_id: str):
+    async def get_comments_by_article(self, article_id: str, user_id: str):
         query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id).order_by(comments_model.Comments.date_of_comment.desc())
         results = await self.db_session.execute(query)
-        return results.scalars().all()
+        commented_articles = results.scalars().all()
+        for comment in commented_articles:
+            isliked = await self.check_comment_likes(user_id,comment.id)
+            if isliked:
+                setattr(comment,'isliked',True)
+            else:
+                setattr(comment,'isliked',False)
+        return commented_articles
 
 
     async def check_comment_likes(self, user_id: str, comment_id:str):

@@ -2,7 +2,7 @@ from typing import List
 from pydantic import BaseModel
 from typing import Optional
 from schemas import user_schema
-from datetime import date
+from datetime import date, datetime
 
 
 # class GetComment(BaseModel):
@@ -66,7 +66,7 @@ class CommentReplies(BaseModel):
     id: str 
     user_id: str 
     reply: str 
-    date_of_replies: date 
+    date_of_replies: datetime 
     likes: int
 
     class Config:
@@ -74,8 +74,9 @@ class CommentReplies(BaseModel):
 
 class GetComments(BaseModel):
     id: str 
-    user_id: str 
-    date_of_comment: date 
+    # user_id: str 
+    isliked: bool
+    date_of_comment: datetime 
     totalreplies: Optional[str] = None
     # article_id: str 
     likes: int 
