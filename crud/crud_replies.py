@@ -64,7 +64,7 @@ class Replies():
         if not user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such User Found")
             
-        comment = await self.commentsdb.get_comment_by_id(replies_comment.comment_id)
+        comment = await self.commentsdb.get_comment_by_id(replies_comment.comment_id,replies_comment.user_id)
 
         if not comment:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No such Comment Found")
