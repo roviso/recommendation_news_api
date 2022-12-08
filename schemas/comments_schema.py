@@ -76,7 +76,7 @@ class CommentReplies(BaseModel):
 class GetComments(BaseModel):
     id: str 
     # user_id: str 
-    isliked: bool
+    isliked:  Optional[bool]
     date_of_comment: datetime 
     totalreplies: Optional[str] = None
     # article_id: str 

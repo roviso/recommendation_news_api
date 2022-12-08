@@ -19,11 +19,16 @@ class Comments():
         self.userdb = crud_user.UserCrud(db_session)
 
     
-    async def get_comment_by_id(self, comment_id: str):
+    async def get_comment_by_id(self, comment_id: str,user_id: str):
         query = select(comments_model.Comments).where(comments_model.Comments.id == comment_id)
         results = await self.db_session.execute(query)
-        result = results.scalars().one()
-        return result
+        comment = results.scalars().one()
+        isliked = await self.check_comment_likes(user_id,comment.id)
+        if isliked:
+            setattr(comment,'isliked',True)
+        else:
+            setattr(comment,'isliked',False)
+        return comment
 
     async def get_comments_by_article(self, article_id: str, user_id: str):
         query = select(comments_model.Comments).where(comments_model.Comments.article_id == article_id).order_by(asc(comments_model.Comments.date_of_comment))

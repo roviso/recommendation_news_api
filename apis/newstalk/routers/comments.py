@@ -30,12 +30,12 @@ async def comment_article(article_commented_data: comments_schema.CreateComments
             comments = Comments(session)
             return await comments.create_comment(article_commented)
 
-@router.get('/get_comments')
+@router.get('/get_comments',  response_model=comments_schema.GetComments)
 async def get_comment_by_id(comment_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
             comments = Comments(session)
-            return await comments.get_comment_by_id(comment_id)
+            return await comments.get_comment_by_id(comment_id, current_user.id)
 
 @router.post('/like_comment', status_code = status.HTTP_201_CREATED)
 async def like_article_comment(comment_id: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
