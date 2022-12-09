@@ -252,8 +252,8 @@ async def recommend_similar_articles(article_id: str, async_session: Session = D
 
             similar_articles = await articlecrud.get_all_articles_by_id(all_article_list)
 
-    for article in similar_articles:
-        article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+    # for article in similar_articles:
+    #     article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
     return  paginate(similar_articles)
     # return {"item": articles,
@@ -318,8 +318,8 @@ async def web_recommend(async_session: Session = Depends(database.get_session)):
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
             random.shuffle(recommended_articles)
         ## Replacing with redirect url
-        for article in recommended_articles:
-            article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+        # for article in recommended_articles:
+        #     article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
         return  paginate(recommended_articles)
 
@@ -381,8 +381,8 @@ async def recommend_user_articles(current_user: user_model.User = Depends(get_cu
             recommended_articles = await articlecrud.get_all_articles_by_id(recommended_article_list)
             random.shuffle(recommended_articles)
         ## Replacing with redirect url
-        for article in recommended_articles:
-            article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
+        # for article in recommended_articles:
+        #     article.url =  f"http://newstalk.prixa.net/redirect/{article.id}?user_id={user_id}&referrer=from_web"
 
         return  paginate(recommended_articles)
 

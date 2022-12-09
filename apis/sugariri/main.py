@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile,HTTPException,Depends
+from fastapi import FastAPI, File, UploadFile,HTTPException,Depends,status
 import speech_recognition as sr
 import nepali_roman as nr
 from nepali_unicode_converter.convert import Converter
@@ -30,17 +30,24 @@ class suga_request(BaseModel):
         orm_mode = True
 
 
-session = boto3.Session(
-    aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
-    aws_secret_access_key='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',
-)
+# session = boto3.Session(
+#     aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
+#     aws_secret_access_key='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',
+# )
 
-s3 = session.resource('s3')
+# s3 = session.resource('s3')
 BUCKET = "riri.prixacdn.net"
 
-bucket_session = s3.Bucket(BUCKET)
+# bucket_session = s3.Bucket(BUCKET)
 
-
+def init_aws_session():
+    session = boto3.Session(
+                aws_access_key_id='AKIAT2O2SZBBDI4Q3EFJ',
+                aws_secret_access_key='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',
+            )
+    s3 = session.resource('s3')
+    
+    return s3
 
 
 sugaApi = FastAPI(title="Suga-RiRi", openapi_url="/openapi.json")
@@ -89,8 +96,10 @@ def check_and_infer(text: str, voice: str):
     filename =  filename_md5_encodded.hexdigest()
 
     fname = f"output/{filename}.mp3"
+    s3= init_aws_session()
 
     try:
+        
         s3.Object(BUCKET, fname).load()
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
@@ -107,8 +116,9 @@ def check_and_infer(text: str, voice: str):
             return response.json()
         except:
             raise HTTPException(status_code=404, detail="RIRI Server connection error!!!")
-    else:
+    finally:
         # file_exists = True
+        del s3
         print("file already exists in s3 bucket")
         return { 'status': "success",
                 'text':text,
@@ -195,14 +205,26 @@ async def whisper( voice: str, file: UploadFile = File(...), async_session: Sess
 
 
     op_path = "output/"+file.filename
-    if os.path.exists(audio_path):
-        bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
+    s3= init_aws_session()
+    try:
+        if os.path.exists(audio_path):
 
-    if os.path.isfile(audio_path):
-        print(f"removing file: {audio_path}")
-        os.remove(audio_path)
-    else:    ## Show an error ##
-        print("Error: %s file not found" % audio_path)
+            bucket_session = s3.Bucket(BUCKET)
+            bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
+
+        if os.path.isfile(audio_path):
+            print(f"removing file: {audio_path}")
+            os.remove(audio_path)
+        else:    ## Show an error ##
+            print("Error: %s file not found" % audio_path)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Username, Firstname or Lastname is missing",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    finally:
+        del s3
 
     cdn_path = "https://riri.prixacdn.net/"+op_path
 
@@ -229,7 +251,7 @@ async def whisper( voice: str, file: UploadFile = File(...), async_session: Sess
             'result_audio': ""}
     
 
-@sugaApi.post("/translate")
+@sugaApi.post("/translate", response_model = tasks_schema.tasks)
 async def whisper(file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
     try:
         contents = file.file.read()
@@ -245,36 +267,55 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
 
 
     op_path = "output/"+file.filename
-    if os.path.exists(audio_path):
-        bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
+    s3= init_aws_session()
+    try:
+        if os.path.exists(audio_path):
 
-    if os.path.isfile(audio_path):
-        print(f"removing file: {audio_path}")
-        os.remove(audio_path)
-    else:    ## Show an error ##
-        print("Error: %s file not found" % audio_path)
+            bucket_session = s3.Bucket(BUCKET)
+            bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
 
+        if os.path.isfile(audio_path):
+            print(f"removing file: {audio_path}")
+            os.remove(audio_path)
+        else:    ## Show an error ##
+            print("Error: %s file not found" % audio_path)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Username, Firstname or Lastname is missing",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    finally:
+        del s3
+        
     cdn_path = "https://riri.prixacdn.net/"+op_path
 
     task = translate.delay(cdn_path)
 
-    sucess = await wait_until(task.id,20)
+    # sucess = await wait_until(task.id,20)
     
-    if sucess:
-        async with async_session as session:
-            async with session.begin():
-                taskscrud= crud_tasks.TasksCrud(session)
-                task_exists = await taskscrud.check_tasks(task.id)
-                if task_exists:
-                    infer_text = await taskscrud.get_tasks(task.id)
-                    return {'id': task.id,
-                            'status': infer_text.status,
-                            'text':infer_text.result,
-                            'result_audio': cdn_path}
-    return {'id': task.id,
-            'status': "Retrying",
-            'text': "",
-            'result_audio': cdn_path}
+    # if sucess:
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task_exists = await taskscrud.check_tasks(task.id)
+            if task_exists:
+                infer_text = await taskscrud.get_tasks(task.id)
+                return infer_text
+            else:
+                new_task = tasks_model.Tasks(
+                id = task.id, 
+                status = "in_progress",
+                result = ""
+                )
+                await taskscrud.create_tasks(new_task)
+                return new_task
+
+
+    # return {'id': task.id,
+    #         'status': "Retrying",
+    #         'text': "",
+    #         'result_audio': cdn_path}
 
 
 
@@ -301,9 +342,9 @@ async def suga_from_id(sugaid: suga_id  ,async_session: Session = Depends(databa
 
 
 
-@sugaApi.post("/update_tasks")
-async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depends(database.get_session)):
-    async with async_session as session:
+@sugaApi.post("/create_tasks")
+async def create_tasks(task:tasks_schema.tasks):
+    async with async_session() as session:
         async with session.begin():
             taskscrud= crud_tasks.TasksCrud(session)
             new_task = tasks_model.Tasks(
@@ -314,6 +355,26 @@ async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depend
             
             await taskscrud.create_tasks(new_task)
             return new_task
+
+
+@sugaApi.patch("/update_tasks")
+async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task = await taskscrud.check_tasks(task.id)
+            if task:
+                await taskscrud.update_task(task_id=task.id, status=task.status, result=task.result)
+                return task
+            else:
+                new_task = tasks_model.Tasks(
+                id = task.id, 
+                status = task.status,
+                result = task.result
+                )
+                await taskscrud.create_tasks(new_task)
+                return new_task
+
 
 @sugaApi.get("/test_task")
 def test_task():
@@ -335,7 +396,7 @@ async def get_status(task_id: str,):
                 return False
 
 
-@sugaApi.get("/get_tasks/{task_id}")
+@sugaApi.get("/get_tasks/{task_id}", response_model = tasks_schema.tasks)
 async def get_task(task_id: str,async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():

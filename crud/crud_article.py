@@ -39,7 +39,7 @@ class ArticleCrud():
         
 
     async def get_all_articles_by_id(self, article_ids: list) -> List[Article]:
-        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 7)
+        n_days_ago = nepali_datetime.datetime.now() - datetime.timedelta(days = 5)
         # print(n_days_ago.date(),"n_days_ago")
 
         query = select(Article).filter(Article.id.in_(article_ids)).filter(Article.date > str(n_days_ago.date()))

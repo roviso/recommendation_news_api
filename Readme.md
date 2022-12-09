@@ -4,7 +4,7 @@ cd /home/admin/web/newstalk/recommendation_news_api
 <!-- 165.232.184.231:0 - "GET /recommend/train_model HTTP/1.0" 404 Not Found -->
 
 ##TO connect to metabase:
->> systemctl start metabase
+>> sudo systemctl start metabase
 >> ssh -L 1234:localhost:5432 root@165.232.184.231 -N -v -v
 
 

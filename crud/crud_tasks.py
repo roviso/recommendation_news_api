@@ -26,4 +26,14 @@ class TasksCrud():
         result = results.scalars().one()
         return result
 
+    async def update_task(self, task_id: str, status: Optional[str], result: Optional[str]):
+        q = update(tasks_model.Tasks).where(tasks_model.Tasks.id == task_id)
+        if status:
+            q = q.values(status=status)
+        if result:
+            q = q.values(result=result)
+            
+        q.execution_options(synchronize_session="fetch")
+        await  self.db_session.execute(q)
+
     
