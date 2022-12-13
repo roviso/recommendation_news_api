@@ -357,7 +357,7 @@ async def create_tasks(task:tasks_schema.tasks):
             return new_task
 
 
-@sugaApi.patch("/update_tasks")
+@sugaApi.post("/update_tasks")
 async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
