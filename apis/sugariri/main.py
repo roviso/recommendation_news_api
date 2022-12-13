@@ -364,10 +364,12 @@ async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depend
             taskscrud= crud_tasks.TasksCrud(session)
             task_exists = await taskscrud.check_tasks(task.id)
             if task_exists:
-                task = await taskscrud.get_tasks(task.id)
-                await taskscrud.update_task(task_id=task.id, status=task.status, result=task.result)
+                old_task = await taskscrud.get_tasks(task.id)
+                print(f"Updatin task: {task}")
+                await taskscrud.update_task(task_id=old_task.id, status=task.status, result=task.result)
                 return task
             else:
+                print(f"Creating task: {task}")
                 new_task = tasks_model.Tasks(
                 id = task.id, 
                 status = task.status,
