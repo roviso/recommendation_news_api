@@ -26,7 +26,7 @@ async def search_articles(hashtag: str, async_session: Session = Depends(databas
     async with async_session as session:
         async with session.begin():
             keywordcrud = KeywordsCrud(session)
-            tagged_articles = await keywordcrud.search_articles_by_keywords(tag)
+            tagged_articles = await keywordcrud.search_articles_by_keywords(hashtag)
             return paginate(tagged_articles)
 
 
