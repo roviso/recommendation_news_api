@@ -21,15 +21,16 @@ router = APIRouter(
 
 
 
-@router.get('/hashtag/{tag}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
-async def search_articles(tag: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+@router.get('/hashtag', response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def search_articles(hashtag: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
             keywordcrud = KeywordsCrud(session)
             tagged_articles = await keywordcrud.search_articles_by_keywords(tag)
             return paginate(tagged_articles)
 
-@router.get('/author/{author_name}' , response_model = LimitOffsetPage[author_schema.GetAllAuthors])
+
+@router.get('/author' , response_model = LimitOffsetPage[author_schema.GetAllAuthors])
 async def search_author(author_name: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
@@ -40,7 +41,7 @@ async def search_author(author_name: str, async_session: Session = Depends(datab
 
 
 
-@router.get('/user/{user_name}', response_model = LimitOffsetPage[user_schema.SearchUsers])
+@router.get('/user', response_model = LimitOffsetPage[user_schema.SearchUsers])
 async def search_users(user_name: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():

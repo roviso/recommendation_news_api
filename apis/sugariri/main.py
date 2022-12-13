@@ -21,6 +21,7 @@ from celery import shared_task
 import time
 import pathlib
 import os
+from apis.sugariri.routers import tts
 
 class suga_request(BaseModel):
     voice: str 
@@ -52,6 +53,10 @@ def init_aws_session():
 
 sugaApi = FastAPI(title="Suga-RiRi", openapi_url="/openapi.json")
 
+sugaApi.include_router(tts.router)
+
+
+
 url = "https://riri.prixa.net/api/speak/"
 
 
@@ -60,19 +65,6 @@ headers = {
 }
 
 
-
-# def get_audio_text(wavfilepath):
-#     rObject = sr.Recognizer()
-#     wavFile = sr.AudioFile(wavfilepath)
-#     with wavFile as source:
-#         audio = rObject.record(source)
-#     try:
-#         text = rObject.recognize_google(audio, language ='ne-NP')
-#         print("You : ", text)
-#         return text
-#     except:
-#         print("Could not understand your audio, PLease try again !")
-#         return 0
 
 class riri_reponse(BaseModel):
     status: str 
