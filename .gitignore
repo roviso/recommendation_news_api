@@ -18,3 +18,5 @@ tts
 *.dat
 ponicode
 non-potential-topic-word-list.txt
+*.m4a
+*.wav
