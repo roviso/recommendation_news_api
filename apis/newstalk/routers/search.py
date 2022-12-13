@@ -19,7 +19,9 @@ router = APIRouter(
 )
 
 
-@router.get('/{tag}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
+
+
+@router.get('/hashtag/{tag}', response_model=LimitOffsetPage[article_schema.GetAllArticle])
 async def search_articles(tag: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
