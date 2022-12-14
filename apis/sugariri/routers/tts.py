@@ -9,6 +9,7 @@ from crud.crud_article import ArticleCrud
 import html2text
 from bs4 import BeautifulSoup
 import re
+import random
 
 router = APIRouter(
     prefix = "/tts",
@@ -29,6 +30,9 @@ class suga_request(BaseModel):
 def func(value):
     return ''.join(value.splitlines())
 
+
+riri_voices = ['np_rija','np_prasanna']
+
 @router.post("/heading")
 async def heading(suga_request: suga_request, async_session: Session = Depends(database.get_session)):
     article_id = suga_request.id
@@ -37,12 +41,15 @@ async def heading(suga_request: suga_request, async_session: Session = Depends(d
             articleCrud = ArticleCrud(session)
             article = await articleCrud.get_article_by_id(article_id)
             text = article.heading
+            voice = random.choice(riri_voices)
 
             if not nr.is_devanagari(text):
                 converter = Converter()
                 text = converter.convert(text)
 
-            return check_and_infer(text, suga_request.voice)
+            # return check_and_infer(text, suga_request.voice)
+            return check_and_infer(text, voice)
+            
 
 
 @router.post("/content")
