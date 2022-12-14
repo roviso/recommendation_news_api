@@ -29,7 +29,7 @@ def check_and_infer(text: str, voice: str):
     filename_md5_encodded = hashlib.md5(ntext.encode())
     filename =  filename_md5_encodded.hexdigest()
 
-    fname = f"output/{filename}.wav"
+    fname = f"output/{filename}.mp3"
     s3= init_aws_session()
 
     try:
