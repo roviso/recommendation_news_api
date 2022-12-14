@@ -10,7 +10,7 @@ import database
 from fastapi_pagination import paginate,LimitOffsetPage
 from models import user_model
 from apis.newstalk.routers.user import get_current_user
-
+from crud import crud_label
 
 
 router = APIRouter(
@@ -21,7 +21,7 @@ router = APIRouter(
 
 
 
-@router.get('/hashtag', response_model=LimitOffsetPage[article_schema.GetAllArticle])
+@router.get('/hashtag', status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
 async def search_articles(hashtag: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
@@ -30,7 +30,18 @@ async def search_articles(hashtag: str, async_session: Session = Depends(databas
             return paginate(tagged_articles)
 
 
-@router.get('/author' , response_model = LimitOffsetPage[author_schema.GetAllAuthors])
+
+@router.get("/label", status_code = 200, response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def get_label_articles(label_id: int,current_user: user_model.User = Depends(get_current_user)):
+    async with async_session() as session:
+        async with session.begin():
+            labelcrud = crud_label.LabelCrud(session)
+            articles =  await labelcrud.get_label_articles(label_id)
+            return paginate(articles)
+            
+
+
+@router.get('/author', status_code = 200 , response_model = LimitOffsetPage[author_schema.GetAllAuthors])
 async def search_author(author_name: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
@@ -41,7 +52,7 @@ async def search_author(author_name: str, async_session: Session = Depends(datab
 
 
 
-@router.get('/user', response_model = LimitOffsetPage[user_schema.SearchUsers])
+@router.get('/user', status_code = 200, response_model = LimitOffsetPage[user_schema.SearchUsers])
 async def search_users(user_name: str, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
