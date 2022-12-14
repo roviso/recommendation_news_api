@@ -87,7 +87,7 @@ def check_and_infer(text: str, voice: str):
     filename_md5_encodded = hashlib.md5(ntext.encode())
     filename =  filename_md5_encodded.hexdigest()
 
-    fname = f"output/{filename}.wav"
+    fname = f"output/{filename}.mp3"
     s3= init_aws_session()
 
     try:
@@ -182,104 +182,74 @@ async def wait_until(task_id, timeout, period=0.25,):
     return False
 
 
-@sugaApi.post("/whisper")
-async def whisper( voice: str, file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
+@sugaApi.post("/whisper", response_model = tasks_schema.tasks)
+async def whisper(file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
+    op_path = "sr/"+file.filename
+    s3= init_aws_session()
+
     try:
         contents = file.file.read()
-        audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
-        with open(audio_path, 'wb') as f:
-            f.write(contents)
-    except Exception:
-        return {"message": "There was an error uploading the file"}
-
-    finally:
-        file.file.close()
-
-
-    op_path = "output/"+file.filename
-    s3= init_aws_session()
-    try:
-        if os.path.exists(audio_path):
-
-            bucket_session = s3.Bucket(BUCKET)
-            bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
-
-        if os.path.isfile(audio_path):
-            print(f"removing file: {audio_path}")
-            os.remove(audio_path)
-        else:    ## Show an error ##
-            print("Error: %s file not found" % audio_path)
+        s3.Object(BUCKET,op_path).put(Body=contents)
+        # audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
+        # with open(audio_path, 'wb') as f:
+        #     f.write(contents)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username, Firstname or Lastname is missing",
+            detail="Error Uploading file",
             headers={"WWW-Authenticate": "Basic"},
         )
     finally:
+        file.file.close()
         del s3
+
 
     cdn_path = "https://riri.prixacdn.net/"+op_path
 
     task = srec2.delay(cdn_path)
 
-    sucess = await wait_until(task.id,20)
-    
-    if sucess:
-        async with async_session as session:
-            async with session.begin():
-                taskscrud= crud_tasks.TasksCrud(session)
-                task_exists = await taskscrud.check_tasks(task.id)
-                if task_exists:
-                    infer_text = await taskscrud.get_tasks(task.id)
-                    result = check_and_infer(infer_text.result, voice)
-                    print(result,5555555555555555555)
-                    return {'id': task.id,
-                            'status': result['status'],
-                            'text':result['text'],
-                            'result_audio': result['result_audio']}
-    return {'id': task.id,
-            'status': "Retrying",
-            'text': "",
-            'result_audio': ""}
-    
+    # sucess = await wait_until(task.id,20)
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task_exists = await taskscrud.check_tasks(task.id)
+            if task_exists:
+                infer_text = await taskscrud.get_tasks(task.id)
+                return infer_text
+            else:
+                new_task = tasks_model.Tasks(
+                id = task.id, 
+                status = "in_progress",
+                result = ""
+                )
+                await taskscrud.create_tasks(new_task)
+                return new_task
+
+
 
 @sugaApi.post("/translate", response_model = tasks_schema.tasks)
 async def whisper(file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
-    try:
-        contents = file.file.read()
-        
-        audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
-        with open(audio_path, 'wb') as f:
-            f.write(contents)
-    except Exception:
-        return {"message": "There was an error uploading the file"}
-
-    finally:
-        file.file.close()
-
-
     op_path = "output/"+file.filename
     s3= init_aws_session()
     try:
-        if os.path.exists(audio_path):
-
-            bucket_session = s3.Bucket(BUCKET)
-            bucket_session.upload_file(audio_path,op_path,ExtraArgs={'ContentType': "audio/wav", 'ACL': "public-read"} )
-
-        if os.path.isfile(audio_path):
-            print(f"removing file: {audio_path}")
-            os.remove(audio_path)
-        else:    ## Show an error ##
-            print("Error: %s file not found" % audio_path)
+        contents = file.file.read()
+        s3.Object(BUCKET,op_path).put(Body=contents)
+        # audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
+        # with open(audio_path, 'wb') as f:
+        #     f.write(contents)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username, Firstname or Lastname is missing",
+            detail="Error Uploading file",
             headers={"WWW-Authenticate": "Basic"},
         )
+
     finally:
+        file.file.close()
         del s3
-        
+
+
+    
     cdn_path = "https://riri.prixacdn.net/"+op_path
 
     task = translate.delay(cdn_path)
@@ -302,13 +272,6 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
                 )
                 await taskscrud.create_tasks(new_task)
                 return new_task
-
-
-    # return {'id': task.id,
-    #         'status': "Retrying",
-    #         'text': "",
-    #         'result_audio': cdn_path}
-
 
 
 
