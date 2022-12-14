@@ -47,15 +47,15 @@ async def trending_keywords():
 
 @router.get('/top_articles', status_code = 200 , response_model= LimitOffsetPage[article_schema.GetAllArticle])
 async def get_top_articles(n_days: int,offset: int = 0, limit: int = Query(default=50),current_user: user_model.User = Depends(get_current_user)) -> List[Author]:
-    cache_exists = await topnewscache.check_news_exists(limit + offset)
-    if not bool(cache_exists):
-        async with async_session() as session:
-            async with session.begin():
-                latestcrud = LatestCrud(session)
-                top_articles = await latestcrud.get_top_article(n_days)
-                await topnewscache.cache_news(top_articles)
+    # cache_exists = await topnewscache.check_news_exists(limit + offset)
+    # if not bool(cache_exists):
+    async with async_session() as session:
+        async with session.begin():
+            latestcrud = LatestCrud(session)
+            top_articles = await latestcrud.get_top_article(n_days)
+            # await topnewscache.cache_news(top_articles)
     
-    top_articles = await topnewscache.read_all_news_from_cache(0, limit + offset)
+    # top_articles = await topnewscache.read_all_news_from_cache(0, limit + offset)
     return paginate(top_articles)
 
 
