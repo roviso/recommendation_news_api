@@ -21,3 +21,4 @@ lxml
 html5lib
 nepali
 pandas
+googletrans==3.1.0a0

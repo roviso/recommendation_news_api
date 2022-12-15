@@ -376,7 +376,9 @@ async def chat_from_id(sugaid: suga_id  ,async_session: Session = Depends(databa
             if task:
                 task = await taskscrud.get_tasks(sugaid.id)
                 riri_ans = get_dialogflow_result(task.result)
-                result = check_and_infer(riri_ans, sugaid.voice)
+                translator = Translator()
+                ne_result = translator.translate(result, src='en', dest='ne')
+                result = check_and_infer(ne_result, sugaid.voice)
                 return {'id': task.id,
                             'status': result['status'],
                             'text':result['text'],
