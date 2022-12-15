@@ -22,7 +22,7 @@ import time
 import pathlib
 import os
 from apis.sugariri.routers import tts
-
+from apis.sugariri.utils import detect_intent_texts
 class suga_request(BaseModel):
     voice: str 
     text: str
@@ -248,7 +248,6 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
         file.file.close()
         del s3
 
-
     
     cdn_path = "https://riri.prixacdn.net/"+op_path
 
@@ -272,6 +271,40 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
                 )
                 await taskscrud.create_tasks(new_task)
                 return new_task
+
+
+
+
+@sugaApi.post("/chat")
+async def chat(taskid: str  ,async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task = await taskscrud.check_tasks(taskid)
+            if task:
+                task = await taskscrud.get_tasks(taskid)
+
+                project_id = "riri-ynri"
+                session_id = "123456789" 
+                language_code="en-US" 
+                texts= [task.result]
+
+                print(f"texts is: {texts}")
+
+                result = detect_intent_texts(
+                    project_id, session_id, texts, language_code
+                )
+                # result = check_and_infer(task.result, sugaid.voice)
+                return {'id': task.id,
+                        'status': 'sucess',
+                        'text':result,
+                        }
+
+            else:          
+                return {'id': taskid,
+                        'status': "Does Not Exists",
+                        'text': "",
+                        }
 
 
 
@@ -372,6 +405,11 @@ def tts(suga_request: suga_request):
         text = converter.convert(text)
 
     return check_and_infer(text, suga_request.voice)
+
+
+
+
+
 
     # ntext = text + '_' + suga_request.voice
 
