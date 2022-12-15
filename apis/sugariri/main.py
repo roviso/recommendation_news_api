@@ -369,6 +369,8 @@ async def suga_from_id(sugaid: suga_id  ,async_session: Session = Depends(databa
 
 @sugaApi.post("/chatid")
 async def chat_from_id(sugaid: suga_id  ,async_session: Session = Depends(database.get_session)):
+    translator = Translator()
+    converter = Converter()
     async with async_session as session:
         async with session.begin():
             taskscrud= crud_tasks.TasksCrud(session)
@@ -376,8 +378,8 @@ async def chat_from_id(sugaid: suga_id  ,async_session: Session = Depends(databa
             if task:
                 task = await taskscrud.get_tasks(sugaid.id)
                 riri_ans = get_dialogflow_result(task.result)
-                translator = Translator()
                 ne_result = translator.translate(riri_ans, src='en', dest='ne')
+                ne_result = converter.convert(ne_result)
                 result = check_and_infer(ne_result.text, sugaid.voice)
                 return {'id': task.id,
                             'status': result['status'],
