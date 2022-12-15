@@ -23,6 +23,11 @@ import pathlib
 import os
 from apis.sugariri.routers import tts
 from apis.sugariri.utils import detect_intent_texts
+
+from googletrans import Translator
+
+
+
 class suga_request(BaseModel):
     voice: str 
     text: str
@@ -307,6 +312,39 @@ async def chat(taskid: str  ,async_session: Session = Depends(database.get_sessi
                         }
 
 
+def get_dialogflow_result(text):
+    project_id = "riri-ynri"
+    session_id = "123456789" 
+    language_code="en-US" 
+    texts= [text]
+
+    print(f"texts is: {texts}")
+
+    result = detect_intent_texts(
+        project_id, session_id, texts, language_code
+    )
+    return result
+
+
+@sugaApi.post("/chat/text")
+async def chatriri(text: str ):
+    result = get_dialogflow_result(text)
+    # result = check_and_infer(task.result, sugaid.voice)
+    return {'you': text,
+        'riri':result,
+            }
+
+
+@sugaApi.post("/chat/text/ne")
+async def chatririne(text: str ):
+    result = get_dialogflow_result(text)
+    translator = Translator()
+    ne_result = translator.translate(result, src='en', dest='ne')
+    # result = check_and_infer(task.result, sugaid.voice)
+    return {'you': text,
+        'riri':ne_result.text,
+            }
+
 
 @sugaApi.post("/sugaid")
 async def suga_from_id(sugaid: suga_id  ,async_session: Session = Depends(database.get_session)):
@@ -317,6 +355,28 @@ async def suga_from_id(sugaid: suga_id  ,async_session: Session = Depends(databa
             if task:
                 task = await taskscrud.get_tasks(sugaid.id)
                 result = check_and_infer(task.result, sugaid.voice)
+                return {'id': task.id,
+                            'status': result['status'],
+                            'text':result['text'],
+                            'result_audio': result['result_audio']}
+
+            else:          
+                return {'id': sugaid.id,
+                        'status': "Does Not Exists",
+                        'text': "",
+                        'result_audio': ""}
+
+
+@sugaApi.post("/chatid")
+async def chat_from_id(sugaid: suga_id  ,async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task = await taskscrud.check_tasks(sugaid.id)
+            if task:
+                task = await taskscrud.get_tasks(sugaid.id)
+                riri_ans = get_dialogflow_result(task.result)
+                result = check_and_infer(riri_ans, sugaid.voice)
                 return {'id': task.id,
                             'status': result['status'],
                             'text':result['text'],
