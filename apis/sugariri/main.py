@@ -213,7 +213,7 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
 
     task = srec2.delay(cdn_path)
 
-    # sucess = await wait_until(task.id,20)
+    # success = await wait_until(task.id,20)
     async with async_session as session:
         async with session.begin():
             taskscrud= crud_tasks.TasksCrud(session)
@@ -258,9 +258,9 @@ async def whisper(file: UploadFile = File(...), async_session: Session = Depends
 
     task = translate.delay(cdn_path)
 
-    # sucess = await wait_until(task.id,20)
+    # success = await wait_until(task.id,20)
     
-    # if sucess:
+    # if success:
     async with async_session as session:
         async with session.begin():
             taskscrud= crud_tasks.TasksCrud(session)
@@ -301,13 +301,13 @@ async def chat(taskid: str  ,async_session: Session = Depends(database.get_sessi
                 )
                 # result = check_and_infer(task.result, sugaid.voice)
                 return {'id': task.id,
-                        'status': 'sucess',
+                        'status': 'success',
                         'text':result,
                         }
 
             else:          
                 return {'id': taskid,
-                        'status': "Does Not Exists",
+                        'status': "does_not_exist",
                         'text': "",
                         }
 
@@ -434,7 +434,7 @@ async def update_tasks(task:tasks_schema.tasks,  async_session: Session = Depend
 @sugaApi.get("/test_task")
 def test_task():
     url = 'https://newstalk.prixa.net/api/sugariri/update_tasks'
-    payload={'id': 'test_id', 'status': 'sucess', 'result': 'transcription'}
+    payload={'id': 'test_id', 'status': 'success', 'result': 'transcription'}
     response = requests.request("POST", url, json=payload)
     return response.text
 
