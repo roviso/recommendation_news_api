@@ -73,7 +73,7 @@ def add_column():
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
-        add_column()
+        # add_column()
         await conn.run_sync(Base.metadata.create_all)
         await recommend.startup_event()
 
