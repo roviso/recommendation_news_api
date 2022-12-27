@@ -203,3 +203,25 @@ async def sign_up(user_info: user_schema.RegisterUser,current_user: user_model.U
             access_token =generate_access_token(current_user.id)
 
     return access_token
+
+
+
+@router.post("/deactivate", response_model = token_schema.Token)
+async def deactivate(logout_user: token_schema.CreateUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= crud_user.UserCrud(session)
+            await usercrud.deactivate_user(current_user.id)
+    access_token = await create_user(logout_user,async_session)
+    return access_token
+
+
+
+@router.get("/delete", response_model = token_schema.Token)
+async def delete(logout_user: token_schema.CreateUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= crud_user.UserCrud(session)
+            await usercrud.delete_user(current_user.id)
+    access_token = await create_user(logout_user,async_session)
+    return access_token
