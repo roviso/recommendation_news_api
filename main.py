@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from database import engine, Base
+from database import engine,Base, db_engine
+# from sqlalchemy.ext.declarative import declarative_base
 # from fastapi.logger import logger
 from apis.sugariri.main import sugaApi
 from apis.newstalk.main import newstalkApi
@@ -42,14 +43,54 @@ app.mount("/api/newstalk", newstalkApi)
 
 # app.mount("/api/tts", ttsApi)
 
+# async def add_column(db_engine):
+#     async with db_engine.acquire() as connection:
+#         # Start a transaction
+#         trans = await connection.begin()
+#         # Add the new column to the table
+#         await connection.execute(
+#             "ALTER TABLE user ADD COLUMN status STRING DEFAULT 'active'"
+#         )
+#         # Commit the transaction
+#         await trans.commit()
+
+def add_column():
+    connection = db_engine.connect()
+    # Base = declarative_base()
+    trans = connection.begin()
+    query = f"ALTER TABLE public.user ADD COLUMN status VARCHAR(255) DEFAULT 'active'" 
+    # query = f"ALTER TABLE clicks DROP status"
+    # connection.execute(query)
+
+    connection.execute(
+    # 'ALTER TABLE user ADD COLUMN status VARCHAR DEFAULT "active" ;'
+        query
+    )
+    trans.commit()
+    connection.close()
+
+
 @app.on_event("startup")
 async def startup():
-    # create db tables
     async with engine.begin() as conn:
-        #await conn.run_sync(Base.metadata.drop_all)
-        # db_loader.load_model_data()
+        add_column()
         await conn.run_sync(Base.metadata.create_all)
         await recommend.startup_event()
+
+
+    
+    #     #await conn.run_sync(Base.metadata.drop_all)
+    #     # db_loader.load_model_data()
+    #     # await conn.run_sync(Base.metadata.drop_all(tables=['user']))
+        
+    #     # trans = await conn.begin()
+    #     await conn.execute(
+    #         "ALTER TABLE user ADD COLUMN status STRING DEFAULT 'active"
+    #     )
+    #     await conn.commit()
+    
+
+        
 
 # app.include_router(scrap.router)
 # app.include_router(source.router)

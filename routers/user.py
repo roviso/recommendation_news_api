@@ -15,14 +15,21 @@ from helper.username_generator import username_generator
 from fastapi_pagination import Page, Params, paginate, LimitOffsetPage
 from collections import Counter
 import operator
-
+from passlib.context import CryptContext
 
 router = APIRouter(
     prefix = "/user",
     tags=['user']
 )
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+    
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
@@ -79,7 +86,8 @@ async def create_user(device_id: str, device_name: str,ip_address: str, async_se
                 device_id = device_id,
                 device_name = device_name,
                 ip_address = ip_address,
-                registered = False
+                registered = False,
+                status = 'active'
             )
         async with async_session as session:
             async with session.begin():
@@ -98,6 +106,31 @@ async def read_user(current_user: user_schema.User = Depends(), async_session: S
             usercrud= UserCrud(session)
             return await usercrud.get_user(current_user.id)
 
+
+@router.get("/activate_user")
+async def activate_user(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.activate_user(user_id)
+
+
+@router.get("/deactivate_user")
+async def deactivate_user(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.deactivate_user(user_id)
+
+@router.get("/delete_user")
+async def delete_user(user_id: str, async_session: Session = Depends(database.get_session)):
+    # return UserCrud.get_user(user_id=current_user.id)\
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            return await usercrud.delete_user(user_id)
 
 @router.get("/remove_user")
 async def remove_user(user_id: str, async_session: Session = Depends(database.get_session)):
@@ -151,14 +184,67 @@ async def read_all_nonregistered_user(async_session: Session = Depends(database.
             users_list =  await usercrud.get_all_nonregistered_user()
             return paginate(users_list)
 
-
-        
-@router.post('/register_user', response_model=user_schema.RegisterUser)
-async def register_user(user_info: user_schema.RegisterUser, async_session: Session = Depends(database.get_session)):
+@router.get("/get_all_active_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
+async def get_all_active_user(async_session: Session = Depends(database.get_session)):
     async with async_session as session:
         async with session.begin():
             usercrud= UserCrud(session)
-            await usercrud.register_user(user_id= user_info.id, username=user_info.username, password = user_info.password,
+            users_list =  await usercrud.get_all_active_user()
+            return paginate(users_list)
+
+@router.get("/get_all_deactivated_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
+async def get_all_deactivated_user(async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            users_list =  await usercrud.get_all_deactivated_user()
+            return paginate(users_list)
+
+@router.get("/get_all_deleted_user", response_model = LimitOffsetPage[user_schema.SearchUsers])
+async def get_all_deactivated_user(async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            users_list =  await usercrud.get_all_deleted_user()
+            return paginate(users_list)
+
+@router.get("/get_all_registered_user", response_model = LimitOffsetPage[user_schema.GetRegisteredUsers])
+async def read_all_registered_user(async_session: Session = Depends(database.get_session)):
+    async with async_session as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            users_list =  await usercrud.get_all_registered_user()
+            return paginate(users_list)
+
+        
+@router.post('/register_user', response_model=user_schema.RegisterUser)
+async def register_user(user_id:str, user_info: user_schema.RegisterUser):
+    if not user_info.email or not user_info.first_name or not user_info.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email, Firstname or Password is missing",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    
+
+    async with async_session() as session:
+        async with session.begin():
+            usercrud= UserCrud(session)
+            hashed_password = get_password_hash(user_info.password)
+            user = await usercrud.get_user(user_id)
+
+            email_exists = await usercrud.check_user_exists_by_email(user_info.email)
+
+            if email_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Email already exists.",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+            if not user_info.username:
+                user_info.username = user.username
+            new_device_id = user.device_id + "_" + user_id
+            await usercrud.register_user(user_id= user_id,device_id = new_device_id ,username=user_info.username, password = hashed_password,
                 first_name = user_info.first_name,last_name =user_info.last_name,email = user_info.email)
     
     return user_info

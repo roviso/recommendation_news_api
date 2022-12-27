@@ -9,6 +9,7 @@ from schemas import user_schema, likes_schema
 from crud import crud_article, crud_author, crud_user
 import secrets
 from models  import author_model,article_model,user_model
+from sqlalchemy import and_
 
 
 
@@ -30,7 +31,7 @@ class Likes():
             user_model.UserArticleLikes
         ).join(
             article_model.Article
-        ).filter(article_model.Article.id == article_id)
+        ).filter(and_(article_model.Article.id == article_id, user_model.User.status == 'active'))
         # .where(user_model.UserArticleLikes.user_id == user_id)
         results = await self.db_session.execute(query)
         return results.scalars().all()

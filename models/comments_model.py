@@ -9,16 +9,16 @@ class Comments(Base):
 
     id = Column(String, primary_key =True, index=True)
 
-    user_id = Column(ForeignKey('user.id'))
-    article_id = Column(ForeignKey('article.id'))
+    user_id = Column(ForeignKey('user.id', onupdate="CASCADE"))
+    article_id = Column(ForeignKey('article.id', onupdate="CASCADE"))
     date_of_comment = Column(DateTime)
     likes = Column(Integer)
-    totalreplies = Column(Integer)
+    totalreplies = Column(Integer) 
 
     comments = Column(String)
 
 
-    commented_user = relationship("User", back_populates="commented_articles",lazy='selectin')
+    commented_user = relationship("User",backref='comments', passive_deletes=True,lazy='selectin')
     commented_article = relationship("Article", back_populates="article_comments")
 
     

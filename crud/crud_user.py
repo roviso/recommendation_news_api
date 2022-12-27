@@ -1,19 +1,31 @@
 from re import L
 from typing import List, Optional
 from sqlalchemy.orm import Session,with_polymorphic,selectinload,joinedload,subqueryload
-from sqlalchemy import update, delete
+from sqlalchemy import update, delete,and_
 from sqlalchemy.future import select
 # from schemas import article_schema
-from models.user_model import User,RegisteredUser, UserArticleBookmarks,NonRegisteredUser
+from models.user_model import User,RegisteredUser, UserArticleBookmarks,NonRegisteredUser, DeactivatedUser, DeletedUser
 from models import article_model, user_model, comments_model
 from crud import crud_follow
+from datetime import datetime  
+import random
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class UserCrud():
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
     async def create_user(self, user: NonRegisteredUser):
         self.db_session.add(user)
+        await self.db_session.flush()
+    
+    async def create_deactivated_user(self, deactivated_user: DeactivatedUser):
+        self.db_session.add(deactivated_user)
+        await self.db_session.flush()
+
+    async def create_deleted_user(self, deleted_user: DeletedUser):
+        self.db_session.add(deleted_user)
         await self.db_session.flush()
 
 
@@ -36,8 +48,10 @@ class UserCrud():
             q = q.values(last_name=last_name)
         if email:
             q = q.values(email=email)
+        q = q.values(status = 'active')
         q.execution_options(synchronize_session="fetch")
         await self.db_session.execute(q)
+        await self.db_session.commit()
 
     
     async def update_profile_pic(self, user_id: str, profile_Image_path: str):
@@ -45,30 +59,129 @@ class UserCrud():
         q = q.values(profile_Image=profile_Image_path)
         q.execution_options(synchronize_session="fetch")
         await self.db_session.execute(q)
+        await self.db_session.commit()
 
 
 
     async def get_user(self,user_id: str) -> User:
-        query = select(User).where(User.id == user_id)
+        query = select(User).filter(User.status == 'active').where(User.id == user_id)
         results = await self.db_session.execute(query)
         result = results.scalars().one()
         # (result,) = results.one()
         return result
 
 
-    async def remove_user(self, user_id: str):
-        query = delete(user_model.User).where(user_model.User.id == user_id)
-        await self.db_session.execute(query)
+    # async def remove_user(self, user_id: str):
+    #     query = delete(user_model.User).where(user_model.User.id == user_id)
+    #     await self.db_session.execute(query)
+
+    async def activate_user(self, user_id: str):
+        deactivated_user = await self.get_deactivated_user(user_id)
+
+
+        q = update(RegisteredUser).where(RegisteredUser.id == user_id)
+        q = q.values(username = deactivated_user.username)
+        q = q.values(profile_Image = deactivated_user.profile_Image)
+
+        q = q.values(status = 'active')
+        q.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(q)
+
+        l = update(DeactivatedUser).where(and_(DeactivatedUser.user_id == user_id, DeactivatedUser.activated == False))
+        l = l.values(activated = True)
+        l = l.values(date_of_activation = datetime.now())
+        l.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(l)
+
+
+        await self.db_session.commit()
+
+
+    async def deactivate_user(self, user_id: str):
+        user = await self.get_registerd_user(user_id)
+        deactivate_user = DeactivatedUser(
+            user_id = user_id,
+            username = user.username,
+            device_id = user.device_id,
+            device_name = user.device_name,
+            ip_address = user.ip_address,
+            registered = user.registered,
+            status = user.status,
+            profile_Image = user.profile_Image,
+            date_of_deactivation = datetime.now(),
+            activated = False,
+            date_of_activation = None
+        )
+        await self.create_deactivated_user(deactivate_user)
+
+        q = update(RegisteredUser).where(RegisteredUser.id == user_id)
+        random_int = random.randint(1000, 9999)
+        username = "user_{}".format(random_int)
+        q = q.values(username = username)
+        q = q.values(profile_Image = "riri.prixacdn.net/newstalk.png")
+        q = q.values(status = 'deactivated')
+
+        q.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(q)
+        await self.db_session.commit()
+
+
+    def get_password_hash(self,password):
+        return pwd_context.hash(password)
+
+
+    async def delete_user(self, user_id: str):
+        user = await self.get_registerd_user(user_id)
+        delete_user = DeletedUser(
+            user_id = user_id,
+            username = user.username,
+            password = user.password,
+            first_name = user.first_name,
+            last_name = user.last_name,
+            email = user.email,
+            
+            device_id = user.device_id,
+            device_name = user.device_name,
+            ip_address = user.ip_address,
+            registered = user.registered,
+            status = user.status,
+            profile_Image = user.profile_Image,
+            date_of_deletion = datetime.now(),
+        )
+        await self.create_deleted_user(delete_user)
+
+        q = update(RegisteredUser).where(RegisteredUser.id == user_id)
+
+
+        q = q.values(username = "newstalk_user")
+        q = q.values(password = self.get_password_hash(user.id))
+        q = q.values(first_name = "")
+        q = q.values(last_name = "")
+        q = q.values(email = f"{user.id}@newtalk.com")
+        q = q.values(profile_Image = "riri.prixacdn.net/newstalk.png")
+
+        q = q.values(status = 'deleted')
+        q.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(q)
+        await self.db_session.commit()
+
 
     async def check_userid_exists(self,user_id: str) -> User:
-        query = select(User).where(User.id == user_id)
+        query = select(User).filter(User.status == 'active').where(User.id == user_id)
         results = await self.db_session.execute(query)
         result = results.fetchone()
         return result
 
     
     async def get_registerd_user(self,user_id: str) -> RegisteredUser:
-        query = select(RegisteredUser).where(RegisteredUser.id == user_id)
+        query = select(RegisteredUser).filter(RegisteredUser.status == 'active').where(RegisteredUser.id == user_id)
+        results = await self.db_session.execute(query)
+        result = results.scalars().one()
+        return result
+        
+
+    async def get_deactivated_user(self,user_id: str) -> DeactivatedUser:
+        query = select(DeactivatedUser).where(and_(DeactivatedUser.user_id == user_id, DeactivatedUser.activated == False))
         results = await self.db_session.execute(query)
         result = results.scalars().one()
         return result
@@ -82,7 +195,7 @@ class UserCrud():
 
     
     async def check_user_exists_by_username(self,email: str)-> RegisteredUser:
-        query = select(RegisteredUser).where(RegisteredUser.email == email)
+        query = select(RegisteredUser).filter(RegisteredUser.status == 'active').where(RegisteredUser.email == email)
         results = await self.db_session.execute(query)
         result = results.fetchone()
         return result
@@ -97,7 +210,7 @@ class UserCrud():
 
     async def get_user_profile(self,user_id: str) -> User:
         entity = with_polymorphic(User, RegisteredUser)
-        query = select(entity).where(entity.id == user_id)
+        query = select(entity).filter(entity.status == 'active').where(entity.id == user_id)
         results = await self.db_session.execute(query)
         user_profile = results.scalars().one()
 
@@ -133,7 +246,7 @@ class UserCrud():
 
     async def get_registered_user(self,user_id: str) -> RegisteredUser:
         entity = with_polymorphic(User, RegisteredUser)
-        query = select(entity).where(entity.id == user_id)
+        query = select(entity).filter(entity.status == 'active').where(entity.id == user_id)
         # print(query,111111111111111111111111111111111)
         results = await self.db_session.execute(query)
         (result,) = results.one()
@@ -143,21 +256,37 @@ class UserCrud():
     async def search_user_by_name(self,user_name: str) -> List[User]:
         # query = select(User).where(User.username == user_name)
         entity = with_polymorphic(User, RegisteredUser)
-        query = select(entity).filter(entity.username.like(f'{user_name}%'))
+        query = select(entity).filter(entity.status == 'active').filter(entity.username.like(f'{user_name}%'))
         # query = select(User).filter(User.username.like(f'{user_name}%'))
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
     
-
     
     async def get_all_registered_user(self) -> List[RegisteredUser]:
-        query = select(RegisteredUser).order_by(RegisteredUser.id)
+        query = select(RegisteredUser).filter(RegisteredUser.status == 'active').order_by(RegisteredUser.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
     async def get_all_nonregistered_user(self) -> List[NonRegisteredUser]:
-        query = select(NonRegisteredUser).order_by(NonRegisteredUser.id)
+        query = select(NonRegisteredUser).filter(NonRegisteredUser.status == 'active').order_by(NonRegisteredUser.id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+    async def get_all_active_user(self) -> List[User]:
+        query = select(User).filter(NonRegisteredUser.status == 'active').order_by(User.id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+    
+    async def get_all_deactivated_user(self) -> List[User]:
+        query = select(User).filter(NonRegisteredUser.status == 'deactivated').order_by(User.id)
+        results = await self.db_session.execute(query)
+        return results.scalars().all()
+
+    
+    async def get_all_deleted_user(self) -> List[User]:
+        query = select(User).filter(NonRegisteredUser.status == 'deleted').order_by(User.id)
         results = await self.db_session.execute(query)
         return results.scalars().all()
 
@@ -184,6 +313,7 @@ class UserCrud():
             
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
+        await self.db_session.commit()
 
 
     async def update_user_info(self, user_id: str, device_id: Optional[str], device_name: Optional[str] ):
@@ -195,12 +325,14 @@ class UserCrud():
 
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
+        await self.db_session.commit()
 
 
     async def upload_profile_Image(self, user_id: str, profile_Image: str):
         q = update(RegisteredUser).where(RegisteredUser.id == user_id).values(profile_Image=profile_Image)
         q.execution_options(synchronize_session="fetch")
         await  self.db_session.execute(q)
+        await self.db_session.commit()
 
 
     async def get_liked_articles_by_user(self, user_id: str) -> article_model.Article:
@@ -236,4 +368,4 @@ class UserCrud():
         ).filter(comments_model.Comments.user_id == user_id).order_by(article_model.Article.date.desc()).limit(10)
         results = await self.db_session.execute(query)
         result = results.scalars().all()
-        return 
+        return result

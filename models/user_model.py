@@ -4,7 +4,8 @@ from database import Base
 from sqlalchemy.orm import relationship
 from typing import List, Optional
 from sqlalchemy_utils import EmailType
-
+from sqlalchemy import case
+from sqlalchemy import text
 
 class UserKeywords(Base):
     __tablename__ = 'user_keywords'
@@ -38,16 +39,58 @@ class SourceFollowing(Base):
     follower_id =  Column(String, ForeignKey('user.id'), primary_key=True)
     following_id = Column(Integer, ForeignKey('source.id'), primary_key=True)
 
-class User(Base):
-    __tablename__ = 'user'
-    
-    id = Column(String, primary_key =True, index=True)
+
+class DeactivatedUser(Base):
+    __tablename__ = "deactivateduser"
+    id = Column(Integer, primary_key =True, index=True,autoincrement=True)
+    user_id = Column(String)
     username = Column(String)
     device_name = Column(String)
     device_id = Column(String)
     ip_address = Column(String)
     registered = Column(Boolean)
+    status = Column(String, nullable=False, default=text('deactivated'))
     profile_Image = Column(String(250))
+    date_of_deactivation = Column(DateTime)
+    activated = Column(Boolean)
+    date_of_activation = Column(DateTime)
+
+
+class DeletedUser(Base):
+    __tablename__ = "deleteduser"
+    id = Column(Integer, primary_key =True, index=True,autoincrement=True)
+    user_id = Column(String)
+    username = Column(String)
+    password = Column(String)
+    first_name = Column(String(50))
+    last_name = Column(String(50))
+    email = Column(EmailType)
+
+    device_name = Column(String)
+    device_id = Column(String)
+    ip_address = Column(String)
+    registered = Column(Boolean)
+    status = Column(String, nullable=False, default=text('deleted'))
+    profile_Image = Column(String(250))
+    date_of_deletion = Column(DateTime)
+
+
+
+
+class User(Base):
+    __tablename__ = 'user'
+    
+    id = Column(String, primary_key =True, index=True)
+    username = Column(String)
+
+    device_name = Column(String)
+    device_id = Column(String)
+    ip_address = Column(String)
+    registered = Column(Boolean)
+    status = Column(String, nullable=False, default=text('active'))
+    
+    profile_Image = Column(String(250))
+    
 
     user_followers = relationship(
         'User',
@@ -103,10 +146,15 @@ class User(Base):
     liked_replies = relationship("UserRepliesLikes", back_populates="liked_user")
 
     keywords = relationship("UserKeywords", back_populates= "user", lazy='selectin')
+
+    # __mapper_args__ = {'polymorphic_on': status,
+    #     'polymorphic_identity':'user'}
     
     __mapper_args__ = {'polymorphic_on': registered,
         'polymorphic_identity':'user'
         }
+
+    # __mapper_args__ = {'polymorphic_on': building_type}
 
     # def __repr__(self) -> str:
     #     return f"<User(name={self.username})>"
@@ -117,18 +165,28 @@ class RegisteredUser(User):
     password = Column(String)
     first_name = Column(String(50))
     last_name = Column(String(50))
-
-
     email = Column(EmailType)
     __mapper_args__ = {'polymorphic_identity': True}
+
+    
     # id = Column(
     #     String, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     # )
     
+# class DeactivatedUser(User):
+#     __mapper_args__ = {'polymorphic_identity': 'deactivated'}
+
+
+# class DeletedUser(User):
+#     __mapper_args__ = {'polymorphic_identity': 'deleted'}
+
+
+# class ActiveUser(User):
+#     __mapper_args__ = {'polymorphic_identity': 'active'}
+
 
 class NonRegisteredUser(User):
     __mapper_args__ = {'polymorphic_identity': False}
-
 
 
 
