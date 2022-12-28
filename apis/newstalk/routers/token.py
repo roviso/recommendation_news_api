@@ -100,7 +100,9 @@ def create_new_user_model(device_id: str, device_name: str,ip_address: str):
             device_id = device_id,
             device_name = device_name,
             ip_address = ip_address,
-            registered = False
+            registered = False,
+            status = "active"
+
         )
     return user
 
@@ -217,11 +219,21 @@ async def deactivate(logout_user: token_schema.CreateUser, async_session: Sessio
 
 
 
-@router.get("/delete", response_model = token_schema.Token)
-async def delete(logout_user: token_schema.CreateUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
+@router.post("/delete", response_model = token_schema.Token)
+async def delete(delete_user: token_schema.DeleteUser, async_session: Session = Depends(database.get_session),current_user: user_model.User = Depends(get_current_user)):
     async with async_session as session:
         async with session.begin():
             usercrud= crud_user.UserCrud(session)
+            user = await usercrud.get_registerd_user(current_user.id)
+            if not verify_password(delete_user.password, user.password):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password.")
+
             await usercrud.delete_user(current_user.id)
+    
+    logout_user = token_schema.CreateUser(
+        device_id = delete_user.device_id,
+        device_name = delete_user.device_name,
+        ip_address = delete_user.ip_address
+    )
     access_token = await create_user(logout_user,async_session)
     return access_token

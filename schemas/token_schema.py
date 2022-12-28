@@ -18,6 +18,16 @@ class LoginUser(BaseModel):
         orm_mode = True
         
 
+class DeleteUser(BaseModel):
+    device_id: str
+    device_name: str
+    ip_address: str
+    password: str
+
+    class Config:
+        orm_mode = True
+
+
 
 class Token(BaseModel):
     access_token: str
