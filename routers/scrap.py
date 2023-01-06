@@ -2,9 +2,11 @@ from fastapi import APIRouter,Depends,  HTTPException
 from worker import celery
 from pydantic import BaseModel
 import json
-from crud import crud_scrap
+from crud import crud_scrap, crud_article, crud_source
 from typing import Optional
 from routers import source
+from database import async_session
+from bs4 import BeautifulSoup
 
 router = APIRouter(
     prefix = "/scrap",
@@ -97,6 +99,35 @@ async def test_source_scrape(source_id: int):
 
     return reponse
 
+
+def update_content(content):
+    parsed_html = BeautifulSoup(content[0],  'html5lib')
+    paragraphs = parsed_html.find_all(['p', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+
+    new_content = [''.join(str(p) for p in paragraphs[:-1]) ]
+
+    return  new_content
+
+@router.get("/update_farakdar/")
+async def update_farakdar():
+    async with async_session() as session:
+        async with session.begin():
+            articlecrud = crud_article.ArticleCrud(session)
+            sourcecrud = crud_source.SourceCrud(session)
+            farakdar_articles = await sourcecrud.get_source_articles(1)
+            # farakdar_articles_id = [articles.id for articles in farakdar_articles]
+
+
+
+            # ori_content = farakdar_articles[11].content
+
+            # new_content  = update_content(ori_content)
+
+            [await articlecrud.update_article_content(article_id = article.id, content= update_content(article.content)) for article in farakdar_articles]
+
+
+
+            return "done"
 
 
 @router.get("/test_rss/")

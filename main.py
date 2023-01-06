@@ -6,8 +6,7 @@ from apis.sugariri.main import sugaApi
 from apis.newstalk.main import newstalkApi
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
-from routers import clicks,user
-# , scrap
+from routers import clicks,user, scrap,source
 # article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, , search , clicks , scrap, keywords , label  
 #  ,recommend
 # , recommendation, 
@@ -92,8 +91,8 @@ async def startup():
 
         
 
-# app.include_router(scrap.router)
-# app.include_router(source.router)
+app.include_router(scrap.router)
+app.include_router(source.router)
 
 # app.include_router(recommendation.router)
 # app.include_router(keywords.router)

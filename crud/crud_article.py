@@ -106,6 +106,17 @@ class ArticleCrud():
         await  self.db_session.execute(q)
 
 
+    async def update_article_content(self, article_id: str, content: Optional[str]):
+        q = update(Article).where(Article.id == article_id)
+        
+        if content:
+            q = q.values(content=content)
+
+        q.execution_options(synchronize_session="fetch")
+        await self.db_session.execute(q)
+        # await self.db_session.commit()
+
+
     async def update_views(self, article_id: str, increase_view: Optional[int]= None, decrease_view: Optional[int]= None,):
         article = await self.get_article_by_id(article_id)
         # article = article._mapping.Article

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile,HTTPException,Depends,status
+from fastapi import FastAPI, File, UploadFile,HTTPException,Depends,status, WebSocket, WebSocketDisconnect
 import speech_recognition as sr
 import nepali_roman as nr
 from nepali_unicode_converter.convert import Converter
@@ -23,9 +23,9 @@ import pathlib
 import os
 from apis.sugariri.routers import tts
 from apis.sugariri.utils import detect_intent_texts
-
+from typing import List
 from googletrans import Translator
-
+from fastapi.responses import HTMLResponse
 
 
 class suga_request(BaseModel):
@@ -86,6 +86,31 @@ class suga_id(BaseModel):
     class Config:
         orm_mode = True
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+    def get_active_connections(self):
+        print(self.active_connections)
+        return len(self.active_connections)
+
+
+manager = ConnectionManager()
+
 
 def check_and_infer(text: str, voice: str):
     ntext = text + '_' + voice
@@ -127,6 +152,49 @@ def check_and_infer(text: str, voice: str):
         #     status= "success",
         #     text = text,
         #     result_audio = f"https://{BUCKET}/{fname}")
+
+
+html = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <h1>WebSocket Chat</h1>
+        <h2>Your ID: <span id="ws-id"></span></h2>
+        <form action="" onsubmit="sendMessage(event)">
+            <input type="text" id="messageText" autocomplete="off"/>
+            <button>Send</button>
+        </form>
+        <ul id='messages'>
+        </ul>
+        <script>
+            var client_id = Date.now()
+            document.querySelector("#ws-id").textContent = client_id;
+            var ws = new WebSocket(`ws://ea2d-103-235-197-252.ngrok.io/api/sugariri/wsriri/${client_id}`);
+            ws.onmessage = function(event) {
+                var messages = document.getElementById('messages')
+                var message = document.createElement('li')
+                var content = document.createTextNode(event.data)
+                message.appendChild(content)
+                messages.appendChild(message)
+            };
+            function sendMessage(event) {
+                var input = document.getElementById("messageText")
+                ws.send(input.value)
+                input.value = ''
+                event.preventDefault()
+            }
+        </script>
+    </body>
+</html>
+"""
+
+
+@sugaApi.get("/") 
+async def get():
+    return HTMLResponse(html)
 
 
 @sugaApi.post("/suga")
@@ -344,6 +412,35 @@ async def chatririne(text: str ):
     return {'you': text,
         'riri':ne_result.text,
             }
+
+
+@sugaApi.post("/wetest/{text}")
+async def wetest(text: str,):
+    await manager.broadcast(f"{text}")
+
+            
+@sugaApi.post("/wetest")
+async def wetestconnection():
+    return manager.get_active_connections()
+
+
+
+
+@sugaApi.websocket("/wsriri/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: int):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            result = get_dialogflow_result(data)
+            translator = Translator()
+            ne_result = translator.translate(result, src='en', dest='ne')
+            await manager.send_personal_message(f"You wrote: {data}", websocket)
+            await manager.send_personal_message(f"{ne_result.text}", websocket)
+            # await manager.broadcast(f"User #{client_id} : {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
 
 
 @sugaApi.post("/sugaid")

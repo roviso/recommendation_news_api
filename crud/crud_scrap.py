@@ -125,12 +125,14 @@ class ScrapeLinkX():
         #     content.find(content_unwanted_selector).decompose()
         # print(content,5555555555555555)
         # collecting all paragraphs as content
-        paragraphs = content.find_all(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'])
+        paragraphs = content.find_all(['p', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'])
         # paragraphs = content.findChildren(['p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure'], recursive=False)
-        
+        if self.source.name == "फरक धार" :
+            content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs[:-1]]
+        else:
+            content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs]
 
-        
-        content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs]
+        # content = [ '' if is_empty_soup(p) else str(p) for p in paragraphs]
         content = [i for i in content if i] ## removing empty paragraph
         final_content = [''.join(content)]
 
