@@ -15,6 +15,7 @@ import db_loader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import Page, add_pagination
 from models import label_model
+from fastapi.responses import FileResponse
 
 # from pydantic import BaseSettings
 from apis.newstalk.routers import recommend
@@ -90,7 +91,14 @@ async def startup():
     #     await conn.commit()
     
 
-        
+@app.get("/privacypolicy")  
+def read_privacypolicy():
+    return FileResponse("repository/staticHtml/PrivacyPolicyNewsTalk.html")
+
+
+@app.get("/termsandconditions")  
+def read_termsandconditions():
+    return FileResponse("repository/staticHtml/TermsandConditionsNewsTalk.html")     
 
 # app.include_router(scrap.router)
 # app.include_router(source.router)
