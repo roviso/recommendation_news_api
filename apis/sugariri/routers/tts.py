@@ -62,10 +62,10 @@ async def heading(suga_request: suga_request, async_session: Session = Depends(d
 
             parsed_html = BeautifulSoup(article.content[0],  'html5lib')
             paragraphs = parsed_html.find_all(['p', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
-            if article.source.name == "फरक धार" :
-                content = ''.join(str(p) for p in paragraphs[:-1]) 
-            else:
-                content = ''.join(str(p) for p in paragraphs) 
+            # if article.source.name == "फरक धार" :
+            #     content = ''.join(str(p) for p in paragraphs[:-1]) 
+            # else:
+            content = ''.join(str(p) for p in paragraphs) 
 
             text = html2text.html2text(content)
             text =  func(text)
