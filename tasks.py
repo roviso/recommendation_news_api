@@ -224,6 +224,25 @@ async def scrape_normal_rss(source: source_model.Source ):
 
 
 
+def inference_audio_riri(text):
+    female_payload={'text': text, 'voice': 'np_rija'}
+    male_payload={'text': text, 'voice': 'np_prasanna'}
+
+
+    female_response = requests.request("POST", url, headers=headers, data=female_payload)
+    
+    male_response = requests.request("POST", url, headers=headers, data=male_payload)
+
+    try:
+        if female_response.text and male_response.text:
+            print("___SUCCESSFULLY CREATED RIRI AUDIO_____")
+        else:
+            print("___ERROR CREATING RIRI AUDIO_____")
+    except:
+        print("EORROR AT INFERENCE")
+
+
+
 
 async def scrape_news(source: source_model.Source, link: str, pubDate):
     """
@@ -293,10 +312,11 @@ async def scrape_news(source: source_model.Source, link: str, pubDate):
         if article_created:
             print("ARTICLE SUCCESFULLY ADDED")
             print("_______PREPARING AUDIO FILE______________")
-            payload={'text': article_created.heading, 'voice': 'np_rija'}
-            response = requests.request("POST", url, headers=headers, data=payload)
-            if response.text:
-                print("___SUCCESSFULLY CREATED RIRI AUDIO_____")
+            inference_audio_riri(article_created.heading)
+            # payload={'text': article_created.heading, 'voice': 'np_rija'}
+            # response = requests.request("POST", url, headers=headers, data=payload)
+            # if response.text:
+            #     print("___SUCCESSFULLY CREATED RIRI AUDIO_____")
         else:
             raise Exception(f'UNABLE TO ADD ARTICLE TO DB')
 
