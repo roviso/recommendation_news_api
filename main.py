@@ -6,7 +6,7 @@ from apis.sugariri.main import sugaApi
 from apis.newstalk.main import newstalkApi
 # from apis.keyword.main import keywordApi
 # from apis.tts.main import ttsApi
-from routers import clicks
+# from routers import clicks, user
 # ,user, scrap,source
 # article,cache,source, author,user,likes, views, token, latest , top ,comments, replies, follow, bookmarks, profile, , search , clicks , scrap, keywords , label  
 #  ,recommend
@@ -127,7 +127,7 @@ def read_termsandconditions():
 # app.include_router(author.router)
 
 # app.include_router(label.router)
-app.include_router(clicks.router)
+# app.include_router(clicks.router)
 # app.include_router(likes.router)
 # app.include_router(bookmarks.router)
 # app.include_router(views.router)

@@ -10,7 +10,7 @@ import database
 from fastapi_pagination import paginate,LimitOffsetPage
 from models import user_model
 from apis.newstalk.routers.user import get_current_user
-from crud import crud_label
+from crud import crud_label, crud_search
 
 
 router = APIRouter(
@@ -18,6 +18,16 @@ router = APIRouter(
     tags=['search']
 )
 
+
+@router.get('/', status_code = 200,)
+#  response_model=LimitOffsetPage[article_schema.GetAllArticle])
+async def search_articles(search_str: str, async_session: Session = Depends(database.get_session)):
+# ,current_user: user_model.User = Depends(get_current_user)):
+    async with async_session as session:
+        async with session.begin():
+            searchcrud = crud_search.SearchCrud(session)
+            searched_items = await searchcrud.search_string(search_str)
+            return searched_items
 
 
 

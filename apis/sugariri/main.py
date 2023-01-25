@@ -228,6 +228,18 @@ broker_url = "sqs://{aws_access_key}:{aws_secret_key}@".format(
 
 app = Celery('tasks_ref', broker=broker_url,broker_transport_options = {'region': 'ap-southeast-1'} )
 
+@app.task(name="process_audio")
+def process_audio(text, voice):
+    print(text, voice)
+    return "server not hit"
+
+
+@app.task(name="instruct_pic")
+def instruct_pic(url, instruct_text):
+    print(url,instruct_text)
+    return "server not hit"
+
+
 # @app.task(name="srec")
 @app.task(name="srec2")
 def srec2(url):
@@ -253,6 +265,77 @@ async def wait_until(task_id, timeout, period=0.25,):
             return True
         time.sleep(period)
     return False
+
+
+def sh1_encode_image(image_path):
+    # Open the image file in binary mode
+    with open(image_path, "rb") as image:
+        # Read the file content
+        image_data = image.read()
+        # Create a new SHA1 hash object
+        sha1 = hashlib.sha1()
+        # Update the hash with the image data
+        sha1.update(image_data)
+        # Get the hexadecimal digest of the hash
+        sha1_digest = sha1.hexdigest()
+        print(sha1_digest)
+    return sha1_digest
+
+@sugaApi.post("/pa", response_model = tasks_schema.tasks)
+async def pa(text: str, voice: str):
+    task = process_audio.delay(text, voice)
+    return task.id
+
+    
+@sugaApi.post("/instruct", response_model = tasks_schema.tasks)
+async def instruct(instruct_text: str, file: UploadFile = File(...), async_session: Session = Depends(database.get_session)):
+    
+    s3= init_aws_session()
+    sha1 = hashlib.sha1()
+
+    try:
+        contents = file.file.read()
+        sha1.update(contents)
+        sha1_digest = sha1.hexdigest()
+
+        op_path = "imgs/uploaded/"+sha1_digest+".jpg"
+        print("op image is: ", op_path)
+        s3.Object(BUCKET,op_path).put(Body=contents)
+        # audio_path = os.path.join(pathlib.Path(__file__).parent.resolve(), file.filename)
+        # with open(audio_path, 'wb') as f:
+        #     f.write(contents)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Error Uploading file",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    finally:
+        file.file.close()
+        del s3
+
+
+    cdn_path = "https://riri.prixacdn.net/"+op_path
+
+    task = instruct_pic.delay(cdn_path, instruct_text)
+
+     # success = await wait_until(task.id,20)
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task_exists = await taskscrud.check_tasks(task.id)
+            if task_exists:
+                infer_text = await taskscrud.get_tasks(task.id)
+                return infer_text
+            else:
+                new_task = tasks_model.Tasks(
+                id = task.id, 
+                status = "in_progress",
+                result = ""
+                )
+                await taskscrud.create_tasks(new_task)
+                return new_task
+
 
 
 @sugaApi.post("/whisper", response_model = tasks_schema.tasks)
