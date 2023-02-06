@@ -129,7 +129,7 @@ def check_and_infer(text: str, voice: str):
         else:
             print("Something else has gone wrong.")
         # file_exists = False
-        print("Np file exists in bucket so inferecing the text")
+        print("No file exists in bucket so inferecing the text")
         try:
             payload= {'text': text, 'voice': voice}
             response = requests.request("POST", url, headers=headers, data=payload)
@@ -234,10 +234,20 @@ def process_audio(text, voice):
     return "server not hit"
 
 
+
+@app.task(name="dream_pic")
+def dream_pic( instruct_text):
+    print(instruct_text)
+    return "server not hit"
+
+
+
 @app.task(name="instruct_pic")
 def instruct_pic(url, instruct_text):
     print(url,instruct_text)
     return "server not hit"
+
+    
 
 
 # @app.task(name="srec")
@@ -285,6 +295,28 @@ def sh1_encode_image(image_path):
 async def pa(text: str, voice: str):
     task = process_audio.delay(text, voice)
     return task.id
+
+
+@sugaApi.post("/dream", response_model = tasks_schema.tasks)
+async def pa(text: str, async_session: Session = Depends(database.get_session)):
+    task = dream_pic.delay(text)
+    # return task.id
+    async with async_session as session:
+        async with session.begin():
+            taskscrud= crud_tasks.TasksCrud(session)
+            task_exists = await taskscrud.check_tasks(task.id)
+            if task_exists:
+                infer_text = await taskscrud.get_tasks(task.id)
+                return infer_text
+            else:
+                new_task = tasks_model.Tasks(
+                id = task.id, 
+                status = "in_progress",
+                result = ""
+                )
+                await taskscrud.create_tasks(new_task)
+                return new_task
+
 
     
 @sugaApi.post("/instruct", response_model = tasks_schema.tasks)
