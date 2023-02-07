@@ -236,8 +236,8 @@ def process_audio(text, voice):
 
 
 @app.task(name="dream_pic")
-def dream_pic( instruct_text):
-    print(instruct_text)
+def dream_pic( instruct_text,steps):
+    print(instruct_text,steps)
     return "server not hit"
 
 
@@ -298,8 +298,8 @@ async def pa(text: str, voice: str):
 
 
 @sugaApi.post("/dream", response_model = tasks_schema.tasks)
-async def pa(text: str, async_session: Session = Depends(database.get_session)):
-    task = dream_pic.delay(text)
+async def pa(text: str, steps: int = 20, async_session: Session = Depends(database.get_session)):
+    task = dream_pic.delay(text,steps)
     # return task.id
     async with async_session as session:
         async with session.begin():
