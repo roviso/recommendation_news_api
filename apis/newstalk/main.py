@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 
-from apis.newstalk.routers import user, token, profile, recommend, search, top, latest, author, source, bookmarks, comments, replies, follow, label, likes, views, keywords
+from apis.newstalk.routers import user , token, profile, recommend, search, top, latest, author, source, bookmarks, comments, replies, follow, label, likes, views, keywords
 
 newstalkApi = FastAPI(title="NewsTalk", openapi_url="/openapi.json")
 

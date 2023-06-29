@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends,  HTTPException
-# from worker import celery
+from worker import celery
 from pydantic import BaseModel
 import json
 from crud import crud_scrap, crud_article, crud_source
@@ -25,14 +25,14 @@ class Item(BaseModel):
 #     return dict(id=task.id, url='localhost:8000/check_task/{}'.format(task.id))
 
 
-# @router.post("/scrapenews/")
-# async def scrape_news():
-#     # news: NewsResponse):
-#     task_name = "tasks.refresh_sources"
-#     # task = celery.send_task(task_name, args=[news.pk,news.category_id,news.link,news.prefix,news.selector,
-#     # news.image_selector,news.exception_selector,news.default_image,news.pubDate,news.debug,])
-#     task = await celery.send_task(task_name)
-#     return dict(id=task.id, url='localhost:8848/check_task/{}'.format(task.id))
+@router.post("/scrapenews/")
+async def scrape_news():
+    # news: NewsResponse):
+    task_name = "tasks.refresh_sources"
+    # task = celery.send_task(task_name, args=[news.pk,news.category_id,news.link,news.prefix,news.selector,
+    # news.image_selector,news.exception_selector,news.default_image,news.pubDate,news.debug,])
+    task = await celery.send_task(task_name)
+    return dict(id=task.id, url='localhost:8848/check_task/{}'.format(task.id))
 
 
 # @router.get("/check_task/{id}")

@@ -141,6 +141,8 @@ def extract_keywords(corpus: Iterable[str], word_idf: Mapping[str, float],
 
         # Add leftover keywords scores at the end and compute top indices
         
+        print(f"kwds is : {kwds}")
+        print(f"keywords is : {keywords}")
         # try:
         temp_kwds = n_kwds
         final_keywords: np.ndarray = np.array([*keywords, temp_kwds])
@@ -148,6 +150,10 @@ def extract_keywords(corpus: Iterable[str], word_idf: Mapping[str, float],
                                         dtype=np.float64).argpartition(
                                             kth=-temp_kwds, axis=1)[:,
                                                                 -temp_kwds:]
+        
+        print(f"final_keywords is : {final_keywords}")
+        
+        print(f"top_indices is : {top_indices}")
         for i, indices in enumerate(top_indices):
             top_keywords.append(list(final_keywords[i, indices]))
         # except:

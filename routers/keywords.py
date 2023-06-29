@@ -239,12 +239,13 @@ async def add_article_keywords(keywords: List[str], article_id: str ):
 
 
 @router.get('/update_keywords', status_code = 200)
-async def update_keywords(article, tfidf_dict) -> List[article_model.LatestArticle]:
+async def update_keywords(article, tfidf_dict):
+# -> List[article_model.LatestArticle]:
     CLEANR = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
     # html_filter = HTMLFilter()
     # html_filter.feed(article.content[0])
     content = [re.sub(CLEANR, '', article.heading + ' ' + strip_tags(article.content[0])) ]
-            # print(content,1111111111111111111)
+    # print(content,1111111111111111111)
     try:
         keywords = tfidf_generator.extract_keywords(content, tfidf_dict, 20)
         final_keywords = reduce(add ,keywords)

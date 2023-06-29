@@ -20,3 +20,5 @@ ponicode
 non-potential-topic-word-list.txt
 *.m4a
 *.wav
+*.DS_Store
+*.db

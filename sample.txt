@@ -1,0 +1,21 @@
+## Function to get similar articles list using tfidf 
+def get_similar_articles(q):
+    # print("query:", q)
+    print("Articles with high cosine similarity are: ")
+    q = [q]
+    q_vec = tfidf.vectorizer.transform(q).toarray().reshape(tfidf.tfidfVectors.shape[0],)
+    sim = {}
+    for i in range(tfidf.tfidfVectors.shape[1]):
+        sim[i] = np.dot(tfidf.tfidfVectors.loc[:, i].values, q_vec) / np.linalg.norm(tfidf.tfidfVectors.loc[:, i]) * np.linalg.norm(q_vec)
+
+    sim_sorted = sorted(sim.items(), key=lambda x: x[1], reverse=True)
+
+    article_list = []
+
+    for k, v in sim_sorted:
+        if v >= 0.25:
+            # print("Article Similarity:", v)
+            # print(pre.article_df.article_id.iloc[k])
+            article_list.append(tfidf.article_keyword_df.article_id.iloc[k])
+
+    return article_list

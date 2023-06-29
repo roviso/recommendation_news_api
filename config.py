@@ -43,9 +43,9 @@ class Settings:
     PROJECT_NAME:str = "news_recommendation"
     PROJECT_VERSION: str = "1.0.0"
 
-    POSTGRES_USER : str = os.getenv("POSTGRES_USER","prixatech_ravi")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD","bSzWN8ufDToiYyKR")
-    POSTGRES_DB : str = os.getenv("POSTGRES_DB","prixatech_news_recommendation")
+    POSTGRES_USER : str = os.getenv("POSTGRES_USER","postgres")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD","postgres")
+    POSTGRES_DB : str = os.getenv("POSTGRES_DB","news_recommendation")
     # POSTGRES_USER : str = os.getenv("POSTGRES_USER","ravi")
     # POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD","techprixa1234")
     # POSTGRES_DB : str = os.getenv("POSTGRES_DB","news_recommendation")

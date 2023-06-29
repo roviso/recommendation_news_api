@@ -53,6 +53,7 @@ async def train_implicit_model():
             articlecrud = RecommendationCrud(session)
 
             user_articles_score_df = await articlecrud.get_user_article() 
+            print(user_articles_score_df,"_____user_articles_score_df_______")
             data = user_articles_score_df.dropna()
             data.rename(columns={"user_id":"user","article_id": "article"},inplace=True)
 
@@ -61,6 +62,8 @@ async def train_implicit_model():
             data['article'] = data['article'].astype("category")
             data['user_id'] = data['user'].cat.codes
             data['article_id'] = data['article'].cat.codes
+
+            # print(data,"_____data_______")
 
             user_id_dict = pd.Series(data.user_id.values, index=data.user).to_dict()
 
@@ -112,7 +115,7 @@ async def get_tfidf_verctorizer(tfidf):
                 all_latest_articles = await articlecrud.get_n_latest_articles(500)
                 await latestnewscache.cache_news(all_latest_articles)
         
-    articles = await latestnewscache.read_all_news_from_cache(0, 200)
+    articles = await latestnewscache.read_all_news_from_cache(0, 20)
     # print(f"articles in cache is: {articles}")
 
     article_keyword = {article['id'] : [str(keyword['keyword']['tag']) for keyword in article['keywords'] ] for article in  articles if article['keywords']}
@@ -120,6 +123,7 @@ async def get_tfidf_verctorizer(tfidf):
     article_keyword_df = pd.DataFrame(list(article_keyword.items()), columns = ['article_id','keywords_words'])
 
     article_keyword_df.keywords_words = article_keyword_df.keywords_words.apply(lambda x: ' '.join([tags for tags in x]))
+    # print(f"article_keyword_df : {article_keyword_df}")
 
     keyword_values = article_keyword_df.keywords_words.values
     vectorizer = TfidfVectorizer()
@@ -141,6 +145,7 @@ user_id_dict,article_id_dict,sparse_user_item,model,data = None,None,None,None,N
 ## updating tfidf object on router startup
 @router.on_event("startup")
 async def startup_event():
+    print("recommendation starting")
     await get_tfidf_verctorizer(tfidf)
     await train_implicit_model()
 
